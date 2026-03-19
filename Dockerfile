@@ -23,14 +23,8 @@ COPY . .
 # Collect static files
 RUN python manage.py collectstatic --noinput --clear
 
-# Run migrations
-RUN python manage.py migrate --noinput
-
-# Seed database (run once during initial deployment)
-RUN python seed.py
-
 # Expose port
 EXPOSE 8000
 
-# Start Gunicorn
-CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Start script: run migrations and seed, then start Gunicorn
+CMD python manage.py migrate --noinput && python seed.py && gunicorn backend.wsgi:application --bind "0.0.0.0:8000"
