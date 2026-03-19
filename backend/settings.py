@@ -19,6 +19,7 @@ if not ALLOWED_HOSTS and not DEBUG:
     ALLOWED_HOSTS = [
         'wellman-backend-production.up.railway.app',
         'wellman-fitness-version-136.vercel.app',
+        'wellman-fitness-version-136-iids0o4bc-deadlyspoon907s-projects.vercel.app',
     ]
 
 INSTALLED_APPS = [
@@ -109,12 +110,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Explicitly whitelist Vercel frontend domains (exact matches)
 CORS_ALLOWED_ORIGINS = [
     "https://wellman-fitness-version-136.vercel.app",
+    "https://wellman-fitness-version-136-iids0o4bc-deadlyspoon907s-projects.vercel.app",
     "https://wellman-backend-production.up.railway.app",
 ]
 
-# Use regex patterns for Vercel preview deployments (only wellman-fitness-version-136)
+# Use regex patterns for Vercel preview deployments (wellman-fitness-version-136 and deadlyspoon907s-projects)
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"https://wellman-fitness-version-136.*\.vercel\.app",
+    r"https://wellman-fitness-version-136-iids0o4bc-deadlyspoon907s-projects.*\.vercel\.app",
     r"https://.*\.up\.railway\.app",
 ]
 
@@ -124,6 +127,7 @@ CORS_ALLOW_CREDENTIALS = True
 # CSRF trusted origins for POST requests to /api/login/
 CSRF_TRUSTED_ORIGINS = [
     "https://wellman-fitness-version-136.vercel.app",
+    "https://wellman-fitness-version-136-iids0o4bc-deadlyspoon907s-projects.vercel.app",
     "https://wellman-backend-production.up.railway.app",
 ]
 
