@@ -69,7 +69,7 @@ if DATABASE_URL:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql" if url.scheme.startswith("postgres") else "django.db.backends.sqlite3",
-            "NAME": url.path[1:] if url.path else "",
+            "NAME": url.path[1:].strip() if url.path else "",
             "USER": url.username or "",
             "PASSWORD": url.password or "",
             "HOST": url.hostname or "",
