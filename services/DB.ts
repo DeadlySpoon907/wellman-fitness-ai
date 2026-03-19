@@ -7,9 +7,7 @@ import { sanitizeUserForSave } from '../utils/userHelpers';
 // FIX: Use .trim() to remove any accidental leading/trailing whitespace in the env var
 const envApiUrl = import.meta.env.VITE_API_BASE_URL;
 // Default to wellman-backend-production for Railway (the correct domain)
-// When deployed on Vercel, use proxy (/api) to avoid CORS issues
-const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
-const API_URL = isVercel ? '/api' : (envApiUrl ? `${envApiUrl.trim()}/api`.replace('//api/api', '/api') : 'https://wellman-backend-production.up.railway.app/api');
+const API_URL = envApiUrl ? `${envApiUrl.trim()}/api`.replace('//api/api', '/api') : 'https://wellman-backend-production.up.railway.app/api';
 
 // Debug log in development only
 if (import.meta.env.DEV) {
