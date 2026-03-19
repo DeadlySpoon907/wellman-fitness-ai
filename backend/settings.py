@@ -115,3 +115,17 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 AUTH_USER_MODEL = 'api.User'
+
+# Run database seeder if SEED_DB=true is set (for initial deployment)
+if os.getenv("SEED_DB", "False").lower() in ("1", "true", "yes"):
+    import sys
+    import django
+    print("SEED_DB enabled - running database seeder...")
+    try:
+        # Import and run seed function
+        sys.path.insert(0, str(BASE_DIR))
+        from seed import seed
+        seed()
+        print("Database seeding complete!")
+    except Exception as e:
+        print(f"Error running seeder: {e}")
