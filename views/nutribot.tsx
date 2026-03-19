@@ -36,7 +36,7 @@ const NutritionistChat: React.FC<NutriBotProps> = ({ apiKey }) => {
 
   useEffect(() => {
     // Initialize Gemini Chat
-    const key = apiKey || import.meta.env.VITE_API_KEY;
+    const key = apiKey || (import.meta as any).env.VITE_API_KEY;
     if (!key) {
       setMessages(prev => [...prev, { role: 'bot', content: '⚠️ System Error: API Key is missing. Please check your configuration.' }]);
       return;

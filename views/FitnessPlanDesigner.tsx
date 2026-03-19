@@ -37,7 +37,7 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
         ? user.weightLogs[user.weightLogs.length - 1].weight 
         : 70;
       
-      const key = apiKey || import.meta.env.VITE_API_KEY;
+      const key = apiKey || (import.meta as any).env.VITE_API_KEY;
       if (!key) throw new Error("API Key is missing");
 
       const ai = new GoogleGenAI({ apiKey: key });
@@ -59,7 +59,7 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
         contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
 
-      const text = response.response?.text() || (typeof response.text === 'function' ? response.text() : response.text) || "{}";
+      const text = response.text();
       const jsonString = text.replace(/```json|```/g, '').trim();
       const plan = JSON.parse(jsonString);
       const completePlan = { ...plan, generatedAt: new Date().toISOString() };

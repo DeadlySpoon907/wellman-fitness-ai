@@ -40,7 +40,7 @@ const PostureChecker: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKe
     setIsAnalyzing(true);
     setAnalysis(null);
     try {
-      const key = apiKey || import.meta.env.VITE_API_KEY;
+      const key = apiKey || (import.meta as any).env.VITE_API_KEY;
       if (!key) throw new Error("API Key is missing");
 
       const ai = new GoogleGenAI({ apiKey: key });
@@ -57,7 +57,7 @@ const PostureChecker: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKe
         ]
       });
 
-      const text = response.response?.text() || (typeof response.text === 'function' ? response.text() : response.text) || "{}";
+      const text = response.text();
       const jsonString = text.replace(/```json|```/g, '').trim();
       const data = JSON.parse(jsonString);
       setAnalysis(data);

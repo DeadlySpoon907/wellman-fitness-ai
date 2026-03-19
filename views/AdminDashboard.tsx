@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { getAllUsers, saveUser, deleteUser } from '../services/DB';
-import { sanitizeUserForSave } from '/utils/userHelpers';
+import { sanitizeUserForSave } from '../utils/userHelpers';
 
 const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [users, setUsers] = useState<User[]>([]);

@@ -2,7 +2,7 @@
 import React, { useState, ChangeEvent, useEffect } from 'react';
 import { User } from '../types';
 import { saveUser } from '../services/DB';
-import { sanitizeUserForSave } from '/utils/userHelpers';
+import { sanitizeUserForSave } from '../utils/userHelpers';
 
 interface ProfileProps {
   user: User;

@@ -285,7 +285,7 @@ const App: React.FC = () => {
         {activeTab === 'bmi' && <BmiEstimator user={user} onUpdateProfile={syncUser} apiKey={apiKey} />}
         {activeTab === 'posture' && <PostureChecker user={user} apiKey={apiKey} />}
         {activeTab === 'profile' && <Profile user={user} onUpdate={syncUser} />}
-        {activeTab === 'settings' && <Settings user={user} currentApiKey={customApiKey} onSave={handleSaveApiKey} />}
+        {activeTab === 'settings' && <Settings user={user} currentApiKey={customApiKey} onSave={handleSaveApiKey} onUpdate={() => {}} />}
       </main>
 
       <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around p-2 z-50">

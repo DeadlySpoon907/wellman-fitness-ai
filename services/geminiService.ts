@@ -5,7 +5,7 @@ const MODEL_ID = "gemini-3-flash-preview";
 
 // Helper to initialize the AI client with the provided key or environment variable
 const getClient = (apiKey?: string) => {
-  const key = apiKey || import.meta.env.VITE_API_KEY;
+  const key = apiKey || (import.meta as any).env.VITE_API_KEY;
   if (!key) {
     throw new Error("API Key is missing. Please provide it in the settings or environment variables.");
   }
