@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { FitnessProfile, MacroData, BmiEstimation, PostureAnalysis } from "../types";
 
-const MODEL_ID = "gemini-3-flash-preview";
+const MODEL_ID = "gemini-2.0-flash-exp";
 
 // Helper to initialize the AI client with the provided key or environment variable
 const getClient = (apiKey?: string) => {

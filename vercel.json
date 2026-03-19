@@ -6,6 +6,10 @@
   "installCommand": "npm install",
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "https://wellman-backend-production.up.railway.app/api/$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
