@@ -1,6 +1,4 @@
-# Railway Configuration - Deploy from backend directory
-# This file should be in the root directory to tell Railway to deploy from backend/
-
+# Railway Configuration for Wellman Fitness Backend
 [build]
 builder = "Nixpacks"
 
