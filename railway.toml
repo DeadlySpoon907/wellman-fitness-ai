@@ -12,6 +12,7 @@ restartPolicyMaxRetries = 10
 [build.env]
 PYTHON_VERSION = "3.11"
 NODE_VERSION = "20"
+NIXPACKS_NODE_VERSION = "20"
 
 [deploy.env]
 DJANGO_SETTINGS_MODULE = "backend.settings"
