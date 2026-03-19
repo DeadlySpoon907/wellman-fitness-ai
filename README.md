@@ -353,7 +353,62 @@ Testing:
 ### Development
 Use `npm run dev` and `python manage.py runserver` with automatic hot-reloading.
 
-### Production
+### Production (Vercel + Railway)
+
+#### Frontend (Vercel)
+1. **Build and deploy**:
+   ```bash
+   npm run build
+   vercel deploy --prod
+   ```
+
+2. **Environment Variables** (in Vercel dashboard):
+   - `VITE_API_KEY` - Google Gemini API key
+   - `VITE_API_BASE_URL` - Railway backend URL (e.g., `https://your-app.up.railway.app`)
+
+#### Backend (Railway)
+1. **Deploy**:
+   - Connect GitHub repository to Railway project
+   - Railway automatically deploys on git push to main branch
+
+2. **Environment Variables** (in Railway dashboard):
+   - `GEMINI_API_KEY` - Google Gemini API key
+   - `SECRET_KEY` - Django secret key
+   - `DEBUG=False` - Production mode
+   - `ALLOWED_HOSTS` - Your Vercel domain
+   - `CORS_ALLOW_ALL_ORIGINS=True` - Allow Vercel frontend
+
+#### CORS Configuration
+
+The backend uses `django-cors-headers` to allow cross-origin requests from the Vercel frontend.
+
+**Settings in `backend/settings.py`:**
+```python
+# Allow all origins (recommended for development)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Or explicitly whitelist Vercel domains
+CORS_ALLOWED_ORIGINS = [
+    "https://your-app.vercel.app",
+]
+
+# Use regex for Vercel preview deployments
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"https://your-app-.*\.vercel\.app",
+]
+
+# Allow credentials (cookies)
+CORS_ALLOW_CREDENTIALS = True
+```
+
+**Railway Configuration (`railway.toml`):**
+```toml
+[deploy.env]
+CORS_ALLOW_ALL_ORIGINS = "True"
+CORS_ALLOWED_ORIGINS = "https://your-app.vercel.app"
+```
+
+### Manual Production Deploy
 1. **Frontend**: Build and serve with static hosting
    ```bash
    npm run build
