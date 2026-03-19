@@ -2,8 +2,15 @@
 import { User } from '../types';
 import { sanitizeUserForSave } from '../utils/userHelpers';
 
-// Note: VITE_API_BASE_URL should already include /api (e.g., https://your-app.up.railway.app/api)
-const API_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api`.replace('//api/api', '/api') : 'http://localhost:8000/api';
+// Get API URL from environment variable - must be set in Vercel!
+// Format: https://wellman-fitness-ai-production.up.railway.app (no /api suffix)
+const envApiUrl = import.meta.env.VITE_API_BASE_URL;
+const API_URL = envApiUrl ? `${envApiUrl}/api`.replace('//api/api', '/api') : 'http://localhost:8000/api';
+
+// Debug log in development only
+if (import.meta.env.DEV) {
+  console.log('[DB] API_URL:', API_URL);
+}
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
