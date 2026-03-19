@@ -10,7 +10,6 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
     goal: 'weight-loss',
     intensity: 'beginner',
     location: 'home',
-    focusAreas: ['Core'],
     ...(user?.fitnessProfile || {}),
     focusAreas: user?.fitnessProfile?.focusAreas || ['Core']
   }));
@@ -59,7 +58,7 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
         contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
 
-      const text = response.text();
+      const text = (response as any).text();
       const jsonString = text.replace(/```json|```/g, '').trim();
       const plan = JSON.parse(jsonString);
       const completePlan = { ...plan, generatedAt: new Date().toISOString() };
