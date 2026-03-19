@@ -27,7 +27,7 @@ if (-not $railwayExists) {
     npm install -g @railway/cli
 }
 
-Write-Host "✓ CLIs ready" -ForegroundColor Green
+Write-Host "CLIs ready" -ForegroundColor Green
 Write-Host ""
 
 # Step 1: Configure Environment
