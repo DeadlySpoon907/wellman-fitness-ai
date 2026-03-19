@@ -2,7 +2,8 @@
 import { User } from '../types';
 import { sanitizeUserForSave } from '../utils/userHelpers';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+// Note: VITE_API_BASE_URL should already include /api (e.g., https://your-app.up.railway.app/api)
+const API_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api`.replace('//api/api', '/api') : 'http://localhost:8000/api';
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {

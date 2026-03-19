@@ -26,6 +26,9 @@ RUN python manage.py collectstatic --noinput --clear
 # Run migrations
 RUN python manage.py migrate --noinput
 
+# Seed database if SEED_DB=true
+RUN if [ "$SEED_DB" = "true" ]; then python seed.py; fi
+
 # Expose port
 EXPOSE 8000
 

@@ -96,6 +96,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("1", "true", "yes")
 if not CORS_ALLOW_ALL_ORIGINS:
-    CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+    cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    # Always allow Vercel frontend in production
+    cors_origins.extend([
+        "https://wellman-fitness-ai.vercel.app",
+        "https://wellman-fitness-ai*.vercel.app"
+    ])
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in cors_origins if o.strip()]
 
 AUTH_USER_MODEL = 'api.User'
