@@ -7,6 +7,11 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import User
 from .serializers import UserSerializer
+import os
+
+# Registration key - set via environment variable for security
+# New users must provide this key to register
+REGISTRATION_KEY = os.environ.get('REGISTRATION_KEY', '')
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -14,6 +19,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def register(self, request):
+        # Check if registration key is required and provided
+        if REGISTRATION_KEY:
+            provided_key = request.data.get('registration_key')
+            if provided_key != REGISTRATION_KEY:
+                return Response(
+                    {'error': 'Registration is closed. Please contact the administrator.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
