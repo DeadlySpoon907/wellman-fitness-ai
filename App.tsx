@@ -23,7 +23,7 @@ const App: React.FC = () => {
   
   // API Key Management
   const [customApiKey, setCustomApiKey] = useState<string>(localStorage.getItem('gemini_api_key') || '');
-  const apiKey = customApiKey || process.env.API_KEY || '';
+  const apiKey = customApiKey || import.meta.env.VITE_API_KEY || '';
 
   const handleSaveApiKey = (key: string) => {
     setCustomApiKey(key);

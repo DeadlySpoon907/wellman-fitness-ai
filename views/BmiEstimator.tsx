@@ -51,8 +51,9 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
       const formData = new FormData();
       formData.append('image', blob, 'capture.jpg');
 
-      // Connect to local LRML_estimator service
-      const response = await fetch('http://localhost:5001/estimate', {
+      // Connect to backend BMI estimation endpoint
+      const bmiEstimatorUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${bmiEstimatorUrl}/estimate/`, {
         method: 'POST',
         body: formData
       });

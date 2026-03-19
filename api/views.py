@@ -1,6 +1,7 @@
 ﻿from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, parser_classes
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import authenticate
 from django.utils import timezone
 from datetime import timedelta
@@ -57,3 +58,58 @@ class WeightLogViewSet(viewsets.ViewSet):
             user.save()
             return Response(request.data, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class BMIEstimator:
+    def __init__(self):
+        pass  # No model loading needed for mock implementation
+
+    def estimate_bmi(self, image_data):
+        try:
+            # For now, return mock BMI estimation data
+            # TODO: Implement actual TensorFlow pose detection when compatible versions are available
+            import random
+
+            # Mock estimation based on image size (rough approximation)
+            height_cm = random.uniform(160, 190)
+            weight_kg = random.uniform(50, 90)
+            bmi = weight_kg / ((height_cm / 100) ** 2)
+
+            return {
+                'heightCm': round(height_cm, 1),
+                'weightKg': round(weight_kg, 1),
+                'bmi': round(bmi, 1),
+                'confidence': 0.5,  # Lower confidence for mock data
+                'note': 'Mock estimation - TensorFlow integration pending'
+            }
+
+        except Exception as e:
+            raise Exception(f"BMI estimation failed: {str(e)}")
+
+
+# Global BMI estimator instance
+bmi_estimator = BMIEstimator()
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def estimate_bmi(request):
+    try:
+        if 'image' not in request.FILES:
+            return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        image_file = request.FILES['image']
+        image_data = image_file.read()
+
+        result = bmi_estimator.estimate_bmi(image_data)
+
+        return Response({
+            'data': result,
+            'success': True
+        })
+
+    except Exception as e:
+        return Response({
+            'error': str(e),
+            'success': False
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

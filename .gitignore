@@ -31,3 +31,6 @@ __pycache__/
 *.sqlite3
 backend/db.sqlite3
 venv/
+
+.vercel
+.env*.local
