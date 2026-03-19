@@ -1,6 +1,7 @@
 {
   "name": "wellman-fitness",
   "version": "1.0.0",
+  "type": "module",
   "description": "AI-powered fitness tracking application",
   "main": "index.tsx",
   "dependencies": {
