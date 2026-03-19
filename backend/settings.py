@@ -20,6 +20,7 @@ if not ALLOWED_HOSTS and not DEBUG:
         'wellman-backend-production.up.railway.app',
         'wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app',
         'wellman-fitness-version-136-e0fe5yb7n-deadlyspoon907s-projects.vercel.app',
+        'wellman-fitness-version-136-kquc7fuj1-deadlyspoon907s-projects.vercel.app',
         'wellman-fitness-ai.vercel.app',
     ]
 
@@ -106,6 +107,7 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in 
 CORS_ALLOWED_ORIGINS = [
     "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-version-136-e0fe5yb7n-deadlyspoon907s-projects.vercel.app",
+    "https://wellman-fitness-version-136-kquc7fuj1-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-ai.vercel.app",
     "https://wellman-backend-production.up.railway.app",
 ]
@@ -126,6 +128,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-version-136-e0fe5yb7n-deadlyspoon907s-projects.vercel.app",
+    "https://wellman-fitness-version-136-kquc7fuj1-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-ai.vercel.app",
     "https://wellman-backend-production.up.railway.app",
 ]
