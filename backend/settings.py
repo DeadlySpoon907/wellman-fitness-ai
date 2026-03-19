@@ -100,8 +100,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS Configuration - Allow all origins for development (can be restricted in production)
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("1", "true", "yes")
+# CORS Configuration - Allow all origins (always True for this app to support any Vercel deployment)
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Explicitly whitelist Vercel frontend domains (exact matches)
 CORS_ALLOWED_ORIGINS = [
