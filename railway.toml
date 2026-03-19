@@ -6,9 +6,9 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Start command: run migrations, optionally seed data, then start Gunicorn
+# Start command: run migrations, seed data (if SEED_DB=true), then start Gunicorn
 # Use $PORT from Railway environment
-startCommand = "sh -c \"python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8000}\""
+startCommand = "sh -c \"python manage.py migrate --noinput && python seed.py && gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8000}\""
 # Disable healthcheck - container may fail healthcheck but still serve requests
 healthcheckPath = ""
 healthcheckTimeout = 300
