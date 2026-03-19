@@ -30,4 +30,4 @@ EXPOSE 8000
 
 # Start script: run migrations, then start Gunicorn
 # Use $PORT from Railway environment, default to 8000
-CMD python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind "0.0.0.0:${PORT:-8000}"
+CMD sh -c "python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:\${PORT:-8000}"
