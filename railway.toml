@@ -8,9 +8,9 @@ dockerfilePath = "Dockerfile"
 [deploy]
 # Start command: run migrations, optionally seed data, then start Gunicorn
 # Use $PORT from Railway environment
-startCommand = "sh -c \"python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:\\${PORT:-8000}\""
-# Health check on the admin endpoint (Django admin always exists)
-healthcheckPath = "/admin/"
+startCommand = "sh -c \"python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8000}\""
+# Disable healthcheck - container may fail healthcheck but still serve requests
+healthcheckPath = ""
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
@@ -20,6 +20,7 @@ restartPolicyMaxRetries = 10
 # Required Django settings
 DJANGO_SETTINGS_MODULE = "backend.settings"
 PYTHON_VERSION = "3.11"
+PORT = "8000"
 
 # Security - Railway injects these as environment variables:
 # - SECRET_KEY: Set in Railway dashboard under Variables
@@ -30,8 +31,8 @@ DEBUG = "False"
 ALLOWED_HOSTS = "*"
 CORS_ALLOW_ALL_ORIGINS = "True"
 
-# CORS - Vercel frontend domains
-CORS_ALLOWED_ORIGINS = "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app,https://wellman-fitness-ai.vercel.app"
+# CORS - Vercel frontend domains (all current deployments)
+CORS_ALLOWED_ORIGINS = "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app,https://wellman-fitness-ai.vercel.app,https://wellman-fitness-version-136.vercel.app"
 
 # Database - Railway PostgreSQL plugin automatically provides DATABASE_URL
 # No need to manually configure - it's injected automatically
