@@ -18,10 +18,7 @@ if not ALLOWED_HOSTS and not DEBUG:
     # Default production hosts - Railway and Vercel domains
     ALLOWED_HOSTS = [
         'wellman-backend-production.up.railway.app',
-        'wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app',
-        'wellman-fitness-version-136-e0fe5yb7n-deadlyspoon907s-projects.vercel.app',
-        'wellman-fitness-version-136-kquc7fuj1-deadlyspoon907s-projects.vercel.app',
-        'wellman-fitness-ai.vercel.app',
+        'wellman-fitness-version-136.vercel.app',
     ]
 
 INSTALLED_APPS = [
@@ -70,11 +67,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Use PostgreSQL for production (Railway) - no SQLite fallback
 if DATABASE_URL:
     url = urllib.parse.urlparse(DATABASE_URL)
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql" if url.scheme.startswith("postgres") else "django.db.backends.sqlite3",
+            "ENGINE": "django.db.backends.postgresql",
             "NAME": url.path[1:].strip() if url.path else "",
             "USER": url.username or "",
             "PASSWORD": url.password or "",
@@ -83,10 +81,15 @@ if DATABASE_URL:
         }
     }
 else:
+    # Local development fallback to PostgreSQL
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "wellman_fitness"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
 
@@ -105,19 +108,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Explicitly whitelist Vercel frontend domains (exact matches)
 CORS_ALLOWED_ORIGINS = [
-    "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-fitness-version-136-e0fe5yb7n-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-fitness-version-136-kquc7fuj1-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-fitness-ai.vercel.app",
+    "https://wellman-fitness-version-136.vercel.app",
     "https://wellman-backend-production.up.railway.app",
 ]
 
-# Use regex patterns for Vercel preview deployments (e.g., wellman-fitness-ai-abc123.vercel.app)
+# Use regex patterns for Vercel preview deployments (only wellman-fitness-version-136)
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"https://wellman-fitness-.*\.vercel\.app",
-    r"https://wellman-fitness-version-.*\.vercel\.app",
-    r"https://deadlyspoon907s-projects.*\.vercel\.app",
-    r"https://.*\.vercel\.app",
+    r"https://wellman-fitness-version-136.*\.vercel\.app",
     r"https://.*\.up\.railway\.app",
 ]
 
@@ -126,10 +123,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 # CSRF trusted origins for POST requests to /api/login/
 CSRF_TRUSTED_ORIGINS = [
-    "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-fitness-version-136-e0fe5yb7n-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-fitness-version-136-kquc7fuj1-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-fitness-ai.vercel.app",
+    "https://wellman-fitness-version-136.vercel.app",
     "https://wellman-backend-production.up.railway.app",
 ]
 

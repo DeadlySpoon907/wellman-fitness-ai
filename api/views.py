@@ -16,9 +16,29 @@ class UserViewSet(viewsets.ModelViewSet):
     def register(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            user = serializer.save()
+            
+            # Set membership expiry to 30 days from now
             expiry = timezone.now() + timedelta(days=30)
-            serializer.save(membership_expires=expiry)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            user.membership_expires = expiry
+            
+            # Initialize new user with default/empty JSON fields
+            user.weight_logs = user.weight_logs or []
+            user.activity_logs = user.activity_logs or []
+            user.meal_logs = user.meal_logs or []
+            user.posture_logs = user.posture_logs or []
+            user.fitness_profile = user.fitness_profile or None
+            user.active_plan = user.active_plan or None
+            
+            # Set default role if not provided
+            if not user.role:
+                user.role = 'user'
+            
+            user.save()
+            
+            # Return serialized data
+            response_serializer = self.get_serializer(user)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])

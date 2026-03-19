@@ -93,12 +93,7 @@ export const registerUser = async (username: string, password?: string): Promise
     body: JSON.stringify({ 
       username, 
       password: password || 'password123',
-      weightLogs: [],
-      activityLogs: [],
-      mealLogs: [],
-      postureLogs: [],
-      role: 'user',
-      membershipExpires: new Date().toISOString()
+      role: 'user'
     })
   });
   return handleResponse(response);
