@@ -10,7 +10,7 @@ import FitnessPlanDesigner from './views/FitnessPlanDesigner';
 import AdminDashboard from './views/AdminDashboard';
 import Profile from './views/Profile';
 import { Login } from './views/Login';
-import NutriBot from './views/nutribot';
+import NutriBot from './views/NutriBot';
 import Settings from './views/Settings';
 
 const App: React.FC = () => {

@@ -4,7 +4,6 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "installCommand": "npm install",
-  "ignore": "git status --porcelain",
   "routes": [
     {
       "handle": "filesystem"
@@ -22,8 +21,5 @@
   ],
   "env": {
     "VITE_API_BASE_URL": "https://wellman-backend-production.up.railway.app"
-  },
-  "github": {
-    "silent": true
   }
 }
