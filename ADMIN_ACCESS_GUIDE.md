@@ -167,7 +167,7 @@ If the `admin_fitness` user doesn't exist, create it manually:
 1. **Open terminal in backend folder**:
    ```bash
    cd backend
-   .\..\..\venv\Scripts\Activate.ps1
+   ..\venv\Scripts\Activate.ps1
    ```
 
 2. **Run superuser creation command**:
@@ -192,7 +192,7 @@ If you forget the password:
 
 ```bash
 cd backend
-.\..\..\venv\Scripts\Activate.ps1
+..\venv\Scripts\Activate.ps1
 
 # Reset password via Django shell
 python manage.py shell

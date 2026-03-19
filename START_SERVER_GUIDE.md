@@ -105,7 +105,7 @@ The frontend provides the user interface and AI features.
 2. **Create `.env` file** in root directory:
    ```env
    VITE_API_KEY=your_google_gemini_api_key
-   VITE_API_URL=http://localhost:8000/api
+   VITE_API_BASE_URL=http://localhost:8000
    ```
 
 3. **Install Dependencies** (first time only):
@@ -126,30 +126,16 @@ The frontend provides the user interface and AI features.
 
 ---
 
-## 🤖 Node.js BMI Estimator (LRML Service)
+## 🤖 TensorFlow.js Pose Detection
 
-The BMI Estimator is a Node.js service that processes video frames and estimates body metrics using pose detection.
+The BMI Estimator and Posture Checker use TensorFlow.js running directly in the browser for pose detection and body metrics estimation.
 
-### Manual Start
-1. **Open a new terminal** (keep backend and frontend running)
+### How It Works
+- TensorFlow.js loads pose detection models in the frontend
+- Camera capture sends frames to the browser-based AI models
+- No external Node.js service required - all processing happens client-side
 
-2. **Navigate to backend folder**:
-   ```bash
-   cd backend
-   ```
-
-3. **Install Dependencies** (first time only):
-   ```bash
-   npm install
-   ```
-
-4. **Start the Estimator Service**:
-   ```bash
-   node LRML_estimator.js
-   ```
-   ✅ BMI Estimator running at `http://localhost:5001`
-
-**Note**: The BMI Estimator service is automatically started with the `start_all.bat` script.
+**Note**: The `start_all.bat` script handles starting the Django backend and React frontend. TensorFlow.js runs in the browser.
 
 ---
 

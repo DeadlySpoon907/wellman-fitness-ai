@@ -45,10 +45,10 @@ Wellman is a high-performance, AI-powered fitness application designed for moder
 
 1. **Clone or extract the project**:
    ```bash
-   cd wellman-fitness-version-1.3.5
+   cd wellman-fitness-version-1.3.6
    ```
 
-2. **Run the automated setup**:
+   2. **Run the automated setup**:
    ```bash
    .\setup.ps1
    ```
@@ -70,7 +70,7 @@ Wellman is a high-performance, AI-powered fitness application designed for moder
    Create `.env` file in root directory:
    ```env
    VITE_API_KEY=your_google_gemini_api_key
-   VITE_API_URL=http://localhost:8000/api
+   VITE_API_BASE_URL=http://localhost:8000
    ```
 
 4. **Start all services**:

@@ -2,7 +2,7 @@
 
 This guide details how to navigate, run, and explore the Wellman Fitness AI system, covering both the React frontend and Django backend.
 
-## � Quick Start
+## ⚡ Quick Start
 
 **Fastest way to get everything running:**
 ```bash
@@ -23,7 +23,7 @@ This automatically:
 The project is organized into two distinct areas:
 
 ```
-wellman-fitness-version-1.3.5/
+wellman-fitness-version-1.3.6/
 ├── frontend/                    # React + Vite application
 │   ├── components/             # Reusable React components
 │   ├── views/                  # Page components
@@ -99,12 +99,12 @@ The backend handles authentication, data persistence, ML/AI integration, and RES
 ### Key Directories & Files
 - **`backend/settings.py`** - Django configuration (database, INSTALLED_APPS, middlewares)
 - **`backend/urls.py`** - URL routing configuration
-- **`api/models.py`** - Database models (User, WeightLog, FitnessPlan, PostureLog, etc.)
+- **`api/models.py`** - Database models (User, WeightLog, FitnessPlan, MealLog, PostureLog, ActivityLog)
 - **`api/views.py`** - API endpoints and business logic
 - **`api/serializers.py`** - Data serialization for API
 - **`api/migrations/`** - Database migration files
 - **`manage.py`** - Django management utility
-- **`db.sqlite3`** - SQLite database file
+- **`db.sqlite3`** - SQLite database file (development)
 - **`seed.py`** - Script to populate test data
 
 ### How to Run
@@ -188,7 +188,7 @@ python seed.py
 ### Frontend (`.env` in root)
 ```env
 VITE_API_KEY=your_google_gemini_api_key
-VITE_API_URL=http://localhost:8000/api
+VITE_API_BASE_URL=http://localhost:8000
 ```
 
 ### Backend (`.env` in `backend/` or system variables)

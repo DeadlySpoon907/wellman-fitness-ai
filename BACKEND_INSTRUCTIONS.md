@@ -29,6 +29,7 @@ This guide explains how to set up, run, and develop the Django REST API backend 
    SECRET_KEY=your-django-secret-key
    DATABASE_URL=sqlite:///db.sqlite3
    ALLOWED_HOSTS=localhost,127.0.0.1
+   VITE_API_BASE_URL=http://localhost:8000
    ```
 
 3. **Initialize database**:

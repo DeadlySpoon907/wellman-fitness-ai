@@ -6,11 +6,10 @@ This document provides a high-level overview of how the Wellman Fitness system c
 
 Wellman Fitness follows a decoupled **Client-Server Architecture**:
 
-- **Frontend (Client)**: A Single Page Application (SPA) built with React. It handles user interaction, visualization, and direct AI vision tasks.
+- **Frontend (Client)**: A Single Page Application (SPA) built with React. It handles user interaction, visualization, and direct AI vision tasks using TensorFlow.js.
 - **Backend (Server)**: A Django REST API that manages data persistence, user authentication, and complex business logic.
-- **BMI Service**: A specialized Node.js microservice using TensorFlow.js for visual body metrics.
 - **Database**: SQLite (Dev) / PostgreSQL (Prod) for storing user profiles, logs, and plans.
-- **AI Services**: Google Gemini 3 models (Pro & Flash) utilized by both the frontend and backend.
+- **AI Services**: Google Gemini models utilized by both the frontend and backend for intelligent features.
 
 ## 2. Architecture Diagram
 
@@ -18,7 +17,6 @@ Wellman Fitness follows a decoupled **Client-Server Architecture**:
 graph TD
     User[User] -->|HTTPS| Client[React Frontend]
     Client -->|REST API / JSON| Server[Django Backend]
-    Client -->|HTTP / JSON| NodeService[Node.js BMI Estimator]
     Server -->|SQL| DB[(Database)]
     
     subgraph AI_Integration
@@ -48,27 +46,31 @@ graph TD
     - Gemini returns nutritional data.
     - Frontend displays data (and optionally sends to Backend for logging).
 
-4.  **BMI Estimation (Microservice)**:
+4.  **BMI Estimation (In-Browser)**:
     - Frontend captures video/image.
-    - Sends frame data to Node.js service (`localhost:5001`).
-    - Service processes via TensorFlow.js/LRML and returns metrics.
-    - Service is located in `backend/LRML_estimator.js` and runs independently from Django.
+    - Processes directly in browser using TensorFlow.js.
+    - Returns metrics without external service required.
 
 ## 4. File Organization
 
-The LRML_estimator (Node.js BMI Service) is located in:
+The backend is organized as follows:
 ```
 backend/
-└── LRML_estimator.js      # Standalone Node.js service running on port 5001
+├── manage.py               # Django management utility
+├── seed.py                 # Database seeding script
+├── requirements.txt        # Python dependencies
+├── backend/                # Django project settings
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+└── api/                    # REST API application
+    ├── models.py
+    ├── views.py
+    ├── serializers.py
+    └── migrations/
 ```
 
-It should be started separately using:
-```bash
-cd backend
-node LRML_estimator.js
-```
-
-Or use `start_all.bat` to launch all services automatically.
+Use `start_all.bat` to launch all services automatically.
 
 ## 5. Security & Configuration
 

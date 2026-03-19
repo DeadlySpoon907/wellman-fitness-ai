@@ -8,25 +8,24 @@ This document details the client-side architecture of the Wellman Fitness applic
 |-----------|---------|---------|
 | **Core Framework** | `react` (v19) | Component-based UI library. |
 | **Build Tool** | `vite` | Fast development server and bundler. |
-| **State Management** | `@reduxjs/toolkit` | Global state management for user sessions and data. |
+| **State Management** | React Context API | Local and global state management for user sessions and data. |
 | **Styling** | `tailwindcss` | Utility-first CSS framework for responsive design. |
 | **Visualization** | `recharts` | Rendering weight history and activity charts. |
 | **AI Client** | `@google/genai` | Client-side interaction with Gemini for vision tasks. |
 
 ## 2. Project Structure
 
-The frontend source code is located in the `src/` directory:
+The frontend source code is located in the project root:
 
 ```text
-src/
-├── assets/             # Static images and global styles.
-├── components/         # Reusable UI components (Buttons, Cards, Charts).
-├── context/            # React Context providers.
-├── features/           # Redux slices and feature-specific logic.
-├── pages/              # Main application views (Dashboard, Login, Plan Designer).
-├── services/           # API service layers (Axios/Fetch wrappers).
-├── App.jsx             # Root component and routing configuration.
-└── main.jsx            # Application entry point.
+├── components/         # Reusable UI components (AuthGuard, WeightChart, CameraCapture).
+├── views/              # Main application views (Dashboard, Login, AdminDashboard, etc.).
+├── services/           # API service layers (DB.ts, geminiService.ts).
+├── utils/              # Utility functions and helpers.
+├── App.tsx             # Root component and routing configuration.
+├── index.tsx           # Application entry point.
+├── types.ts            # TypeScript type definitions.
+└── package.json        # npm dependencies.
 ```
 
 ## 3. Key Features & Implementation
@@ -37,14 +36,14 @@ src/
 
 ### AI Integration (Client-Side)
 The frontend interacts directly with Google's Gemini API for low-latency, interactive features, particularly those involving computer vision.
-- **Nutritionist**: Captures/uploads images to Gemini 3 Flash for caloric estimation.
-- **Posture Checker**: Analyzes video/image frames for alignment feedback.
-- **BMI Estimator**: Sends video frames to the local Node.js service (`localhost:5001`) for volumetric analysis.
+- **Nutritionist**: Captures/uploads images to Gemini for caloric and macro-nutrient estimation.
+- **Posture Checker**: Analyzes video/image frames using TensorFlow.js pose detection for alignment feedback.
+- **BMI Estimator**: Uses TensorFlow.js for in-browser body metric estimation.
 
 ### State Management
-Redux Toolkit is used to manage:
-- **Authentication State (`authSlice`)**: User tokens (JWT) and profile info. Handles persistence via `localStorage`.
-- **UI State (`uiSlice`)**: Sidebar toggles, active modals, and theme preferences (Dark/Light mode).
+React Context API is used to manage:
+- **Authentication State**: User tokens and profile info. Handles persistence via `localStorage`.
+- **UI State**: Sidebar toggles, active modals, and theme preferences (Dark/Light mode).
 - **Data State**: Caching of fetched plans and logs to minimize API calls.
 
 ## 4. Configuration

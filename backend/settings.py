@@ -97,11 +97,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS Configuration - Allow all origins for development (can be restricted in production)
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("1", "true", "yes")
 
-# Explicitly whitelist Vercel frontend domains
+# Explicitly whitelist Vercel frontend domains (exact matches)
 CORS_ALLOWED_ORIGINS = [
     "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-ai.vercel.app",
-    "https://wellman-fitness-ai-*.vercel.app",
+]
+
+# Use regex patterns for Vercel preview deployments (e.g., wellman-fitness-ai-abc123.vercel.app)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"https://wellman-fitness-ai-.*\.vercel\.app",
+    r"https://.*\.vercel\.app",
 ]
 
 # Allow credentials (cookies/sessions) for login
@@ -111,7 +116,6 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-ai.vercel.app",
-    "https://wellman-fitness-ai-*.vercel.app",
 ]
 
 AUTH_USER_MODEL = 'api.User'
