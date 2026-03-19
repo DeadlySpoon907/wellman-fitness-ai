@@ -94,14 +94,24 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# CORS Configuration - Allow all origins for development (can be restricted in production)
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("1", "true", "yes")
-if not CORS_ALLOW_ALL_ORIGINS:
-    cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
-    # Always allow Vercel frontend in production
-    cors_origins.extend([
-        "https://wellman-fitness-ai.vercel.app",
-        "https://wellman-fitness-ai*.vercel.app"
-    ])
-    CORS_ALLOWED_ORIGINS = [o.strip() for o in cors_origins if o.strip()]
+
+# Explicitly whitelist Vercel frontend domains
+CORS_ALLOWED_ORIGINS = [
+    "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
+    "https://wellman-fitness-ai.vercel.app",
+    "https://wellman-fitness-ai-*.vercel.app",
+]
+
+# Allow credentials (cookies/sessions) for login
+CORS_ALLOW_CREDENTIALS = True
+
+# CSRF trusted origins for POST requests to /api/login/
+CSRF_TRUSTED_ORIGINS = [
+    "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
+    "https://wellman-fitness-ai.vercel.app",
+    "https://wellman-fitness-ai-*.vercel.app",
+]
 
 AUTH_USER_MODEL = 'api.User'
