@@ -21,6 +21,6 @@
     }
   ],
   "env": {
-    "VITE_API_BASE_URL": "https://wellman-fitness-ai-production.up.railway.app"
+    "VITE_API_BASE_URL": "https://django-backend-production-9cde.up.railway.app"
   }
 }
