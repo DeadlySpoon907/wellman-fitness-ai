@@ -8,10 +8,9 @@ dockerfilePath = "Dockerfile"
 [deploy]
 # Start command: run migrations, optionally seed data, then start Gunicorn
 # Use $PORT from Railway environment
-startCommand = "python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
-# Disabled healthcheck - Django doesn't respond to root path by default
-# Health checks can be enabled after adding a health check endpoint
-healthcheckPath = ""
+startCommand = "python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8000}"
+# Health check on the admin endpoint (Django admin always exists)
+healthcheckPath = "/admin/"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
