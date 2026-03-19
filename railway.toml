@@ -1,18 +1,13 @@
 # Railway Configuration for Wellman Fitness Backend
 [build]
-builder = "Nixpacks"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "python manage.py collectstatic --noinput --clear && python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = "gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-[build.env]
-PYTHON_VERSION = "3.11"
-NODE_VERSION = "20"
-NIXPACKS_NODE_VERSION = "20"
 
 [deploy.env]
 DJANGO_SETTINGS_MODULE = "backend.settings"
