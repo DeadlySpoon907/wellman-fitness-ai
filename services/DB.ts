@@ -3,10 +3,11 @@ import { User } from '../types';
 import { sanitizeUserForSave } from '../utils/userHelpers';
 
 // Get API URL from environment variable - must be set in Vercel!
-// Format: https://wellman-fitness-ai-production.up.railway.app (no /api suffix)
+// Format: https://wellman-backend-production.up.railway.app (no /api suffix)
 // FIX: Use .trim() to remove any accidental leading/trailing whitespace in the env var
 const envApiUrl = import.meta.env.VITE_API_BASE_URL;
-const API_URL = envApiUrl ? `${envApiUrl.trim()}/api`.replace('//api/api', '/api') : 'http://localhost:8000/api';
+// Default to wellman-backend-production for Railway (the correct domain)
+const API_URL = envApiUrl ? `${envApiUrl.trim()}/api`.replace('//api/api', '/api') : 'https://wellman-backend-production.up.railway.app/api';
 
 // Debug log in development only
 if (import.meta.env.DEV) {
