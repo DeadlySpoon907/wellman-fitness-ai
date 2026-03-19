@@ -27,6 +27,5 @@
     "noEmit": true
   },
   "include": ["src", "components", "views", "services", "utils", "types", "index.tsx", "App.tsx"],
-  "exclude": ["node_modules", "dist", "backend", "venv", "**/venv/**", "**/backend/**", "**/*.js"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": ["node_modules", "dist", "backend", "venv", "**/venv/**", "**/backend/**", "**/*.js"]
 }
