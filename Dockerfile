@@ -4,6 +4,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=backend.settings
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -23,8 +24,9 @@ COPY . .
 # Collect static files
 RUN python manage.py collectstatic --noinput --clear
 
-# Expose port
-EXPOSE 8000
+# Expose port (Railway provides this via $PORT)
+EXPOSE $PORT
 
-# Start script: run migrations and seed, then start Gunicorn
-CMD python manage.py migrate --noinput && python seed.py && gunicorn backend.wsgi:application --bind "0.0.0.0:8000"
+# Start script: run migrations, then start Gunicorn
+# Use $PORT from Railway environment
+CMD python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind "0.0.0.0:$PORT"

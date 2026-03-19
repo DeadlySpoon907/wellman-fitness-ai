@@ -15,8 +15,12 @@ DEBUG = os.getenv("DEBUG", "True").lower() in ("1", "true", "yes")
 # Allow Railway and Vercel domains in production
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
 if not ALLOWED_HOSTS and not DEBUG:
-    # Default production hosts
-    ALLOWED_HOSTS = ['*']  # Railway handles host validation
+    # Default production hosts - Railway and Vercel domains
+    ALLOWED_HOSTS = [
+        'wellman-backend-production.up.railway.app',
+        'wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app',
+        'wellman-fitness-ai.vercel.app',
+    ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -101,12 +105,15 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in 
 CORS_ALLOWED_ORIGINS = [
     "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-ai.vercel.app",
+    "https://wellman-backend-production.up.railway.app",
 ]
 
 # Use regex patterns for Vercel preview deployments (e.g., wellman-fitness-ai-abc123.vercel.app)
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"https://wellman-fitness-ai-.*\.vercel\.app",
+    r"https://wellman-fitness-.*\.vercel\.app",
+    r"https://deadlyspoon907s-projects.*\.vercel\.app",
     r"https://.*\.vercel\.app",
+    r"https://.*\.up\.railway\.app",
 ]
 
 # Allow credentials (cookies/sessions) for login
@@ -116,6 +123,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app",
     "https://wellman-fitness-ai.vercel.app",
+    "https://wellman-backend-production.up.railway.app",
 ]
 
 AUTH_USER_MODEL = 'api.User'

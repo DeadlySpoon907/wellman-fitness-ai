@@ -1,21 +1,40 @@
 # Railway Configuration for Wellman Fitness Backend
+# Documentation: https://docs.railway.app/reference/config
+
 [build]
 builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "python manage.py migrate && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
-healthcheckPath = "/"
+# Start command: run migrations, optionally seed data, then start Gunicorn
+# Use $PORT from Railway environment
+startCommand = "python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
+# Disabled healthcheck - Django doesn't respond to root path by default
+# Health checks can be enabled after adding a health check endpoint
+healthcheckPath = ""
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
+# Environment variables for the deployed service
 [deploy.env]
+# Required Django settings
 DJANGO_SETTINGS_MODULE = "backend.settings"
-SECRET_KEY = "@secret_key"
+PYTHON_VERSION = "3.11"
+
+# Security - Railway injects these as environment variables:
+# - SECRET_KEY: Set in Railway dashboard under Variables
+# - GEMINI_API_KEY: Set in Railway dashboard under Variables
+
+# Runtime configuration
 DEBUG = "False"
 ALLOWED_HOSTS = "*"
 CORS_ALLOW_ALL_ORIGINS = "True"
+
+# CORS - Vercel frontend domains
 CORS_ALLOWED_ORIGINS = "https://wellman-fitness-rkf9l77au-deadlyspoon907s-projects.vercel.app,https://wellman-fitness-ai.vercel.app"
-GEMINI_API_KEY = "@gemini_api_key"
-# DATABASE_URL is automatically provided by Railway PostgreSQL plugin
-# Set SEED_DB=true to seed the database with sample data (run once then set back to false)
+
+# Database - Railway PostgreSQL plugin automatically provides DATABASE_URL
+# No need to manually configure - it's injected automatically
+
+# Optional: Set SEED_DB=true in Railway Variables to seed sample data (run once then set to false)
