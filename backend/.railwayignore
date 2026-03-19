@@ -1,0 +1,5 @@
+# Railway-specific configuration
+# This tells Railway to use the backend directory as the root for deployment
+
+# The railway.toml file should be in the backend directory
+# Railway will automatically detect this configuration

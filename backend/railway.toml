@@ -1,11 +1,9 @@
-# Railway Configuration
-# This file tells Railway how to deploy your Django app
-
+# Railway Configuration for Django
 [build]
 builder = "Nixpacks"
 
 [deploy]
-startCommand = "python manage.py migrate --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
