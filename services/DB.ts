@@ -6,8 +6,25 @@ import { sanitizeUserForSave } from '../utils/userHelpers';
 // Format: https://wellman-backend-production.up.railway.app (no /api suffix)
 // FIX: Use .trim() to remove any accidental leading/trailing whitespace in the env var
 const envApiUrl = import.meta.env.VITE_API_BASE_URL;
-// Default to wellman-backend-production for Railway (the correct domain)
-const API_URL = envApiUrl ? `${envApiUrl.trim()}/api`.replace('//api/api', '/api') : 'https://wellman-backend-production.up.railway.app/api';
+
+// Ensure we always use a full URL (not relative path)
+let API_URL: string;
+if (envApiUrl) {
+  const trimmedUrl = envApiUrl.trim();
+  // Check if it's a full URL (starts with http:// or https://)
+  if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+    API_URL = trimmedUrl.endsWith('/api') ? trimmedUrl : `${trimmedUrl}/api`;
+  } else {
+    // If not a full URL, prepend https:// and ensure it's not a relative path
+    API_URL = `https://${trimmedUrl}/api`;
+  }
+} else {
+  // Default to wellman-backend-production for Railway (the correct domain)
+  API_URL = 'https://wellman-backend-production.up.railway.app/api';
+}
+
+// Remove any double /api/api patterns
+API_URL = API_URL.replace('/api/api', '/api');
 
 // Debug log in development only
 if (import.meta.env.DEV) {
