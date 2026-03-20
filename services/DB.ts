@@ -102,7 +102,7 @@ export const registerUser = async (username: string, password?: string): Promise
 export const loginUser = async (username: string, password: string): Promise<User> => {
   // 1. Try dedicated login endpoint
   try {
-    const response = await fetch(`${API_URL}/login/`, {
+    const response = await fetch(`${API_URL}/users/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })

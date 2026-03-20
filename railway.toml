@@ -26,12 +26,13 @@ PORT = "8000"
 # - SECRET_KEY: Set in Railway dashboard under Variables
 # - GEMINI_API_KEY: Set in Railway dashboard under Variables
 
-# Runtime configuration - CRITICAL FOR CORS
+# Runtime configuration
+# DEBUG should be "False" in production
 DEBUG = "False"
-ALLOWED_HOSTS = "*"
-# These MUST be set as environment variables to override Django settings
-CORS_ALLOW_ALL_ORIGINS = "True"
-CSRF_TRUSTED_ORIGINS = "*"
+# ALLOWED_HOSTS - explicitly list domains for security (Django settings.py has fallback)
+ALLOWED_HOSTS = "wellman-backend-production.up.railway.app,wellman-fitness-version-136.vercel.app"
+# Note: CORS settings are handled by django-cors-headers in backend/settings.py
+# CORS_ALLOW_ALL_ORIGINS and CSRF_TRUSTED_ORIGINS are already configured there
 
 # Database - Railway PostgreSQL plugin automatically provides DATABASE_URL
 # No need to manually configure - it's injected automatically
