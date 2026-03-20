@@ -58,9 +58,18 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
         body: formData
       });
 
-      if (!response.ok) throw new Error("Failed to connect to BMI Estimator Service");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`BMI Estimator Service error (${response.status}): ${errorText.substring(0, 100)}`);
+      }
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseErr) {
+        const text = await response.text();
+        throw new Error(`Invalid JSON response from BMI service: ${text.substring(0, 100)}`);
+      }
       setEstimation({
         estimatedHeightCm: result.data.heightCm,
         estimatedWeightKg: result.data.weightKg,

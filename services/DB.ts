@@ -28,7 +28,19 @@ const handleResponse = async (response: Response) => {
       throw new Error(text || response.statusText);
     }
   }
-  return response.json();
+  // Handle non-JSON responses gracefully
+  const text = await response.text();
+  if (!text.trim()) {
+    return {} as any;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    // Log first 200 chars of response for debugging
+    const preview = text.substring(0, 200);
+    console.error('Non-JSON response received:', preview);
+    throw new Error(`Invalid JSON response from server. Received: ${preview}...`);
+  }
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
