@@ -104,31 +104,23 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS Configuration - Allow all origins with wellman-fitness in the URL
+# CORS Configuration - Allow ALL origins for development/production
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Explicitly whitelist Vercel frontend domains (exact matches)
-CORS_ALLOWED_ORIGINS = [
-    "https://wellman-fitness-version-136.vercel.app",
-    "https://wellman-fitness-version-136-iids0o4bc-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-backend-production.up.railway.app",
-]
+# Explicitly whitelist (not needed when CORS_ALLOW_ALL_ORIGINS is True)
+CORS_ALLOWED_ORIGINS = ["*"]
 
 # Use regex patterns for any Vercel deployment with wellman-fitness
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"https://.*wellman-fitness.*\.vercel\.app",
     r"https://.*\.up\.railway\.app",
+    r".*",  # Allow everything
 ]
 
 # Allow credentials (cookies/sessions) for login
 CORS_ALLOW_CREDENTIALS = True
 
-# CSRF trusted origins for POST requests - allow any wellman-fitness URL
-CSRF_TRUSTED_ORIGINS = [
-    "https://wellman-fitness-version-136.vercel.app",
-    "https://wellman-fitness-version-136-iids0o4bc-deadlyspoon907s-projects.vercel.app",
-    "https://wellman-backend-production.up.railway.app",
-    "https://wellman-fitness.vercel.app",
-]
+# CSRF trusted origins for POST requests - allow all for CORS
+CSRF_TRUSTED_ORIGINS = ["*"]
 
 AUTH_USER_MODEL = 'api.User'

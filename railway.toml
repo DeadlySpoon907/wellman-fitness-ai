@@ -26,13 +26,12 @@ PORT = "8000"
 # - SECRET_KEY: Set in Railway dashboard under Variables
 # - GEMINI_API_KEY: Set in Railway dashboard under Variables
 
-# Runtime configuration
+# Runtime configuration - CRITICAL FOR CORS
 DEBUG = "False"
 ALLOWED_HOSTS = "*"
+# These MUST be set as environment variables to override Django settings
 CORS_ALLOW_ALL_ORIGINS = "True"
-
-# CORS - Allow any Vercel deployment with wellman-fitness in the URL
-CORS_ALLOW_ALL_ORIGINS = "True"
+CSRF_TRUSTED_ORIGINS = "*"
 
 # Database - Railway PostgreSQL plugin automatically provides DATABASE_URL
 # No need to manually configure - it's injected automatically
