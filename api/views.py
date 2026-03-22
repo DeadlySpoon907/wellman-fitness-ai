@@ -33,6 +33,38 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    def create(self, request, *args, **kwargs):
+        """Override create to ensure trial_ends_at is always set for new users."""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            
+            # Set membership expiry to 30 days from now
+            expiry = timezone.now() + timedelta(days=30)
+            user.membership_expires = expiry
+            
+            # Set trial ends at to 30 days from now (free trial)
+            user.trial_ends_at = expiry
+            
+            # Initialize new user with default/empty JSON fields
+            user.weight_logs = user.weight_logs or []
+            user.activity_logs = user.activity_logs or []
+            user.meal_logs = user.meal_logs or []
+            user.posture_logs = user.posture_logs or []
+            user.fitness_profile = user.fitness_profile or None
+            user.active_plan = user.active_plan or None
+            
+            # Set default role if not provided
+            if not user.role:
+                user.role = 'user'
+            
+            user.save()
+            
+            # Return serialized data
+            response_serializer = self.get_serializer(user)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['post'])
     def register(self, request):
         # Check if registration key is required and provided
