@@ -7,11 +7,21 @@ interface LoginProps {
   isAdminView?: boolean;
 }
 
+// Seeded demo accounts
+const DEMO_ACCOUNTS = [
+  { username: 'john_doe', password: 'member123', role: 'Premium Member', description: 'Full access to all features' },
+  { username: 'jane_smith', password: 'guest123', role: 'Trial User', description: 'Expired trial - upgrade to premium' },
+];
+
+const ADMIN_DEMO_ACCOUNT = { username: 'admin_jafitness', password: 'admin123' };
+
 export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = false }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showDemoAccounts, setShowDemoAccounts] = useState(!isAdminView);
+  const [showAdminDemo, setShowAdminDemo] = useState(isAdminView);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +111,48 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
           </button>
         </form>
 
+        {/* Demo Accounts Section */}
+        {!isAdminView && showDemoAccounts && !isSignUp && (
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+              Try Demo Accounts
+            </p>
+            <div className="space-y-2">
+              {DEMO_ACCOUNTS.map((account) => (
+                <button
+                  key={account.username}
+                  onClick={() => {
+                    setUsername(account.username);
+                    setPassword(account.password);
+                    setShowDemoAccounts(false);
+                  }}
+                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 transition-all text-left group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-slate-800 dark:text-slate-100 text-sm">{account.username}</div>
+                      <div className="text-[10px] text-slate-500">{account.description}</div>
+                    </div>
+                    <span className={`text-[10px] font-black px-2 py-1 rounded-full ${
+                      account.role === 'Premium Member' 
+                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' 
+                        : 'bg-orange-100 dark:bg-orange-900/30 text-orange-600'
+                    }`}>
+                      {account.role}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowDemoAccounts(false)}
+              className="w-full mt-3 text-xs text-slate-400 hover:text-slate-600 font-medium"
+            >
+              Or sign in with your own account →
+            </button>
+          </div>
+        )}
+
         {!isAdminView && (
           <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
             <button 
@@ -119,9 +171,23 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
               : 'A fitness app by J&A Fitness Co'}
           </p>
           {isAdminView && (
-            <a href="#/" className="mt-4 inline-block text-[10px] font-black text-slate-400 hover:text-primary-600 transition-colors">
-              BACK TO PUBLIC SITE
-            </a>
+            <>
+              {showAdminDemo && (
+                <button
+                  onClick={() => {
+                    setUsername(ADMIN_DEMO_ACCOUNT.username);
+                    setPassword(ADMIN_DEMO_ACCOUNT.password);
+                    setShowAdminDemo(false);
+                  }}
+                  className="mt-4 inline-block text-[10px] font-black text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Click to fill admin credentials →
+                </button>
+              )}
+              <a href="#/" className="mt-4 ml-4 inline-block text-[10px] font-black text-slate-400 hover:text-primary-600 transition-colors">
+                BACK TO PUBLIC SITE
+              </a>
+            </>
           )}
         </div>
       </div>
