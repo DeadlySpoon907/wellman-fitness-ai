@@ -65,8 +65,12 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], url_path='register')
     def register(self, request):
+        """
+        Dedicated registration endpoint for new users.
+        Creates a new user with default premium trial (30 days).
+        """
         # Check if registration key is required and provided
         if REGISTRATION_KEY:
             provided_key = request.data.get('registration_key')
@@ -76,9 +80,28 @@ class UserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_403_FORBIDDEN
                 )
         
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
+        # Validate required fields
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if not username:
+            return Response({'error': 'Username is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not password:
+            return Response({'error': 'Password is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create user with properly hashed password
+        try:
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                role=request.data.get('role', 'user'),
+                email=request.data.get('email', ''),
+                display_name=request.data.get('displayName', username),
+            )
             
             # Set membership expiry to 30 days from now
             expiry = timezone.now() + timedelta(days=30)
@@ -86,25 +109,24 @@ class UserViewSet(viewsets.ModelViewSet):
             
             # Set trial ends at to 30 days from now (free trial)
             user.trial_ends_at = expiry
+            user.is_premium = True  # Trial premium
             
-            # Initialize new user with default/empty JSON fields
-            user.weight_logs = user.weight_logs or []
-            user.activity_logs = user.activity_logs or []
-            user.meal_logs = user.meal_logs or []
-            user.posture_logs = user.posture_logs or []
-            user.fitness_profile = user.fitness_profile or None
-            user.active_plan = user.active_plan or None
-            
-            # Set default role if not provided
-            if not user.role:
-                user.role = 'user'
+            # Initialize JSON fields
+            user.weight_logs = []
+            user.activity_logs = []
+            user.meal_logs = []
+            user.posture_logs = []
+            user.fitness_profile = None
+            user.active_plan = None
             
             user.save()
             
-            # Return serialized data
-            response_serializer = self.get_serializer(user)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # Return serialized data (without password)
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     def login(self, request):

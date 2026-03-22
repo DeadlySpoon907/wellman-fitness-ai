@@ -1,18 +1,19 @@
 ﻿from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.indexes import GinIndex
 import uuid
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ROLE_CHOICES = [('admin', 'Admin'), ('member', 'Member'), ('user', 'User')]
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
-    membership_expires = models.DateTimeField(null=True, blank=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user', db_index=True)
+    membership_expires = models.DateTimeField(null=True, blank=True, db_index=True)
     display_name = models.CharField(max_length=100, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     avatar_seed = models.CharField(max_length=100, blank=True, null=True)
     height_cm = models.FloatField(null=True, blank=True)
-    is_premium = models.BooleanField(default=False)
-    trial_ends_at = models.DateTimeField(null=True, blank=True)
+    is_premium = models.BooleanField(default=False, db_index=True)
+    trial_ends_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     # Structured Data
     # { "goal": str, "intensity": str, "location": str, "focusAreas": [str] }
@@ -29,3 +30,17 @@ class User(AbstractUser):
     meal_logs = models.JSONField(default=list, blank=True)
     # [{ "date": str, "score": int, "findings": [str], "recommendations": [str] }]
     posture_logs = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        # Add GIN index for JSON fields for faster queries
+        indexes = [
+            GinIndex(fields=['fitness_profile'], name='idx_fitness_profile'),
+            GinIndex(fields=['active_plan'], name='idx_active_plan'),
+            GinIndex(fields=['weight_logs'], name='idx_weight_logs'),
+            GinIndex(fields=['activity_logs'], name='idx_activity_logs'),
+            GinIndex(fields=['meal_logs'], name='idx_meal_logs'),
+            GinIndex(fields=['posture_logs'], name='idx_posture_logs'),
+        ]
+
+    def __str__(self):
+        return f"{self.username} ({self.role})"
