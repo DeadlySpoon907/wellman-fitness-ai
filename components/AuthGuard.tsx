@@ -29,7 +29,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ user, requireMember, child
           This AI feature requires an active membership. 
           New accounts get 1 month for free!
         </p>
-        <button className="px-6 py-2 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-colors">
+        <button 
+          className="px-6 py-2 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-colors"
+          onClick={() => alert("Refer to J&A gym front desk for membership upgrade.")}
+        >
           Upgrade Membership
         </button>
       </div>

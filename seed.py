@@ -15,6 +15,12 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 def seed():
+    # Check if seed should run (can be disabled in production)
+    seed_enabled = os.getenv('SEED_DB', '').lower() in ('true', '1', 'yes')
+    if not seed_enabled:
+        print("SEED_DB not set to true - skipping seed. Set SEED_DB=true to seed data.")
+        return
+        
     print("Seeding sample data...")
 
     # 1. John Doe (Active Member)

@@ -26,10 +26,10 @@ if (envApiUrl) {
 // Remove any double /api/api patterns
 API_URL = API_URL.replace('/api/api', '/api');
 
-// Debug log in development only
-if (import.meta.env.DEV) {
-  console.log('[DB] API_URL:', API_URL);
-}
+// DEBUG: Log the API_URL configuration - works in ALL environments (dev and production)
+console.log('[DB] API_URL (runtime):', API_URL);
+console.log('[DB] VITE_API_BASE_URL env var:', envApiUrl);
+console.log('[DB] Is DEV mode:', import.meta.env.DEV);
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
@@ -61,8 +61,39 @@ const handleResponse = async (response: Response) => {
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
-  const response = await fetch(`${API_URL}/users/`);
-  return handleResponse(response);
+  const url = `${API_URL}/users/`;
+  
+  // DEBUG: Log the full URL being used - works in ALL environments
+  console.log('[DB] getAllUsers - Full URL:', url);
+  
+  try {
+    const response = await fetch(url);
+    
+    // DEBUG: Log response status
+    console.log('[DB] getAllUsers - Response status:', response.status);
+    console.log('[DB] getAllUsers - Response ok:', response.ok);
+    
+    const data = await handleResponse(response);
+    
+    // DEBUG: Log the number of users returned
+    console.log('[DB] getAllUsers - Users count:', data?.length ?? 0);
+    console.log('[DB] getAllUsers - Response data:', JSON.stringify(data).substring(0, 200));
+    
+    if (!data || data.length === 0) {
+      console.warn('[DB] WARNING: No users returned from API!');
+      console.warn('[DB] Possible causes:');
+      console.warn('  1. Database is empty (no seed data)');
+      console.warn('  2. Wrong API URL - check VITE_API_BASE_URL in Vercel Dashboard');
+      console.warn('  3. CORS blocking the request');
+      console.warn('  4. Network error - check browser console for details');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('[DB] getAllUsers - ERROR:', error);
+    console.error('[DB] getAllUsers - Error message:', error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  }
 };
 
 export const getUser = async (id: string): Promise<User | null> => {
@@ -129,6 +160,9 @@ export const registerUser = async (username: string, password?: string): Promise
 };
 
 export const loginUser = async (username: string, password: string): Promise<User> => {
+  console.log('[DB] loginUser - Attempting login for:', username);
+  console.log('[DB] loginUser - Using API URL:', `${API_URL}/users/login/`);
+  
   // 1. Try dedicated login endpoint
   try {
     const response = await fetch(`${API_URL}/users/login/`, {
@@ -136,8 +170,21 @@ export const loginUser = async (username: string, password: string): Promise<Use
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    if (response.ok) return response.json();
+    console.log('[DB] loginUser - Response status:', response.status);
+    
+    // Log the response body for debugging
+    const responseText = await response.text();
+    console.log('[DB] loginUser - Response body:', responseText);
+    
+    if (response.ok) {
+      return JSON.parse(responseText);
+    } else {
+      console.error('[DB] loginUser - Login failed with status:', response.status);
+      console.error('[DB] loginUser - Error response:', responseText);
+      throw new Error(responseText || 'Login failed');
+    }
   } catch (e) {
+    console.error('[DB] loginUser - Error:', e);
     // Fallback to manual check
   }
 
