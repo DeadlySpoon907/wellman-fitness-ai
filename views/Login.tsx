@@ -38,12 +38,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
             )}
           </div>
           <h1 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-            {isAdminView ? 'Admin Portal' : 'J&A Gym'}
+            {isAdminView ? 'Admin Portal' : 'Wellman'}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium text-center text-sm">
             {isAdminView 
               ? 'Secure entry for platform administrators.' 
-              : isSignUp ? 'Join J&A Gym for better health.' : 'Welcome back to J&A Gym.'}
+              : isSignUp ? 'Join Wellman for better health.' : 'Welcome back to Wellman.'}
           </p>
         </div>
 
@@ -116,7 +116,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
             {isAdminView 
               ? 'Authorized personnel only. Access is monitored.' 
-              : 'New accounts receive 30-Day Welcome Trial at J&A Fitness Gym'}
+              : 'A fitness app by J&A Fitness Co'
           </p>
           {isAdminView && (
             <a href="#/" className="mt-4 inline-block text-[10px] font-black text-slate-400 hover:text-primary-600 transition-colors">

@@ -172,7 +172,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }
             <div>
               <div className="inline-block px-2 py-0.5 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest mb-2">Member</div>
               <h3 className="text-xl font-black mb-1">
-                {isMember ? 'J&A Member' : '30-Day Trial'}
+                {isMember ? 'Wellman Member' : '30-Day Trial'}
               </h3>
             </div>
             {!isMember && (

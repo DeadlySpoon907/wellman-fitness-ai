@@ -82,7 +82,7 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard label="Total Registered" value={stats.total} icon="👥" color="bg-primary-500" />
-        <StatCard label="J&A Members" value={stats.premium} icon="💎" color="bg-indigo-500" />
+        <StatCard label="Wellman Members" value={stats.premium} icon="💎" color="bg-indigo-500" />
         <StatCard label="Trial Users" value={stats.basic} icon="🍃" color="bg-emerald-500" />
       </div>
 
@@ -132,7 +132,7 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${isActivePremium ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                        <span className="text-sm font-medium">{isActivePremium ? 'J&A Member' : 'Trial'}</span>
+                        <span className="text-sm font-medium">{isActivePremium ? 'Wellman Member' : 'Trial'}</span>
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right font-mono text-xs text-slate-500">

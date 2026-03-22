@@ -27,9 +27,9 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ user, requireMember, child
       <>
         <div className="bg-gym-red-50 dark:bg-gym-red-950/20 border border-gym-red-200 dark:border-gym-red-800 p-8 rounded-2xl text-center">
           <div className="text-4xl mb-4">💪</div>
-          <h2 className="text-xl font-bold text-gym-red-900 dark:text-gym-red-100 mb-2">J&A Fitness Members Only</h2>
+          <h2 className="text-xl font-bold text-gym-red-900 dark:text-gym-red-100 mb-2">Wellman Members Only</h2>
           <p className="text-gym-red-800 dark:text-gym-red-200 mb-6">
-            This AI feature requires an active J&A Fitness Gym membership.
+            This AI feature requires an active Wellman membership.
             New accounts get 30 days free trial!
           </p>
           <button 
@@ -48,10 +48,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ user, requireMember, child
                 <span className="text-3xl">🏋️</span>
               </div>
               <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-4">
-                Upgrade to J&A Fitness
+                Upgrade to Wellman
               </h3>
               <p className="text-slate-600 dark:text-slate-300 mb-6">
-                For membership upgrades and payments, please visit the J&A Fitness Gym front desk.
+                For membership upgrades and payments, please contact J&A Fitness Co.
               </p>
               <div className="bg-slate-100 dark:bg-slate-800 rounded-xl p-4 mb-6">
                 <p className="text-sm font-bold text-slate-700 dark:text-slate-200">

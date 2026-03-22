@@ -70,7 +70,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
       <section>
         <h2 className="text-3xl font-black mb-1">Customize Profile</h2>
-        <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your public identity on J&A Gym.</p>
+        <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your public identity on Wellman.</p>
       </section>
 
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
@@ -150,7 +150,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Status</span>
               <span className="text-primary-600 font-bold uppercase text-[10px]">
-                {user.role === 'admin' ? 'Administrator' : user.role === 'member' ? 'J&A Fitness 30-Day Welcome Trial' : 'Basic User'}
+                {user.role === 'admin' ? 'Administrator' : user.role === 'member' ? 'Wellman Member' : 'Trial User'}
               </span>
             </div>
           </div>

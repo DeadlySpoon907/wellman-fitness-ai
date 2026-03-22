@@ -1,6 +1,6 @@
 {
-  "name": "J&A Fitness Gym",
-  "description": "J&A Fitness Gym - AI-powered fitness companion with weight tracking, meal macro analysis, BMI estimation from photos, and posture checking.",
+  "name": "Wellman by J&A Fitness Co",
+  "description": "Wellman - AI-powered fitness companion by J&A Fitness Co. Features weight tracking, meal macro analysis, BMI estimation from photos, and posture checking.",
   "requestFramePermissions": [
     "camera"
   ]
