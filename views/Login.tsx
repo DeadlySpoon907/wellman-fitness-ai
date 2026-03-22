@@ -33,7 +33,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
   const textHighlight = isAdminView ? 'text-red-600' : 'text-primary-600';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 transition-colors relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 p-4 transition-colors relative overflow-hidden">
       {/* Decorative Blobs */}
       <div className={`absolute top-[-10%] right-[-10%] w-[40%] h-[40%] ${isAdminView ? 'bg-red-100 dark:bg-red-900/10' : 'bg-primary-100 dark:bg-primary-900/10'} rounded-full blur-[120px]`} />
       <div className={`absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] ${isAdminView ? 'bg-orange-100 dark:bg-orange-900/10' : 'bg-indigo-100 dark:bg-indigo-900/10'} rounded-full blur-[120px]`} />
@@ -47,10 +47,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
               <span className="text-5xl font-black transform rotate-45 inline-block text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-violet-600">W</span>
             )}
           </div>
-          <h1 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
             {isAdminView ? 'Admin Portal' : 'Wellman'}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium text-center text-sm">
+          <p className="text-slate-700 dark:text-slate-300 font-medium text-center text-sm">
             {isAdminView 
               ? 'Secure entry for platform administrators.' 
               : isSignUp ? 'Join Wellman for better health.' : 'Welcome back to Wellman.'}
