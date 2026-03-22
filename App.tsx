@@ -124,7 +124,7 @@ const App: React.FC = () => {
     localStorage.removeItem('wellman_user_id');
   };
 
-  const handleLogin = async (username: string, password: string, isSignUp: boolean) => {
+  const handleLogin = async (username: string, password: string, isSignUp: boolean, email?: string) => {
     setAuthError(null);
 
     try {
@@ -147,7 +147,7 @@ const App: React.FC = () => {
           setAuthError("Username already exists.");
           return;
         }
-        const newUser = await registerUser(username, password);
+        const newUser = await registerUser(username, password, email);
         // Store password in memory to satisfy backend requirements for updates
         setUser({ ...newUser, password });
         localStorage.setItem('wellman_user_id', newUser.id);

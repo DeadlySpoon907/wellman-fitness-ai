@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 
 interface LoginProps {
-  onLogin: (username: string, password: string, isSignUp: boolean) => void;
+  onLogin: (username: string, password: string, isSignUp: boolean, email?: string) => void;
   error?: string | null;
   isAdminView?: boolean;
 }
@@ -18,15 +18,36 @@ const ADMIN_DEMO_ACCOUNT = { username: 'admin_jafitness', password: 'admin123' }
 export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = false }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showDemoAccounts, setShowDemoAccounts] = useState(!isAdminView);
   const [showAdminDemo, setShowAdminDemo] = useState(isAdminView);
+  const [validationError, setValidationError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError('');
+    
+    if (isSignUp) {
+      // Validation for sign up
+      if (!email) {
+        setValidationError('Email is required');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setValidationError('Passwords do not match');
+        return;
+      }
+      if (password.length < 6) {
+        setValidationError('Password must be at least 6 characters');
+        return;
+      }
+    }
+    
     if (username && password) {
-      onLogin(username, password, isAdminView ? false : isSignUp);
+      onLogin(username, password, isAdminView ? false : isSignUp, email);
     }
   };
 
@@ -58,9 +79,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
+          {(error || validationError) && (
             <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 p-4 rounded-2xl text-sm font-bold border border-red-100 dark:border-red-900/50 flex items-center gap-2 animate-in slide-in-from-top-2">
-              <span className="text-lg">⚠️</span> {error}
+              <span className="text-lg">⚠️</span> {error || validationError}
             </div>
           )}
 
@@ -78,8 +99,22 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
               />
             </div>
 
+            {isSignUp && (
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 px-1">Email</label>
+                <input 
+                  type="email" 
+                  value={email}
+                  autoComplete="email"
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className={`w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-opacity-50 focus:border-current rounded-2xl outline-none transition-all font-medium text-slate-900 dark:text-slate-100 ${textHighlight}`}
+                />
+              </div>
+            )}
+
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Password</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 px-1">Password</label>
               <div className="relative">
                 <input 
                   type={showPassword ? "text" : "password"}
@@ -87,7 +122,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
                   autoComplete={isSignUp ? "new-password" : "current-password"}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-opacity-50 focus:border-current rounded-2xl outline-none transition-all font-medium text-slate-800 dark:text-slate-100 ${textHighlight}`}
+                  className={`w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-opacity-50 focus:border-current rounded-2xl outline-none transition-all font-medium text-slate-900 dark:text-slate-100 ${textHighlight}`}
                   required
                 />
                 <button 
@@ -99,6 +134,23 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
                 </button>
               </div>
             </div>
+
+            {isSignUp && (
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 px-1">Confirm Password</label>
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    autoComplete="new-password"
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-opacity-50 focus:border-current rounded-2xl outline-none transition-all font-medium text-slate-900 dark:text-slate-100 ${textHighlight}`}
+                    required
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <button 

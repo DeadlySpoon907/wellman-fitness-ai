@@ -146,7 +146,7 @@ export const findUser = async (username: string): Promise<User | null> => {
   return users.find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
 };
 
-export const registerUser = async (username: string, password?: string): Promise<User> => {
+export const registerUser = async (username: string, password?: string, email?: string): Promise<User> => {
   // Use dedicated registration endpoint
   const response = await fetch(`${API_URL}/users/register/`, {
     method: 'POST',
@@ -154,6 +154,7 @@ export const registerUser = async (username: string, password?: string): Promise
     body: JSON.stringify({ 
       username, 
       password: password || 'password123',
+      email: email || '',
       role: 'user'
     })
   });
