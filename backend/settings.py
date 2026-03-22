@@ -1,7 +1,7 @@
 ﻿import os
-import urllib.parse
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -66,33 +66,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
+# Database - PostgreSQL only via dj-database-url
+# If DATABASE_URL is not set, the app will fail to start (intentional)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Use PostgreSQL for production (Railway) - no SQLite fallback
-if DATABASE_URL:
-    url = urllib.parse.urlparse(DATABASE_URL)
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": url.path[1:].strip() if url.path else "",
-            "USER": url.username or "",
-            "PASSWORD": url.password or "",
-            "HOST": url.hostname or "",
-            "PORT": url.port,
-        }
-    }
-else:
-    # Local development fallback to PostgreSQL
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("DB_NAME", "wellman_fitness"),
-            "USER": os.getenv("DB_USER", "postgres"),
-            "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
-            "HOST": os.getenv("DB_HOST", "localhost"),
-            "PORT": os.getenv("DB_PORT", "5432"),
-        }
-    }
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is required. Please set your PostgreSQL connection string.")
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600
+    )
+}
 
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = 'en-us'

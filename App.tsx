@@ -268,9 +268,12 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Wellman</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
              <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full transition-colors">
               {isDarkMode ? '🌙' : '☀️'}
+            </button>
+            <button onClick={handleLogout} className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full transition-colors" title="Logout">
+              <span className="text-lg">🚪</span>
             </button>
             <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden border border-slate-300 dark:border-slate-600 shadow-sm cursor-pointer" onClick={() => setActiveTab('profile')}>
               <img src={user.avatarUrl || `https://picsum.photos/seed/${user.avatarSeed || user.id}/100`} alt="Avatar" />
