@@ -20,10 +20,15 @@ def seed():
     if not seed_enabled:
         print("SEED_DB not set to true - skipping seed. Set SEED_DB=true to seed data.")
         return
+    
+    # Cleanup: Clear existing test users (non-staff) to prevent duplicate entries
+    print("Cleaning up existing test users...")
+    deleted_count, _ = User.objects.filter(is_staff=False).delete()
+    print(f"Deleted {deleted_count} existing users")
         
     print("Seeding sample data...")
 
-    # 1. John Doe (Active Member)
+    # 1. John Doe (Premium Member - is_premium=True)
     try:
         john, created = User.objects.get_or_create(username='john_doe', defaults={
             'email': 'john@wellman.com',
@@ -32,6 +37,8 @@ def seed():
             'bio': 'Determined to get back in shape! Aiming for 80kg.',
             'height_cm': 180,
             'membership_expires': timezone.now() + timedelta(days=60),
+            'is_premium': True,  # Premium member
+            'trial_ends_at': timezone.now() + timedelta(days=30),  # Active trial
             'avatar_seed': 'john123'
         })
         
@@ -136,6 +143,8 @@ def seed():
             'is_staff': True,
             'height_cm': 180,
             'is_superuser': True,
+            'is_premium': True,  # Admin is premium
+            'trial_ends_at': timezone.now() + timedelta(days=30),  # Active trial
             'avatar_seed': 'admin123'
         })
         
@@ -149,7 +158,7 @@ def seed():
     except Exception as e:
         print(f"Error seeding admin: {e}")
 
-    # 3. Jane Smith (Expired/Inactive)
+    # 3. Jane Smith (Expired Trial - Basic User)
     try:
         jane, created = User.objects.get_or_create(username='jane_smith', defaults={
             'email': 'jane@wellman.com',
@@ -157,7 +166,9 @@ def seed():
             'display_name': 'Jane Smith',
             'bio': 'Just starting out with fitness.',
             'height_cm': 165,
-            'membership_expires': timezone.now() - timedelta(days=1),
+            'membership_expires': timezone.now() - timedelta(days=1),  # Expired
+            'is_premium': False,  # Basic user
+            'trial_ends_at': timezone.now() - timedelta(days=1),  # Expired trial
             'avatar_seed': 'jane456'
         })
 
