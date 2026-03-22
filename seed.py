@@ -31,7 +31,7 @@ def seed():
     # 1. John Doe (Premium Member - is_premium=True)
     try:
         john, created = User.objects.get_or_create(username='john_doe', defaults={
-            'email': 'john@wellman.com',
+            'email': 'john@jafitness.com',
             'role': 'member',
             'display_name': 'John Doe',
             'bio': 'Determined to get back in shape! Aiming for 80kg.',
@@ -135,8 +135,8 @@ def seed():
 
     # 2. Admin User
     try:
-        admin_user, created = User.objects.get_or_create(username='admin_fitness', defaults={
-            'email': 'admin@wellman.com',
+        admin_user, created = User.objects.get_or_create(username='admin_jafitness', defaults={
+            'email': 'admin@jafitness.com',
             'role': 'admin',
             'display_name': 'System Admin',
             'bio': 'Administrator account',
@@ -161,7 +161,7 @@ def seed():
     # 3. Jane Smith (Expired Trial - Basic User)
     try:
         jane, created = User.objects.get_or_create(username='jane_smith', defaults={
-            'email': 'jane@wellman.com',
+            'email': 'jane@jafitness.com',
             'role': 'user',
             'display_name': 'Jane Smith',
             'bio': 'Just starting out with fitness.',

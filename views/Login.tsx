@@ -116,7 +116,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
             {isAdminView 
               ? 'Authorized personnel only. Access is monitored.' 
-              : 'New accounts receive 1 month of J&A Gym Premium automatically'}
+              : 'New accounts receive 30-Day Welcome Trial at J&A Fitness Gym'}
           </p>
           {isAdminView && (
             <a href="#/" className="mt-4 inline-block text-[10px] font-black text-slate-400 hover:text-primary-600 transition-colors">

@@ -150,7 +150,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Status</span>
               <span className="text-primary-600 font-bold uppercase text-[10px]">
-                {user.role === 'admin' ? 'Administrator' : user.role === 'member' ? 'Premium Member' : 'Basic User'}
+                {user.role === 'admin' ? 'Administrator' : user.role === 'member' ? 'J&A Fitness 30-Day Welcome Trial' : 'Basic User'}
               </span>
             </div>
           </div>
