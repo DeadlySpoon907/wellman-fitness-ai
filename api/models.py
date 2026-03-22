@@ -11,6 +11,8 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     avatar_seed = models.CharField(max_length=100, blank=True, null=True)
     height_cm = models.FloatField(null=True, blank=True)
+    is_premium = models.BooleanField(default=False)
+    trial_ends_at = models.DateTimeField(null=True, blank=True)
 
     # Structured Data
     # { "goal": str, "intensity": str, "location": str, "focusAreas": [str] }

@@ -8,6 +8,8 @@ class UserSerializer(serializers.ModelSerializer):
     postureLogs = serializers.JSONField(source='posture_logs', required=False)
     
     membershipExpires = serializers.DateTimeField(source='membership_expires', required=False)
+    trialEndsAt = serializers.DateTimeField(source='trial_ends_at', required=False)
+    isPremium = serializers.BooleanField(source='is_premium', required=False)
     createdAt = serializers.DateTimeField(source='date_joined', read_only=True)
     displayName = serializers.CharField(source='display_name', required=False)
     avatarSeed = serializers.CharField(source='avatar_seed', required=False)
@@ -17,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'role', 'membershipExpires', 'createdAt', 'weightLogs', 'activityLogs', 'mealLogs', 'postureLogs', 'displayName', 'avatarSeed', 'heightCm', 'fitnessProfile', 'activePlan', 'bio']
+        fields = ['id', 'username', 'password', 'role', 'membershipExpires', 'trialEndsAt', 'isPremium', 'createdAt', 'weightLogs', 'activityLogs', 'mealLogs', 'postureLogs', 'displayName', 'avatarSeed', 'heightCm', 'fitnessProfile', 'activePlan', 'bio']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

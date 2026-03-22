@@ -9,6 +9,22 @@ from .models import User
 from .serializers import UserSerializer
 import os
 
+
+def is_premium_user(user):
+    """
+    Check if a user is premium.
+    A user is considered Premium if:
+    - is_premium flag is True, OR
+    - trial_ends_at is set and current date is before trial_ends_at
+    """
+    if not user:
+        return False
+    if user.is_premium:
+        return True
+    if user.trial_ends_at and user.trial_ends_at > timezone.now():
+        return True
+    return False
+
 # Registration key - set via environment variable for security
 # New users must provide this key to register
 REGISTRATION_KEY = os.environ.get('REGISTRATION_KEY', '')
@@ -35,6 +51,9 @@ class UserViewSet(viewsets.ModelViewSet):
             # Set membership expiry to 30 days from now
             expiry = timezone.now() + timedelta(days=30)
             user.membership_expires = expiry
+            
+            # Set trial ends at to 30 days from now (free trial)
+            user.trial_ends_at = expiry
             
             # Initialize new user with default/empty JSON fields
             user.weight_logs = user.weight_logs or []
