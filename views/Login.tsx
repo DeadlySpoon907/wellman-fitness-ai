@@ -34,7 +34,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
             {isAdminView ? (
               <span className="font-black text-4xl text-red-600">A</span>
             ) : (
-              <span className="text-5xl font-black transform rotate-45 inline-block text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-violet-600">≠</span>
+              <span className="text-5xl font-black transform rotate-45 inline-block text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-violet-600">W</span>
             )}
           </div>
           <h1 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
@@ -116,7 +116,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
             {isAdminView 
               ? 'Authorized personnel only. Access is monitored.' 
-              : 'A fitness app by J&A Fitness Co'
+              : 'A fitness app by J&A Fitness Co'}
           </p>
           {isAdminView && (
             <a href="#/" className="mt-4 inline-block text-[10px] font-black text-slate-400 hover:text-primary-600 transition-colors">
