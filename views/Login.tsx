@@ -44,7 +44,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error, isAdminView = fals
             {isAdminView ? (
               <span className="font-black text-4xl text-red-600">A</span>
             ) : (
-              <span className="text-5xl font-black transform rotate-45 inline-block text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-violet-600">W</span>
+              <span className="text-5xl font-black transform rotate-45 inline-block text-transparent bg-clip-text bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-500">W</span>
             )}
           </div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
