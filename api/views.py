@@ -138,6 +138,126 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
+    @action(detail=False, methods=['post'], url_path='seed')
+    def seed(self, request):
+        """
+        Seed the database with demo accounts.
+        Call this endpoint to populate the database with sample users.
+        """
+        import random
+        
+        # Clean up existing users (keep superusers)
+        User.objects.filter(is_staff=False).delete()
+        User.objects.filter(is_staff=True, is_superuser=True).delete()
+        
+        # 1. John Doe (Premium Member)
+        john = User.objects.create(
+            username='john_doe',
+            email='john@jafitness.com',
+            role='member',
+            display_name='John Doe',
+            bio='Determined to get back in shape! Aiming for 80kg.',
+            height_cm=180,
+            membership_expires=timezone.now() + timedelta(days=60),
+            is_premium=True,
+            trial_ends_at=timezone.now() + timedelta(days=30),
+            avatar_seed='john123'
+        )
+        john.set_password('member123')
+        
+        # Add weight logs
+        john.weight_logs = []
+        base_weight = 85.0
+        for i in range(30, -1, -2):
+            date = (timezone.now() - timedelta(days=i)).isoformat()
+            change = random.uniform(-0.5, 0.2)
+            base_weight += change
+            john.weight_logs.append({"date": date, "weight": round(base_weight, 1)})
+        
+        # Add activity logs
+        john.activity_logs = []
+        for i in range(10):
+            date = (timezone.now() - timedelta(days=i)).isoformat()
+            john.activity_logs.append({"date": date})
+        
+        # Add fitness profile
+        john.fitness_profile = {
+            "goal": "weight-loss",
+            "intensity": "intermediate",
+            "location": "gym",
+            "focusAreas": ["Core", "Cardio"]
+        }
+        
+        # Add active plan
+        john.active_plan = {
+            "motivation": "Consistency is key!",
+            "generatedAt": (timezone.now() - timedelta(days=2)).isoformat(),
+            "dailyWorkouts": [
+                {"name": "Full Body Blast", "duration": "45 mins", "exercises": ["Pushups", "Squats", "Lunges", "Plank"]},
+                {"name": "Cardio & Core", "duration": "30 mins", "exercises": ["Running", "Crunches", "Leg Raises"]}
+            ]
+        }
+        john.save()
+        
+        # 2. Admin User
+        admin_user = User.objects.create(
+            username='admin_jafitness',
+            email='admin@jafitness.com',
+            role='admin',
+            display_name='System Admin',
+            bio='Administrator account',
+            is_staff=True,
+            height_cm=180,
+            is_superuser=True,
+            is_premium=True,
+            trial_ends_at=timezone.now() + timedelta(days=30),
+            avatar_seed='admin123'
+        )
+        admin_user.set_password('admin123')
+        admin_user.save()
+        
+        # 3. Jane Smith (Expired Trial)
+        jane = User.objects.create(
+            username='jane_smith',
+            email='jane@jafitness.com',
+            role='user',
+            display_name='Jane Smith',
+            bio='Just starting out with fitness.',
+            height_cm=165,
+            membership_expires=timezone.now() - timedelta(days=1),
+            is_premium=False,
+            trial_ends_at=timezone.now() - timedelta(days=1),
+            avatar_seed='jane456'
+        )
+        jane.set_password('guest123')
+        
+        # Activity logs for jane
+        jane.activity_logs = []
+        for i in range(30):
+            if random.random() > 0.7:
+                date = (timezone.now() - timedelta(days=i)).isoformat()
+                jane.activity_logs.append({"date": date})
+        
+        jane.weight_logs = [
+            {"date": (timezone.now() - timedelta(days=60)).isoformat(), "weight": 65.0},
+            {"date": (timezone.now() - timedelta(days=30)).isoformat(), "weight": 65.5},
+            {"date": (timezone.now() - timedelta(days=5)).isoformat(), "weight": 66.0},
+            {"date": timezone.now().isoformat(), "weight": 66.2}
+        ]
+        
+        jane.fitness_profile = {
+            "goal": "muscle-gain",
+            "intensity": "beginner",
+            "location": "home",
+            "focusAreas": ["Legs", "Glutes"]
+        }
+        jane.save()
+        
+        return Response({
+            'message': 'Database seeded successfully!', 
+            'users': ['john_doe (member123)', 'admin_jafitness (admin123)', 'jane_smith (guest123)']
+        })
+
     @action(detail=True, methods=['post'])
     def record_activity(self, request, pk=None):
         user = self.get_object()
