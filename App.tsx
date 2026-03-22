@@ -195,8 +195,8 @@ const App: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-red-500/20">A</div>
               <div>
-                <h1 className="text-xl font-black tracking-tight">Wellman <span className="text-red-600">Admin</span></h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Platform Command Center</p>
+                <h1 className="text-xl font-black tracking-tight">J&A Gym <span className="text-red-600">Admin</span></h1>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">J&A Gym Admin</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -224,7 +224,7 @@ const App: React.FC = () => {
           <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center border-2 border-slate-100 dark:border-slate-700 shadow-xl">
             <span className="text-2xl font-black transform rotate-45 inline-block text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-violet-600">≠</span>
           </div>
-          <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Wellman</h1>
+          <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">J&A Gym</h1>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -266,7 +266,7 @@ const App: React.FC = () => {
             <div className="w-8 h-8 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-slate-50 dark:border-slate-700 shadow-md">
               <span className="text-lg font-black transform rotate-45 inline-block text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-violet-600">≠</span>
             </div>
-            <h1 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Wellman</h1>
+            <h1 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">J&A Gym</h1>
           </div>
           <div className="flex items-center gap-2">
              <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full transition-colors">

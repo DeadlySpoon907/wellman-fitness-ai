@@ -70,7 +70,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
       <section>
         <h2 className="text-3xl font-black mb-1">Customize Profile</h2>
-        <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your public identity on Wellman.</p>
+        <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your public identity on J&A Gym.</p>
       </section>
 
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
