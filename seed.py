@@ -27,29 +27,30 @@ def seed():
     print("Cleaning up existing test users...")
     deleted_count, _ = User.objects.filter(is_staff=False).delete()
     print(f"Deleted {deleted_count} existing users")
+    
+    # Also delete staff users for fresh seeding (admin accounts)
+    staff_deleted, _ = User.objects.filter(is_staff=True, is_superuser=True).delete()
+    print(f"Deleted {staff_deleted} staff users")
         
     print("Seeding sample data...")
 
     # 1. John Doe (Premium Member - is_premium=True)
     try:
-        john, created = User.objects.get_or_create(username='john_doe', defaults={
-            'email': 'john@jafitness.com',
-            'role': 'member',
-            'display_name': 'John Doe',
-            'bio': 'Determined to get back in shape! Aiming for 80kg.',
-            'height_cm': 180,
-            'membership_expires': timezone.now() + timedelta(days=60),
-            'is_premium': True,  # Premium member
-            'trial_ends_at': timezone.now() + timedelta(days=30),  # Active trial
-            'avatar_seed': 'john123'
-        })
-        
-        if created:
-            john.set_password('member123')
-            john.save()
-            print("Created user: john_doe")
-        else:
-            print("Found user: john_doe")
+        john = User.objects.create(
+            username='john_doe',
+            email='john@jafitness.com',
+            role='member',
+            display_name='John Doe',
+            bio='Determined to get back in shape! Aiming for 80kg.',
+            height_cm=180,
+            membership_expires=timezone.now() + timedelta(days=60),
+            is_premium=True,  # Premium member
+            trial_ends_at=timezone.now() + timedelta(days=30),  # Active trial
+            avatar_seed='john123'
+        )
+        john.set_password('member123')
+        john.save()
+        print("Created user: john_doe")
             
         # Weight Logs (Trending down over 30 days)
         john.weight_logs = []
@@ -137,49 +138,43 @@ def seed():
 
     # 2. Admin User
     try:
-        admin_user, created = User.objects.get_or_create(username='admin_jafitness', defaults={
-            'email': 'admin@jafitness.com',
-            'role': 'admin',
-            'display_name': 'System Admin',
-            'bio': 'Administrator account',
-            'is_staff': True,
-            'height_cm': 180,
-            'is_superuser': True,
-            'is_premium': True,  # Admin is premium
-            'trial_ends_at': timezone.now() + timedelta(days=30),  # Active trial
-            'avatar_seed': 'admin123'
-        })
-        
-        if created:
-            admin_user.set_password('admin123')
-            admin_user.save()
-            print("Created user: admin_fitness")
-        else:
-            print("Found user: admin_fitness")
+        admin_user = User.objects.create(
+            username='admin_jafitness',
+            email='admin@jafitness.com',
+            role='admin',
+            display_name='System Admin',
+            bio='Administrator account',
+            is_staff=True,
+            height_cm=180,
+            is_superuser=True,
+            is_premium=True,  # Admin is premium
+            trial_ends_at=timezone.now() + timedelta(days=30),  # Active trial
+            avatar_seed='admin123'
+        )
+        admin_user.set_password('admin123')
+        admin_user.save()
+        print("Created user: admin_jafitness")
 
     except Exception as e:
         print(f"Error seeding admin: {e}")
 
     # 3. Jane Smith (Expired Trial - Basic User)
     try:
-        jane, created = User.objects.get_or_create(username='jane_smith', defaults={
-            'email': 'jane@jafitness.com',
-            'role': 'user',
-            'display_name': 'Jane Smith',
-            'bio': 'Just starting out with fitness.',
-            'height_cm': 165,
-            'membership_expires': timezone.now() - timedelta(days=1),  # Expired
-            'is_premium': False,  # Basic user
-            'trial_ends_at': timezone.now() - timedelta(days=1),  # Expired trial
-            'avatar_seed': 'jane456'
-        })
-
-        if created:
-            jane.set_password('guest123')
-            jane.save()
-            print("Created user: jane_smith")
-        else:
-            print("Found user: jane_smith")
+        jane = User.objects.create(
+            username='jane_smith',
+            email='jane@jafitness.com',
+            role='user',
+            display_name='Jane Smith',
+            bio='Just starting out with fitness.',
+            height_cm=165,
+            membership_expires=timezone.now() - timedelta(days=1),  # Expired
+            is_premium=False,  # Basic user
+            trial_ends_at=timezone.now() - timedelta(days=1),  # Expired trial
+            avatar_seed='jane456'
+        )
+        jane.set_password('guest123')
+        jane.save()
+        print("Created user: jane_smith")
 
         # Activity Logs (Sporadic)
         jane.activity_logs = []
