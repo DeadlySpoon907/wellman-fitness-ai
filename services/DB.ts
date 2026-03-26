@@ -165,40 +165,26 @@ export const loginUser = async (username: string, password: string): Promise<Use
   console.log('[DB] loginUser - Attempting login for:', username);
   console.log('[DB] loginUser - Using API URL:', `${API_URL}/users/login/`);
   
-  // 1. Try dedicated login endpoint
-  try {
-    const response = await fetch(`${API_URL}/users/login/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    console.log('[DB] loginUser - Response status:', response.status);
-    
-    // Log the response body for debugging
-    const responseText = await response.text();
-    console.log('[DB] loginUser - Response body:', responseText);
-    
-    if (response.ok) {
-      return JSON.parse(responseText);
-    } else {
-      console.error('[DB] loginUser - Login failed with status:', response.status);
-      console.error('[DB] loginUser - Error response:', responseText);
-      throw new Error(responseText || 'Login failed');
-    }
-  } catch (e) {
-    console.error('[DB] loginUser - Error:', e);
-    // Fallback to manual check
-  }
-
-  // 2. Fallback: Find user and verify (Prototype/Dev only)
-  const user = await findUser(username);
-  if (!user) throw new Error("User not found");
+  // Use dedicated login endpoint only - no fallback to ensure proper database authentication
+  const response = await fetch(`${API_URL}/users/login/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
   
-  // Note: This relies on the backend returning the password, which is insecure but common in prototypes.
-  if (user.password && user.password !== password) {
-     throw new Error("Invalid credentials");
+  console.log('[DB] loginUser - Response status:', response.status);
+  
+  // Log the response body for debugging
+  const responseText = await response.text();
+  console.log('[DB] loginUser - Response body:', responseText);
+  
+  if (response.ok) {
+    return JSON.parse(responseText);
+  } else {
+    console.error('[DB] loginUser - Login failed with status:', response.status);
+    console.error('[DB] loginUser - Error response:', responseText);
+    throw new Error(responseText || 'Login failed');
   }
-  return user;
 };
 
 export const logWeight = async (userId: string, weight: number): Promise<void> => {
