@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env in backend/ for local development (ignored in production)
+# Load .env for production (Railway)
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-setup-key")
@@ -21,6 +21,10 @@ if not ALLOWED_HOSTS and not DEBUG:
         'wellman-fitness-version-136.vercel.app',
         'wellman-fitness-version-136-iids0o4bc-deadlyspoon907s-projects.vercel.app',
     ]
+
+# Always allow localhost and 127.0.0.1 for local development
+if DEBUG:
+    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
