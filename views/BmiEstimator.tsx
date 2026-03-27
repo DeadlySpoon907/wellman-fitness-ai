@@ -4,6 +4,7 @@ import { User, BmiEstimation } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { saveUser } from '../services/DB';
 import { CameraCapture } from '../components/CameraCapture';
+import { estimateBmiFromPhoto } from '../services/geminiService';
 
 const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: string }> = ({ user, onUpdateProfile, apiKey }) => {
   const [image, setImage] = useState<string | null>(null);
@@ -39,46 +40,12 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
     setIsProcessing(true);
     setEstimation(null);
     try {
-      // Convert base64 to Blob
-      const byteCharacters = atob(base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: mimeType });
-
-      const formData = new FormData();
-      formData.append('image', blob, 'capture.jpg');
-
-      // Connect to backend BMI estimation endpoint
-      const bmiEstimatorUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${bmiEstimatorUrl}/estimate/`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`BMI Estimator Service error (${response.status}): ${errorText.substring(0, 100)}`);
-      }
-
-      let result;
-      try {
-        result = await response.json();
-      } catch (parseErr) {
-        const text = await response.text();
-        throw new Error(`Invalid JSON response from BMI service: ${text.substring(0, 100)}`);
-      }
-      setEstimation({
-        estimatedHeightCm: result.data.heightCm,
-        estimatedWeightKg: result.data.weightKg,
-        bmi: parseFloat(result.data.bmi),
-        notes: `Confidence: ${result.confidence}. Calculated via geometric pose analysis.`
-      });
+      // Use Gemini AI service directly for BMI estimation
+      const result = await estimateBmiFromPhoto(base64, apiKey);
+      setEstimation(result);
     } catch (err) {
       console.error(err);
-      alert("Processing failed. Ensure the local BMI server is running on port 5001.");
+      alert("BMI estimation failed. Please ensure you have a valid API key configured.");
     } finally {
       setIsProcessing(false);
     }

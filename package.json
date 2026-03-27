@@ -5,7 +5,7 @@
   "description": "AI-powered fitness tracking application",
   "main": "index.tsx",
   "dependencies": {
-    "@google/genai": "^1.46.0",
+    "@google/genai": "^1.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "recharts": "^3.7.0"

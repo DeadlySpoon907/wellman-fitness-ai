@@ -289,26 +289,71 @@ class WeightLogViewSet(viewsets.ViewSet):
 
 class BMIEstimator:
     def __init__(self):
-        pass  # No model loading needed for mock implementation
+        import google.generativeai as genai
+        import os
+        
+        # Initialize Gemini AI client
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is not set")
+        
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
     def estimate_bmi(self, image_data):
         try:
-            # For now, return mock BMI estimation data
-            # TODO: Implement actual TensorFlow pose detection when compatible versions are available
-            import random
-
-            # Mock estimation based on image size (rough approximation)
-            height_cm = random.uniform(160, 190)
-            weight_kg = random.uniform(50, 90)
-            bmi = weight_kg / ((height_cm / 100) ** 2)
-
-            return {
-                'heightCm': round(height_cm, 1),
-                'weightKg': round(weight_kg, 1),
-                'bmi': round(bmi, 1),
-                'confidence': 0.5,  # Lower confidence for mock data
-                'note': 'Mock estimation - TensorFlow integration pending'
+            import google.generativeai as genai
+            import base64
+            
+            # Convert image data to base64 for Gemini
+            if isinstance(image_data, bytes):
+                image_base64 = base64.b64encode(image_data).decode('utf-6')
+            else:
+                image_base64 = image_data
+            
+            # Create prompt for BMI estimation
+            prompt = """
+            Analyze this full body photo to estimate body metrics using computer vision principles.
+            Return ONLY valid JSON with this exact structure:
+            {
+              "estimatedHeightCm": number,
+              "estimatedWeightKg": number,
+              "bmi": number,
+              "notes": "string (brief observation about body composition)"
             }
+            
+            Important:
+            - estimatedHeightCm should be in centimeters (typical range: 150-200)
+            - estimatedWeightKg should be in kilograms (typical range: 40-120)
+            - bmi should be calculated as weight / (height_in_meters ^ 2)
+            - notes should be a brief, professional observation
+            """
+            
+            # Prepare image for Gemini
+            image_part = {
+                "mime_type": "image/jpeg",
+                "data": image_base64
+            }
+            
+            # Generate content with Gemini
+            response = self.model.generate_content([prompt, image_part])
+            
+            # Parse JSON response
+            import json
+            response_text = response.text
+            
+            # Clean markdown code blocks if present
+            cleaned_text = response_text.replace('```json', '').replace('```', '').strip()
+            
+            result = json.loads(cleaned_text)
+            
+            # Validate required fields
+            required_fields = ['estimatedHeightCm', 'estimatedWeightKg', 'bmi', 'notes']
+            for field in required_fields:
+                if field not in result:
+                    raise ValueError(f"Missing required field: {field}")
+            
+            return result
 
         except Exception as e:
             raise Exception(f"BMI estimation failed: {str(e)}")

@@ -1,7 +1,7 @@
 # Fix Deployment - Quick Checklist
 
 ## ⚡ ONE-CLICK FIX
-From the **root directory** of the project (`wellman-fitness-version-1.3.6`), run:
+To ensure the Railway PostgreSQL DB is seeded and used for login/register, run this from the **root directory**:
 ```powershell
 .\force_seed_railway.ps1
 ```

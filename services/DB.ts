@@ -26,12 +26,10 @@ if (envApiUrl) {
 // Remove any double /api/api patterns
 API_URL = API_URL.replace('/api/api', '/api');
 
-console.log(`[DB] Target Environment: Railway Production (PostgreSQL) -> ${API_URL}`);
-
 // DEBUG: Log the API_URL configuration - works in ALL environments (dev and production)
-console.log('[DB] API_URL (runtime):', API_URL);
-console.log('[DB] VITE_API_BASE_URL env var:', envApiUrl);
-console.log('[DB] Is DEV mode:', import.meta.env.DEV);
+console.log(`[DB] Using Railway Backend: ${API_URL}`);
+console.log(`[DB] Connected to PostgreSQL: nozomi.proxy.rlwy.net:26805`);
+console.log('[DB] Mode:', import.meta.env.DEV ? 'Development' : 'Production');
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
