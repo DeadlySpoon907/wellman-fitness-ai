@@ -9,11 +9,13 @@ export interface User {
   password?: string;
   role: 'admin' | 'member' | 'user';
   membershipExpires: string; // ISO string
+  isPremium?: boolean;
+  trialEndsAt?: string; // ISO string
   createdAt: string; // ISO string
   weightLogs: WeightLog[];
   mealLogs?: MealLog[];
   postureLogs?: PostureLog[];
-  activityLogs: string[]; // Array of YYYY-MM-DD strings
+  activityLogs: { date: string }[]; // Array of objects with date property
   heightCm?: number;
   fitnessProfile?: FitnessProfile;
   activePlan?: FitnessPlan;

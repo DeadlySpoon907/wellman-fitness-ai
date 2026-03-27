@@ -1,5 +1,11 @@
 # Fix Deployment - Quick Checklist
 
+## ⚡ ONE-CLICK FIX
+From the **root directory** of the project (`wellman-fitness-version-1.3.6`), run:
+```powershell
+.\force_seed_railway.ps1
+```
+
 ## The Problem
 Your frontend is making requests to a malformed URL:
 ```
@@ -53,11 +59,13 @@ git push
 3. Go to **Variables** tab
 4. Add/Update:
    ```
+   DATABASE_URL=postgresql://postgres:CtMxrouoEWmmeCRNbrbPEbGCpRWhfkyk@nozomi.proxy.rlwy.net:26805/railway
    CSRF_TRUSTED_ORIGINS=https://wellman-fitness-version-136-a6yibchix-deadlyspoon907s-projects.vercel.app
    ```
-5. Click **Deploy** (Railway will auto-redeploy)
+5. Click **Deploy** (Railway will auto-redeploy). 
+   *Note: This ensures the backend handles all login/register requests using the PostgreSQL DB.*
 
-### 4. ✅ Verify the Fix
+## 5. ✅ Verify the Fix
 
 After both deployments complete:
 

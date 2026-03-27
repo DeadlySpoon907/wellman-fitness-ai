@@ -64,7 +64,7 @@ Wellman is a high-performance, AI-powered fitness application designed for moder
    GEMINI_API_KEY=your_google_gemini_api_key
    DEBUG=True
    SECRET_KEY=your-django-secret-key
-   DATABASE_URL=sqlite:///db.sqlite3
+   DATABASE_URL=postgresql://postgres:CtMxrouoEWmmeCRNbrbPEbGCpRWhfkyk@nozomi.proxy.rlwy.net:26805/railway
    ```
    
    Create `.env` file in root directory:

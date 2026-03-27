@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-setup-key")
-DEBUG = os.getenv("DEBUG", "True").lower() in ("1", "true", "yes")
+DEBUG = os.getenv("DEBUG", "False").lower() in ("1", "true", "yes")
 
 # Allow Railway and Vercel domains in production
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]

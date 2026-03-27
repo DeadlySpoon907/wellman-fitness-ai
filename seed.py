@@ -375,7 +375,7 @@ def seed():
     try:
         admin_user = User.objects.create(
             username='admin_jafitness',
-            email='admin@jafitness.com',
+            email='admin@wellmanfitness.com',
             role='admin',
             display_name='System Admin',
             bio='Administrator account for Wellman Fitness.',
@@ -411,7 +411,7 @@ def seed():
         elif account["trial_days"] < 0:
             trial_status = " (Trial Expired)"
         print(f"  {account['username']:20} | {account['password']:15} | {status:8}{trial_status}")
-    print(f"  {'admin_jafitness':20} | {'admin123':15} | Admin")
+    print(f"  {'admin_fitness':20} | {'admin123':15} | Admin")
     print("="*50)
 
 if __name__ == '__main__':

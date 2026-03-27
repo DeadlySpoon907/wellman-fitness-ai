@@ -5,6 +5,7 @@ django-cors-headers>=4.3.0,<4.4.0
 
 # Database & ORM
 psycopg2-binary>=2.9.9,<3.0.0
+dj-database-url>=2.1.0,<3.0.0
 sqlparse>=0.4.4,<0.5.0
 
 # Environment & Configuration

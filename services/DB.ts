@@ -26,6 +26,8 @@ if (envApiUrl) {
 // Remove any double /api/api patterns
 API_URL = API_URL.replace('/api/api', '/api');
 
+console.log(`[DB] Target Environment: Railway Production (PostgreSQL) -> ${API_URL}`);
+
 // DEBUG: Log the API_URL configuration - works in ALL environments (dev and production)
 console.log('[DB] API_URL (runtime):', API_URL);
 console.log('[DB] VITE_API_BASE_URL env var:', envApiUrl);
@@ -162,29 +164,15 @@ export const registerUser = async (username: string, password?: string, email?: 
 };
 
 export const loginUser = async (username: string, password: string): Promise<User> => {
-  console.log('[DB] loginUser - Attempting login for:', username);
-  console.log('[DB] loginUser - Using API URL:', `${API_URL}/users/login/`);
-  
-  // Use dedicated login endpoint only - no fallback to ensure proper database authentication
+  console.log(`[DB] loginUser - Attempting login for: ${username}`);
+
   const response = await fetch(`${API_URL}/users/login/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
   });
-  
-  console.log('[DB] loginUser - Response status:', response.status);
-  
-  // Log the response body for debugging
-  const responseText = await response.text();
-  console.log('[DB] loginUser - Response body:', responseText);
-  
-  if (response.ok) {
-    return JSON.parse(responseText);
-  } else {
-    console.error('[DB] loginUser - Login failed with status:', response.status);
-    console.error('[DB] loginUser - Error response:', responseText);
-    throw new Error(responseText || 'Login failed');
-  }
+
+  return handleResponse(response);
 };
 
 export const logWeight = async (userId: string, weight: number): Promise<void> => {
