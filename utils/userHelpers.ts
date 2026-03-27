@@ -26,6 +26,13 @@ export const sanitizeUserForSave = (user: User): User => {
     delete sanitized.activePlan;
   }
 
+  // Handle fitnessProfile
+  // Fixes: "fitnessProfile": ["This field may not be null."]
+  // If it's null/undefined, remove it so it's not sent as null.
+  if (!sanitized.fitnessProfile) {
+    delete sanitized.fitnessProfile;
+  }
+
   // Remove password if it's empty/null/undefined to prevent validation errors
   if (!sanitized.password) {
     delete sanitized.password;

@@ -57,7 +57,7 @@ const Nutritionist: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKey 
         ]
       });
 
-      const text = (response as any).text();
+      const text = (response as any).text;
       const jsonString = text.replace(/```json|```/g, '').trim();
       const data = JSON.parse(jsonString);
       setAnalysis(data);
