@@ -471,6 +471,18 @@ const UsersTab: React.FC<{ users: User[]; onRefresh: () => void; stats: ReturnTy
                   >
                     +90d
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newDate = new Date();
+                      newDate.setFullYear(newDate.getFullYear() + 1);
+                      setEditingUser({...editingUser, membershipExpires: newDate.toISOString()});
+                    }}
+                    className="px-3 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm"
+                    title="Add 1 year"
+                  >
+                    +1yr
+                  </button>
                 </div>
                 {editingUser.membershipExpires && (
                   <div className="mt-2 text-sm font-bold text-emerald-600">
