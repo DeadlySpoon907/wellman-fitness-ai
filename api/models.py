@@ -11,6 +11,7 @@ class User(AbstractUser):
     display_name = models.CharField(max_length=100, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     avatar_seed = models.CharField(max_length=100, blank=True, null=True)
+    avatar_url = models.URLField(max_length=500, blank=True, null=True)
     height_cm = models.FloatField(null=True, blank=True)
     is_premium = models.BooleanField(default=False, db_index=True)
     trial_ends_at = models.DateTimeField(null=True, blank=True, db_index=True)
