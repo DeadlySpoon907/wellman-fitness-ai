@@ -23,7 +23,7 @@ Wellman is a high-performance, AI-powered fitness application designed for moder
 - **Recharts 3.7.0** - Data visualization components
 
 ### Backend
-- **Django 5.0+** - Robust web framework
+- **Django 4.2+** - Robust web framework
 - **Django REST Framework 3.14.0+** - REST API development
 - **TensorFlow 2.13.0+** - ML model deployment
 - **OpenCV 4.8.0+** - Computer vision processing
