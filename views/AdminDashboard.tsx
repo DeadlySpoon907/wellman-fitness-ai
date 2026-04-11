@@ -313,6 +313,7 @@ const UsersTab: React.FC<{ users: User[]; onRefresh: () => void; stats: ReturnTy
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Joined</th>
+                <th className="px-4 py-3">Membership</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -320,6 +321,7 @@ const UsersTab: React.FC<{ users: User[]; onRefresh: () => void; stats: ReturnTy
               {filteredUsers.map((u) => {
                 const isExpired = u.membershipExpires && new Date(u.membershipExpires) <= new Date();
                 const isActive = u.role === 'admin' || u.role === 'member' || !isExpired;
+                const daysLeft = u.membershipExpires ? Math.max(0, Math.ceil((new Date(u.membershipExpires).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
                 return (
                   <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                     <td className="px-4 py-3">
@@ -358,6 +360,15 @@ const UsersTab: React.FC<{ users: User[]; onRefresh: () => void; stats: ReturnTy
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500">
                       {new Date(u.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      {daysLeft !== null ? (
+                        <span className={`text-sm font-bold ${daysLeft > 0 ? (daysLeft <= 7 ? 'text-amber-600' : 'text-emerald-600') : 'text-red-500'}`}>
+                          {daysLeft > 0 ? `${daysLeft}d left` : 'Expired'}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-slate-400">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -424,6 +435,55 @@ const UsersTab: React.FC<{ users: User[]; onRefresh: () => void; stats: ReturnTy
                   type="text"
                   value={editingUser.displayName || ''}
                   onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Membership Expiry</label>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={editingUser.membershipExpires ? new Date(editingUser.membershipExpires).toISOString().split('T')[0] : ''}
+                    onChange={(e) => setEditingUser({...editingUser, membershipExpires: e.target.value ? new Date(e.target.value).toISOString() : null})}
+                    className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newDate = new Date();
+                      newDate.setDate(newDate.getDate() + 30);
+                      setEditingUser({...editingUser, membershipExpires: newDate.toISOString()});
+                    }}
+                    className="px-3 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm"
+                    title="Add 30 days"
+                  >
+                    +30d
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newDate = new Date();
+                      newDate.setDate(newDate.getDate() + 90);
+                      setEditingUser({...editingUser, membershipExpires: newDate.toISOString()});
+                    }}
+                    className="px-3 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm"
+                    title="Add 90 days"
+                  >
+                    +90d
+                  </button>
+                </div>
+                {editingUser.membershipExpires && (
+                  <div className="mt-2 text-sm font-bold text-emerald-600">
+                    {Math.ceil((new Date(editingUser.membershipExpires).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days remaining
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Trial Ends</label>
+                <input
+                  type="date"
+                  value={editingUser.trialEndsAt ? new Date(editingUser.trialEndsAt).toISOString().split('T')[0] : ''}
+                  onChange={(e) => setEditingUser({...editingUser, trialEndsAt: e.target.value ? new Date(e.target.value).toISOString() : null})}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold"
                 />
               </div>
