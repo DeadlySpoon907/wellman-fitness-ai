@@ -17,6 +17,7 @@ export interface User {
   postureLogs?: PostureLog[];
   activityLogs: { date: string }[]; // Array of objects with date property
   heightCm?: number;
+  estimatedBodyType?: string;
   fitnessProfile?: FitnessProfile;
   activePlan?: FitnessPlan;
 }
@@ -53,6 +54,7 @@ export interface BmiEstimation {
   estimatedHeightCm: number;
   estimatedWeightKg: number;
   bmi: number;
+  bodyType: string;
   notes: string;
 }
 

@@ -56,6 +56,7 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
       const updatedUser = { 
         ...user, 
         heightCm: estimation.estimatedHeightCm,
+        estimatedBodyType: estimation.bodyType,
         weightLogs: [...(user.weightLogs || []), { date: new Date().toISOString(), weight: estimation.estimatedWeightKg }]
       };
       await saveUser(updatedUser);
@@ -143,6 +144,11 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
                     <div className="px-4 py-1 bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-100 rounded-full text-xs font-bold">
                       {estimation.bmi < 18.5 ? 'Underweight' : estimation.bmi < 25 ? 'Normal' : estimation.bmi < 30 ? 'Overweight' : 'Obese'}
                     </div>
+                    {estimation.bodyType && (
+                      <div className="mt-3 px-4 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-full text-xs font-bold">
+                        Body Type: {estimation.bodyType}
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl text-sm text-slate-600 dark:text-slate-400">

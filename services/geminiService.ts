@@ -205,15 +205,16 @@ export const estimateBmiFromPhoto = async (base64Image: string, apiKey?: string)
     const compressedImage = await compressImage(base64Image);
     
     const prompt = `
-      Analyze this full body photo to estimate body metrics using computer vision principles.
-      Return ONLY valid JSON:
-      {
-        "estimatedHeightCm": number,
-        "estimatedWeightKg": number,
-        "bmi": number,
-        "notes": "string (brief observation about body composition)"
-      }
-    `;
+  Analyze this full body photo to estimate body metrics using computer vision principles.
+  Return ONLY valid JSON:
+  {
+    "estimatedHeightCm": number,
+    "estimatedWeightKg": number,
+    "bmi": number,
+    "bodyType": "string (e.g., Slim, Athletic, Average, Curvy, Stocky)",
+    "notes": "string (brief observation about body composition)"
+  }
+`;
 
     const response = await client.models.generateContent({
       model: MODEL_ID,
