@@ -18,19 +18,16 @@ Wellman is a high-performance, AI-powered fitness application designed for moder
 - **TypeScript 5.0** - Type-safe development
 - **Vite 7.3.1** - Lightning-fast build tool
 - **Tailwind CSS 3.4.0** - Utility-first styling
-- **TensorFlow.js 4.22.0** - In-browser machine learning for pose detection
 - **Google GenAI SDK** - Gemini API integration
 - **Recharts 3.7.0** - Data visualization components
 
 ### Backend
-- **Django 4.2+** - Robust web framework
-- **Django REST Framework 3.14.0+** - REST API development
-- **TensorFlow 2.13.0+** - ML model deployment
-- **OpenCV 4.8.0+** - Computer vision processing
-- **google-generativeai 0.3.0+** - Gemini API integration
+- **Django 4.2** - Robust web framework
+- **Django REST Framework 3.14+** - REST API development
+- **Google GenerativeAI** - Gemini API integration
 - **PostgreSQL/SQLite** - Data persistence
-- **Celery 5.3.0+** - Asynchronous task processing
-- **Redis 5.0.0+** - Caching and task queue
+- **Pillow** - Image processing
+- **NumPy** - Numerical operations
 
 ---
 
@@ -48,40 +45,29 @@ Wellman is a high-performance, AI-powered fitness application designed for moder
    cd wellman-fitness-version-1.3.6
    ```
 
-   2. **Run the automated setup**:
+2. **Create environment files from examples**:
    ```bash
-   .\setup.ps1
+   copy .env.example .env
+   copy backend\.env.example backend\.env
    ```
-   This will:
-   - Install all npm dependencies (React, Vite, TensorFlow.js, etc.)
-   - Create Python virtual environment
-   - Install all Python packages (Django, TensorFlow, OpenCV, etc.)
 
 3. **Configure environment variables**:
-   
-   Create `.env` file in `backend/`:
-   ```env
-   GEMINI_API_KEY=your_google_gemini_api_key
-   DEBUG=True
-   SECRET_KEY=your-django-secret-key
-   DATABASE_URL=postgresql://postgres:CtMxrouoEWmmeCRNbrbPEbGCpRWhfkyk@nozomi.proxy.rlwy.net:26805/railway
-   ```
-   
-   Create `.env` file in root directory:
-   ```env
-   VITE_API_KEY=your_google_gemini_api_key
-   VITE_API_BASE_URL=http://localhost:8000
-   ```
+   Edit `.env` in root and `backend/.env` with your values (see Environment Variables section below).
 
 4. **Start all services**:
    ```bash
-   .\start_all.bat
+   # Terminal 1 - Backend
+   cd backend
+   python -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   python manage.py migrate
+   python manage.py createsuperuser
+
+   # Terminal 2 - Frontend
+   npm install
+   npm run dev
    ```
-   
-   This launches:
-   - **Backend API**: `http://localhost:8000`
-   - **Frontend App**: `http://localhost:5173`
-   - **Admin Panel**: `http://localhost:8000/admin`
 
 ### Manual Setup
 
@@ -89,8 +75,10 @@ If the automated scripts fail, follow these steps:
 
 **Terminal 1 (Backend)**:
 ```bash
-.\venv\Scripts\Activate.ps1
 cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser  # Create admin account
 python manage.py runserver
@@ -135,11 +123,17 @@ The backend includes the following main models:
 ### Initial Setup
 
 ```bash
-# Activate virtual environment
-.\venv\Scripts\Activate.ps1
-
-# Navigate to backend
+# Navigate to backend directory
 cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment (Windows)
+venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 
 # Create and apply migrations
 python manage.py makemigrations api
@@ -155,15 +149,16 @@ python seed.py
 
 ### Environment Variables
 
-Set in `.env` file in `backend/` directory or system environment:
+Copy `.env.example` to `.env` in the `backend/` directory:
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `GEMINI_API_KEY` | Google Gemini API for AI features | `AIzaSyD...` |
 | `DEBUG` | Django debug mode | `True` (dev), `False` (prod) |
 | `SECRET_KEY` | Django secret key | `your-secret-key` |
-| `DATABASE_URL` | Database connection | `sqlite:///db.sqlite3` |
+| `DATABASE_URL` | Database connection | `sqlite:///db.sqlite3` or PostgreSQL URL |
 | `ALLOWED_HOSTS` | Allowed domain names | `localhost,127.0.0.1` |
+| `CORS_ALLOWED_ORIGINS` | Frontend URL for CORS | `http://localhost:5173` |
 
 ---
 
@@ -194,14 +189,14 @@ The frontend is built with React 19 and Vite, providing a modern, fast user expe
 
 ### Configuration
 
-Create `.env` in root directory:
+Copy `.env.example` to `.env` in the root directory:
 
 ```env
 # Google Gemini API Key
 VITE_API_KEY=your_google_gemini_api_key
 
 # Backend API URL
-VITE_API_URL=http://localhost:8000/api
+VITE_API_BASE_URL=http://localhost:8000
 ```
 
 ### Development
@@ -289,61 +284,37 @@ Build Tools:
 Styling:
   - tailwindcss@3.4.0
 
-Machine Learning:
-  - @tensorflow/tfjs@4.22.0
-  - @tensorflow-models/pose-detection@2.1.3
-
 AI:
-  - @google/genai@1.39.0
+  - @google/genai@1.0.0
 
 Data Visualization:
   - recharts@3.7.0
-
-UI:
-  - canvas@3.2.1
-
-Backend:
-  - express@5.2.1
-  - cors@2.8.6
-  - multer@2.0.2
 ```
 
 ### Backend Dependencies (pip)
 ```
 Framework:
-  - Django>=5.0
+  - Django>=4.2
   - djangorestframework>=3.14.0
   - django-cors-headers>=4.3.0
 
-Machine Learning & Vision:
-  - tensorflow>=2.13.0
-  - opencv-python>=4.8.0
-  - numpy>=1.24.0
-  - scikit-learn>=1.3.0
-  - pillow>=10.0.0
-
-AI APIs:
-  - google-generativeai>=0.3.0
-  - requests>=2.31.0
-
 Database:
   - psycopg2-binary>=2.9.9
-  - sqlparse>=0.4.4
+  - dj-database-url>=2.1.0
+
+AI APIs:
+  - google-generativeai>=0.2.0
 
 Production:
   - gunicorn>=21.2.0
   - whitenoise>=6.6.0
 
-Async Processing:
-  - celery>=5.3.0
-  - redis>=5.0.0
-
 Environment:
   - python-dotenv>=1.0.0
 
-Testing:
-  - pytest>=7.4.0
-  - pytest-django>=4.7.0
+Image Processing:
+  - pillow>=10.0.0
+  - numpy>=1.24.0
 ```
 
 ---
