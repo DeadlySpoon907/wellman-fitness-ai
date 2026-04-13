@@ -141,7 +141,7 @@ python manage.py migrate
 
 # Create admin/superuser
 python manage.py createsuperuser
-# Use: username=admin_fitness, password=admin123
+# Use: username=admin_jafitness, password=admin123
 
 # (Optional) Seed database with test data
 python seed.py
@@ -235,7 +235,7 @@ After seeding the database (or manual creation):
 | Role | Username | Password | Purpose |
 |------|----------|----------|---------|
 | **Member** | `john_doe` | `member123` | Test user account |
-| **Admin** | `admin_fitness` | `admin123` | Admin access |
+| **Admin** | `admin_jafitness` | `admin123` | Admin access |
 
 ### Access Points
 - **Frontend Login**: `http://localhost:5173/#/`
@@ -455,7 +455,7 @@ For issues or questions, refer to the documentation files or check the troublesh
 
 | Role | Username | Password | Access Route |
 |------|----------|----------|--------------|
-| **Admin** | `admin_fitness` | `admin123` | `/#/admin` |
+| **Admin** | `admin_jafitness` | `admin123` | `/#/admin` |
 | **Premium Member** | `john_doe` | `member123` | `/#/` |
 | **Basic User** | `jane_smith` | `guest123` | `/#/` |
 
