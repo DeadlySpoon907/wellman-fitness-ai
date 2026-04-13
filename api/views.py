@@ -397,6 +397,76 @@ class GymLogViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(logs, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def db_status(self, request):
+        """Check database table status and migration information"""
+        from django.db import connection
+        
+        status_info = {
+            'migrations': [],
+            'tables': {},
+            'gym_log_table_exists': False,
+            'gym_log_count': 0
+        }
+        
+        try:
+            # Check applied migrations
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT app, name, applied
+                    FROM django_migrations
+                    WHERE app = 'api'
+                    ORDER BY applied;
+                """)
+                migrations = cursor.fetchall()
+                
+                for app, name, applied in migrations:
+                    status_info['migrations'].append({
+                        'name': f'{app}.{name}',
+                        'applied': applied
+                    })
+            
+            # Check if gym_logs table exists
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.tables
+                        WHERE table_name = 'api_gymlog'
+                    );
+                """)
+                status_info['gym_log_table_exists'] = cursor.fetchone()[0]
+            
+            # If table exists, get count and structure
+            if status_info['gym_log_table_exists']:
+                status_info['gym_log_count'] = GymLog.objects.count()
+                
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT column_name, data_type, is_nullable
+                        FROM information_schema.columns
+                        WHERE table_name = 'api_gymlog'
+                        ORDER BY ordinal_position;
+                    """)
+                    columns = cursor.fetchall()
+                    
+                    status_info['tables']['api_gymlog'] = [
+                        {
+                            'name': col_name,
+                            'type': data_type,
+                            'nullable': is_nullable == 'YES'
+                        }
+                        for col_name, data_type, is_nullable in columns
+                    ]
+            
+            return Response(status_info)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e),
+                'status': 'Database check failed'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['post'])
     def time_in(self, request):
         user_id = request.data.get('user_id')
