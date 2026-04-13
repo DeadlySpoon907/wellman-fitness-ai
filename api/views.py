@@ -5,8 +5,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import authenticate
 from django.utils import timezone
 from datetime import timedelta
-from .models import User
-from .serializers import UserSerializer
+from .models import User, GymLog
+from .serializers import UserSerializer, GymLogSerializer
 import os
 
 
@@ -385,3 +385,54 @@ def estimate_bmi(request):
             'error': str(e),
             'success': False
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GymLogViewSet(viewsets.ModelViewSet):
+    queryset = GymLog.objects.all()
+    serializer_class = GymLogSerializer
+
+    @action(detail=False, methods=['get'])
+    def active(self, request):
+        logs = GymLog.objects.filter(time_out__isnull=True).select_related('user')
+        serializer = self.get_serializer(logs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def time_in(self, request):
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        today = timezone.now().date()
+        existing = GymLog.objects.filter(user=user, time_out__isnull=True, date=today).first()
+        if existing:
+            return Response({'error': 'User already timed in'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        gym_log = GymLog.objects.create(
+            user=user,
+            time_in=timezone.now(),
+            date=today
+        )
+        serializer = self.get_serializer(gym_log)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'])
+    def time_out(self, request):
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        today = timezone.now().date()
+        gym_log = GymLog.objects.filter(user_id=user_id, time_out__isnull=True, date=today).first()
+        if not gym_log:
+            return Response({'error': 'No active time-in found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        gym_log.time_out = timezone.now()
+        gym_log.save()
+        serializer = self.get_serializer(gym_log)
+        return Response(serializer.data)

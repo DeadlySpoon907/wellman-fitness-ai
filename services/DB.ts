@@ -1,5 +1,5 @@
 
-import { User } from '../types';
+import { User, GymLog } from '../types';
 import { sanitizeUserForSave } from '../utils/userHelpers';
 
 // Get API URL from environment variable - must be set in Vercel!
@@ -200,4 +200,32 @@ export const recordActivity = async (userId: string): Promise<void> => {
     logs.push({ date: new Date().toISOString() });
     await saveUser({ ...user, activityLogs: logs });
   }
+};
+
+export const getAllGymLogs = async (): Promise<GymLog[]> => {
+  const response = await fetch(`${API_URL}/gym-logs/`);
+  return handleResponse(response);
+};
+
+export const getActiveGymLogs = async (): Promise<GymLog[]> => {
+  const response = await fetch(`${API_URL}/gym-logs/active/`);
+  return handleResponse(response);
+};
+
+export const timeInUser = async (userId: string, _username: string): Promise<GymLog> => {
+  const response = await fetch(`${API_URL}/gym-logs/time_in/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId })
+  });
+  return handleResponse(response);
+};
+
+export const timeOutUser = async (userId: string): Promise<GymLog> => {
+  const response = await fetch(`${API_URL}/gym-logs/time_out/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId })
+  });
+  return handleResponse(response);
 };

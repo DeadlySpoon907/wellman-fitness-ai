@@ -1,5 +1,5 @@
 ﻿from rest_framework import serializers
-from .models import User
+from .models import User, GymLog
 
 class UserSerializer(serializers.ModelSerializer):
     weightLogs = serializers.JSONField(source='weight_logs', required=False)
@@ -30,3 +30,12 @@ class UserSerializer(serializers.ModelSerializer):
             user.set_password(password)
             user.save()
         return user
+
+
+class GymLogSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    userId = serializers.UUIDField(source='user.id', read_only=True)
+
+    class Meta:
+        model = GymLog
+        fields = ['id', 'user', 'userId', 'username', 'time_in', 'time_out', 'date']

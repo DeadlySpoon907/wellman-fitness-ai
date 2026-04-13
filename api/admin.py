@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import User, GymLog
 import json
 
 
@@ -78,6 +78,17 @@ class CustomUserAdmin(UserAdmin):
 
 # Register the User model with custom admin
 admin.site.register(User, CustomUserAdmin)
+
+
+@admin.register(GymLog)
+class GymLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'time_in', 'time_out', 'date')
+    list_filter = ('date', 'user__role')
+    search_fields = ('user__username',)
+    raw_id_fields = ('user',)
+    ordering = ('-time_in',)
+    readonly_fields = ('id', 'date')
+
 
 # Customize admin site headers
 admin.site.site_header = "Wellman Fitness Admin"

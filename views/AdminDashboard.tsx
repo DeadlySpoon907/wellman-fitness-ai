@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User } from '../types';
-import { getAllUsers, saveUser, deleteUser } from '../services/DB';
+import { User, GymLog } from '../types';
+import { getAllUsers, saveUser, deleteUser, getAllGymLogs, timeInUser, timeOutUser, getActiveGymLogs } from '../services/DB';
 
-type TabType = 'users' | 'analytics' | 'health' | 'settings';
+type TabType = 'users' | 'analytics' | 'health' | 'settings' | 'logbook';
 
 const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [users, setUsers] = useState<User[]>([]);
@@ -63,6 +63,8 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
         return <HealthMetricsTab users={users} />;
       case 'settings':
         return <SettingsTab user={user} />;
+      case 'logbook':
+        return <LogbookTab users={users} />;
       default:
         return null;
     }
@@ -79,7 +81,7 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
           <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your platform and monitor activity.</p>
         </div>
         <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-100 dark:border-slate-800">
-          {(['users', 'analytics', 'health', 'settings'] as TabType[]).map((tab) => (
+          {(['users', 'analytics', 'health', 'settings', 'logbook'] as TabType[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -847,5 +849,231 @@ const StatCard: React.FC<{ label: string; value: number; icon: string; color: st
     </div>
   </div>
 );
+
+const LogbookTab: React.FC<{ users: User[] }> = ({ users }) => {
+  const [gymLogs, setGymLogs] = useState<GymLog[]>([]);
+  const [activeLogs, setActiveLogs] = useState<GymLog[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showUserSelect, setShowUserSelect] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const loadLogs = async () => {
+    setLoading(true);
+    const all = await getAllGymLogs();
+    const active = await getActiveGymLogs();
+    setGymLogs(all);
+    setActiveLogs(active);
+    setLoading(false);
+  };
+
+  const handleTimeIn = async (user: User) => {
+    try {
+      await timeInUser(user.id, user.username);
+      await loadLogs();
+      setSelectedUser(null);
+      setShowUserSelect(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to time in');
+    }
+  };
+
+  const handleTimeOut = async (userId: string) => {
+    try {
+      await timeOutUser(userId);
+      await loadLogs();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to time out');
+    }
+  };
+
+  const formatTime = (iso: string) => {
+    return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const activeUsers = useMemo(() => {
+    return users.filter(u => activeLogs.some(log => log.user === u.id));
+  }, [users, activeLogs]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold">Gym Logbook</h3>
+          <p className="text-slate-500 text-sm">Track gym check-ins and check-outs</p>
+        </div>
+        <button
+          onClick={() => setShowUserSelect(true)}
+          className="px-4 py-2 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700"
+        >
+          + Time In User
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+          <div className="text-3xl font-black text-primary-600">{activeLogs.length}</div>
+          <div className="text-xs font-bold text-slate-400 uppercase">Currently in Gym</div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+          <div className="text-3xl font-black text-emerald-600">{gymLogs.filter(l => l.time_out).length}</div>
+          <div className="text-xs font-bold text-slate-400 uppercase">Check-outs Today</div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+          <div className="text-3xl font-black text-indigo-600">{gymLogs.length}</div>
+          <div className="text-xs font-bold text-slate-400 uppercase">Total Records</div>
+        </div>
+      </div>
+
+      {activeLogs.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-xl font-bold">Currently in Gym</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+                <tr className="text-[10px] font-black text-slate-400 uppercase">
+                  <th className="px-6 py-3">User</th>
+                  <th className="px-6 py-3">Time In</th>
+                  <th className="px-6 py-3">Duration</th>
+                  <th className="px-6 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {activeLogs.map(log => {
+                  const duration = Math.round((Date.now() - new Date(log.time_in).getTime()) / 60000);
+                  const user = users.find(u => u.id === log.user);
+                  return (
+                    <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 font-bold">
+                            {log.username?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || '?'}
+                          </div>
+                          <span className="font-bold">{log.username || user?.username || 'Unknown'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-primary-600">{formatTime(log.time_in)}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm">{duration < 60 ? `${duration}m` : `${Math.floor(duration / 60)}h ${duration % 60}m`}</span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleTimeOut(log.user)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700"
+                        >
+                          Time Out
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-xl font-bold">Recent Activity</h3>
+        </div>
+        <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+          <table className="w-full text-left">
+            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/50">
+              <tr className="text-[10px] font-black text-slate-400 uppercase">
+                <th className="px-6 py-3">User</th>
+                <th className="px-6 py-3">Date</th>
+                <th className="px-6 py-3">Time In</th>
+                <th className="px-6 py-3">Time Out</th>
+                <th className="px-6 py-3">Duration</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {gymLogs.slice().reverse().slice(0, 50).map(log => {
+                const timeIn = new Date(log.time_in).getTime();
+                const timeOut = log.time_out ? new Date(log.time_out).getTime() : null;
+                const duration = timeOut ? Math.round((timeOut - timeIn) / 60000) : null;
+                const user = users.find(u => u.id === log.user);
+                return (
+                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                    <td className="px-6 py-4 font-bold">{log.username || user?.username || 'Unknown'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{formatDate(log.date)}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-primary-600">{formatTime(log.time_in)}</td>
+                    <td className="px-6 py-4 text-sm">
+                      {log.time_out ? (
+                        <span className="text-emerald-600 font-bold">{formatTime(log.time_out)}</span>
+                      ) : (
+                        <span className="text-amber-600 font-bold">In Gym</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500">
+                      {duration !== null ? (
+                        duration < 60 ? `${duration}m` : `${Math.floor(duration / 60)}h ${duration % 60}m`
+                      ) : '-'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showUserSelect && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-black">Time In User</h3>
+              <button onClick={() => setShowUserSelect(false)} className="text-2xl">×</button>
+            </div>
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {users.map(user => {
+                const isActive = activeLogs.some(log => log.user === user.id);
+                return (
+                  <button
+                    key={user.id}
+                    onClick={() => !isActive && handleTimeIn(user)}
+                    disabled={isActive}
+                    className={`w-full p-4 rounded-xl flex items-center justify-between ${
+                      isActive
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                        : 'bg-slate-50 dark:bg-slate-800 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <img src={user.avatarUrl || `https://picsum.photos/seed/${user.avatarSeed || user.id}/40`} alt="" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold">{user.username}</div>
+                        <div className="text-xs text-slate-400">{user.role}</div>
+                      </div>
+                    </div>
+                    {isActive ? (
+                      <span className="text-xs font-bold text-amber-600">In Gym</span>
+                    ) : (
+                      <span className="text-sm font-bold text-primary-600">Time In</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default AdminDashboard;

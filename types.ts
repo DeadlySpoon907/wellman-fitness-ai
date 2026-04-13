@@ -20,6 +20,17 @@ export interface User {
   estimatedBodyType?: string;
   fitnessProfile?: FitnessProfile;
   activePlan?: FitnessPlan;
+  gymLogs?: GymLog[];
+}
+
+export interface GymLog {
+  id: string;
+  user: string;
+  userId?: string;
+  username: string;
+  time_in: string;
+  time_out?: string;
+  date: string;
 }
 
 export interface FitnessProfile {

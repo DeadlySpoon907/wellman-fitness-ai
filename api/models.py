@@ -46,3 +46,17 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+
+class GymLog(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gym_logs')
+    time_in = models.DateTimeField()
+    time_out = models.DateTimeField(null=True, blank=True)
+    date = models.DateField()
+
+    class Meta:
+        ordering = ['-time_in']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date}"
