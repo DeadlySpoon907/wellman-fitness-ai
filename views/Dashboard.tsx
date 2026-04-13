@@ -1,8 +1,9 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User } from '../types';
 import { WeightChart } from '../components/WeightChart';
 import { AuthGuard } from '../components/AuthGuard';
+import { getUserGymLogs } from '../services/DB';
 
 interface DashboardProps {
   user: User;
@@ -12,6 +13,11 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }) => {
   const [newWeight, setNewWeight] = useState('');
+  const [gymLogs, setGymLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    getUserGymLogs(user.id).then(setGymLogs).catch(console.error);
+  }, [user.id]);
 
   const isMember = user.role === 'admin' || user.role === 'member' || new Date(user.membershipExpires) > new Date();
 
@@ -83,6 +89,34 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }
     return days;
   }
 
+  const gymAttendance = useMemo(() => {
+    if (!gymLogs || gymLogs.length === 0) return { total: 0, thisWeek: 0, last7Days: [] };
+    
+    const normalizedLogs = gymLogs.map(log => log.date?.split('T')[0] || log.date).filter(Boolean);
+    const uniqueDays = [...new Set(normalizedLogs)].sort();
+    
+    const today = new Date().toISOString().split('T')[0];
+    const weekStart = new Date();
+    weekStart.setUTCDate(weekStart.getUTCDate() - 7);
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    
+    const thisWeek = uniqueDays.filter(d => d >= weekStartStr && d <= today).length;
+    
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      last7Days.push({
+        date: dateStr,
+        label: d.toLocaleDateString('en-US', { weekday: 'narrow', timeZone: 'UTC' }),
+        active: normalizedLogs.includes(dateStr)
+      });
+    }
+    
+    return { total: uniqueDays.length, thisWeek, last7Days };
+  }, [gymLogs]);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <section className="flex justify-between items-start">
@@ -130,6 +164,34 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }
                 <span className="text-[10px] font-bold text-slate-400 uppercase">{day.label}</span>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Gym Attendance Metric */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <span className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">🏋️</span>
+              Gym Attendance
+            </h3>
+            <span className="text-2xl font-black text-emerald-600">{gymAttendance.total} Visits</span>
+          </div>
+          <div className="flex justify-between items-end gap-1 mt-auto">
+            {gymAttendance.last7Days.map((day, i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                  day.active 
+                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                }`}>
+                  {day.active ? '✓' : ''}
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">{day.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 text-xs font-medium text-slate-500">
+            This week: <span className="text-emerald-600 font-bold">{gymAttendance.thisWeek}</span> visits
           </div>
         </div>
 

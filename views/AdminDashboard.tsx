@@ -856,6 +856,7 @@ const LogbookTab: React.FC<{ users: User[] }> = ({ users }) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserSelect, setShowUserSelect] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadLogs();
@@ -869,6 +870,31 @@ const LogbookTab: React.FC<{ users: User[] }> = ({ users }) => {
     setActiveLogs(active);
     setLoading(false);
   };
+
+  const filteredGymLogs = useMemo(() => {
+    if (!searchTerm.trim()) return gymLogs.slice().reverse().slice(0, 50);
+    const term = searchTerm.toLowerCase();
+    return gymLogs
+      .filter(log => {
+        const logUsername = (log.username || '').toLowerCase();
+        const user = users.find(u => u.id === log.user);
+        const userUsername = (user?.username || '').toLowerCase();
+        return logUsername.includes(term) || userUsername.includes(term);
+      })
+      .reverse()
+      .slice(0, 50);
+  }, [gymLogs, users, searchTerm]);
+
+  const filteredActiveLogs = useMemo(() => {
+    if (!searchTerm.trim()) return activeLogs;
+    const term = searchTerm.toLowerCase();
+    return activeLogs.filter(log => {
+      const logUsername = (log.username || '').toLowerCase();
+      const user = users.find(u => u.id === log.user);
+      const userUsername = (user?.username || '').toLowerCase();
+      return logUsername.includes(term) || userUsername.includes(term);
+    });
+  }, [activeLogs, users, searchTerm]);
 
   const handleTimeIn = async (user: User) => {
     try {
@@ -899,8 +925,8 @@ const LogbookTab: React.FC<{ users: User[] }> = ({ users }) => {
   };
 
   const activeUsers = useMemo(() => {
-    return users.filter(u => activeLogs.some(log => log.user === u.id));
-  }, [users, activeLogs]);
+    return users.filter(u => filteredActiveLogs.some(log => log.user === u.id));
+  }, [users, filteredActiveLogs]);
 
   return (
     <div className="space-y-6">
@@ -909,30 +935,39 @@ const LogbookTab: React.FC<{ users: User[] }> = ({ users }) => {
           <h3 className="text-xl font-bold">Gym Logbook</h3>
           <p className="text-slate-500 text-sm">Track gym check-ins and check-outs</p>
         </div>
-        <button
-          onClick={() => setShowUserSelect(true)}
-          className="px-4 py-2 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700"
-        >
-          + Time In User
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 font-bold text-sm"
+          />
+          <button
+            onClick={() => setShowUserSelect(true)}
+            className="px-4 py-2 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700"
+          >
+            + Time In User
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
-          <div className="text-3xl font-black text-primary-600">{activeLogs.length}</div>
+          <div className="text-3xl font-black text-primary-600">{filteredActiveLogs.length}</div>
           <div className="text-xs font-bold text-slate-400 uppercase">Currently in Gym</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
-          <div className="text-3xl font-black text-emerald-600">{gymLogs.filter(l => l.time_out).length}</div>
+          <div className="text-3xl font-black text-emerald-600">{filteredGymLogs.filter(l => l.time_out).length}</div>
           <div className="text-xs font-bold text-slate-400 uppercase">Check-outs Today</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
-          <div className="text-3xl font-black text-indigo-600">{gymLogs.length}</div>
+          <div className="text-3xl font-black text-indigo-600">{filteredGymLogs.length}</div>
           <div className="text-xs font-bold text-slate-400 uppercase">Total Records</div>
         </div>
       </div>
 
-      {activeLogs.length > 0 && (
+      {filteredActiveLogs.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
           <div className="p-6 border-b border-slate-100 dark:border-slate-800">
             <h3 className="text-xl font-bold">Currently in Gym</h3>
@@ -948,7 +983,7 @@ const LogbookTab: React.FC<{ users: User[] }> = ({ users }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {activeLogs.map(log => {
+                {filteredActiveLogs.map(log => {
                   const duration = Math.round((Date.now() - new Date(log.time_in).getTime()) / 60000);
                   const user = users.find(u => u.id === log.user);
                   return (
@@ -1000,7 +1035,7 @@ const LogbookTab: React.FC<{ users: User[] }> = ({ users }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {gymLogs.slice().reverse().slice(0, 50).map(log => {
+              {filteredGymLogs.map(log => {
                 const timeIn = new Date(log.time_in).getTime();
                 const timeOut = log.time_out ? new Date(log.time_out).getTime() : null;
                 const duration = timeOut ? Math.round((timeOut - timeIn) / 60000) : null;

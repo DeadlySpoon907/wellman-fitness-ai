@@ -229,3 +229,8 @@ export const timeOutUser = async (userId: string): Promise<GymLog> => {
   });
   return handleResponse(response);
 };
+
+export const getUserGymLogs = async (userId: string): Promise<GymLog[]> => {
+  const allLogs = await getAllGymLogs();
+  return allLogs.filter(log => log.userId === userId || log.user === userId);
+};
