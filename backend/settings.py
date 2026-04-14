@@ -71,19 +71,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# Database - PostgreSQL only via dj-database-url
-# If DATABASE_URL is not set, the app will fail to start (intentional)
+# Database - PostgreSQL for production, SQLite for development
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is required. Please set your PostgreSQL connection string.")
-
-DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600
-    )
-}
+if DATABASE_URL and not DEBUG:
+    # Use PostgreSQL in production
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600
+        )
+    }
+else:
+    # Use SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = 'en-us'

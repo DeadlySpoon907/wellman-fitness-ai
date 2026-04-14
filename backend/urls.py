@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from api.views import UserViewSet, WeightLogViewSet, estimate_bmi, GymLogViewSet
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
+router.register(r'users', UserViewSet, basename='user')
 router.register(r'weight-logs', WeightLogViewSet, basename='weight-log')
 router.register(r'gym-logs', GymLogViewSet, basename='gym-log')
 
