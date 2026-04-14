@@ -11,6 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
+from api.models import GymLog
 
 User = get_user_model()
 
@@ -94,6 +95,29 @@ def generate_posture_logs(count=3):
             "findings": random.choice(findings_options),
             "recommendations": random.choice(recommendations_options)
         })
+    logs.sort(key=lambda x: x['date'], reverse=True)
+    return logs
+
+def generate_gym_logs(days=30, frequency=0.6):
+    """Generate gym time-in/time-out logs."""
+    logs = []
+    for i in range(days):
+        if random.random() < frequency:
+            days_ago = random.randint(0, days)
+            date = (timezone.now() - timedelta(days=days_ago)).date()
+            
+            hour_in = random.randint(5, 20)
+            minute_in = random.choice([0, 15, 30, 45])
+            time_in = timezone.now().replace(hour=hour_in, minute=minute_in, second=0) - timedelta(days=days_ago)
+            
+            duration_mins = random.randint(30, 120)
+            time_out = time_in + timedelta(minutes=duration_mins)
+            
+            logs.append({
+                "date": date.isoformat(),
+                "time_in": time_in.isoformat(),
+                "time_out": time_out.isoformat()
+            })
     logs.sort(key=lambda x: x['date'], reverse=True)
     return logs
 
@@ -366,6 +390,17 @@ def seed():
                 user.active_plan = None
             
             user.save()
+            
+            if account_data["role"] == "member":
+                gym_logs = generate_gym_logs(days=30, frequency=account_data["activity_freq"])
+                for log in gym_logs:
+                    GymLog.objects.create(
+                        user=user,
+                        date=log["date"],
+                        time_in=log["time_in"],
+                        time_out=log["time_out"]
+                    )
+            
             print(f"Created user: {account_data['username']} ({account_data['role']})")
             
         except Exception as e:
@@ -394,6 +429,16 @@ def seed():
         admin_user.fitness_profile = generate_fitness_profile()
         admin_user.active_plan = generate_active_plan()
         admin_user.save()
+        
+        admin_gym_logs = generate_gym_logs(days=30, frequency=0.5)
+        for log in admin_gym_logs:
+            GymLog.objects.create(
+                user=admin_user,
+                date=log["date"],
+                time_in=log["time_in"],
+                time_out=log["time_out"]
+            )
+        
         print("Created user: admin_jafitness (admin)")
     except Exception as e:
         print(f"Error seeding admin: {e}")

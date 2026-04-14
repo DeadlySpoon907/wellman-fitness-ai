@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User, GymLog
+from django.utils import timezone
 import json
 
 
@@ -82,15 +83,86 @@ admin.site.register(User, CustomUserAdmin)
 
 @admin.register(GymLog)
 class GymLogAdmin(admin.ModelAdmin):
-    list_display = ('user', 'time_in', 'time_out', 'date')
-    list_filter = ('date', 'user__role')
-    search_fields = ('user__username',)
+    list_display = ('user', 'get_username', 'time_in', 'time_out', 'date', 'duration', 'is_active')
+    list_filter = ('date', 'user__role', 'time_out')  # Added time_out filter to see active vs completed
+    search_fields = ('user__username', 'user__email')
     raw_id_fields = ('user',)
     ordering = ('-time_in',)
-    readonly_fields = ('id', 'date')
+    readonly_fields = ('id', 'date', 'duration')
+    list_per_page = 50  # Show more records per page
+
+    def get_username(self, obj):
+        return obj.user.username
+    get_username.short_description = 'Username'
+    get_username.admin_order_field = 'user__username'
+
+    def duration(self, obj):
+        if obj.time_out and obj.time_in:
+            duration = obj.time_out - obj.time_in
+            hours = duration.seconds // 3600
+            minutes = (duration.seconds % 3600) // 60
+            return f"{hours}h {minutes}m"
+        return "Active"
+    duration.short_description = 'Duration'
+
+    def is_active(self, obj):
+        return obj.time_out is None
+    is_active.boolean = True
+    is_active.short_description = 'Active Session'
+
+    # Add custom actions
+    actions = ['mark_completed', 'export_selected']
+
+    def mark_completed(self, request, queryset):
+        updated = queryset.filter(time_out__isnull=True).update(time_out=timezone.now())
+        self.message_user(request, f'{updated} sessions marked as completed.')
+    mark_completed.short_description = "Mark selected sessions as completed"
+
+    def export_selected(self, request, queryset):
+        # Simple export action
+        self.message_user(request, f'Export functionality for {queryset.count()} records would go here.')
+    export_selected.short_description = "Export selected records"
 
 
 # Customize admin site headers
 admin.site.site_header = "Wellman Fitness Admin"
 admin.site.site_title = "Wellman Fitness Admin Portal"
 admin.site.index_title = "Welcome to Wellman Fitness Administration"
+
+# Add custom admin index view with statistics
+from django.contrib.admin.views.main import ChangeList
+from django.db.models import Count, Q
+
+class CustomAdminSite(admin.AdminSite):
+    def index(self, request, extra_context=None):
+        # Get some basic statistics
+        user_stats = {
+            'total_users': User.objects.count(),
+            'premium_users': User.objects.filter(is_premium=True).count(),
+            'active_users': User.objects.filter(is_active=True).count(),
+        }
+        
+        gym_stats = {
+            'total_sessions': GymLog.objects.count(),
+            'active_sessions': GymLog.objects.filter(time_out__isnull=True).count(),
+            'completed_sessions': GymLog.objects.filter(time_out__isnull=False).count(),
+        }
+        
+        extra_context = extra_context or {}
+        extra_context.update({
+            'user_stats': user_stats,
+            'gym_stats': gym_stats,
+        })
+        
+        return super().index(request, extra_context)
+
+# Create custom admin site
+custom_admin_site = CustomAdminSite(name='custom_admin')
+
+# Register models with custom admin site
+custom_admin_site.register(User, CustomUserAdmin)
+custom_admin_site.register(GymLog, GymLogAdmin)
+
+# Also register with default admin site (already done above)
+# admin.site.register(User, CustomUserAdmin)
+# admin.site.register(GymLog, GymLogAdmin)

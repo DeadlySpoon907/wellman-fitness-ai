@@ -7,10 +7,9 @@ $env:DATABASE_URL="postgresql://postgres:CtMxrouoEWmmeCRNbrbPEbGCpRWhfkyk@nozomi
 
 Write-Host "Connecting to Railway PostgreSQL at nozomi.proxy.rlwy.net..." -ForegroundColor Cyan
 
-cd backend
-if (Test-Path "..\venv\Scripts\Activate.ps1") { 
+if (Test-Path "venv\Scripts\Activate.ps1") { 
     Write-Host "Activating virtual environment..."
-    . ..\venv\Scripts\Activate.ps1 
+    . venv\Scripts\Activate.ps1 
 }
 
 python manage.py migrate
