@@ -46,7 +46,7 @@ const Nutritionist: React.FC<{ user: User; apiKey?: string; onMealLogged?: () =>
 
       const ai = new GoogleGenAI({ apiKey: key });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         contents: [
           {
             role: 'user',
