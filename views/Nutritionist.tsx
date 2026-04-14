@@ -3,14 +3,15 @@ import React, { useState, useRef } from 'react';
 import { User, MacroData } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { GoogleGenAI } from "@google/genai";
-import { saveUser } from '../services/DB';
+import { saveUser, logMeal } from '../services/DB';
 import { CameraCapture } from '../components/CameraCapture';
 
-const Nutritionist: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKey }) => {
+const Nutritionist: React.FC<{ user: User; apiKey?: string; onMealLogged?: () => void }> = ({ user, apiKey }) => {
   const [image, setImage] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<MacroData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return <div className="p-12 text-center text-slate-400 font-medium">Loading user profile...</div>;
@@ -89,6 +90,21 @@ const Nutritionist: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKey 
       </section>
 
       <AuthGuard user={user} requireMember>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold">Log Meal</h3>
+          <button 
+            onClick={() => setShowManualInput(!showManualInput)}
+            className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${showManualInput ? 'bg-primary-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}
+          >
+            {showManualInput ? 'Use AI Analysis' : 'Manual Input'}
+          </button>
+        </div>
+
+        {showManualInput ? (
+          <ManualMealInput user={user} onMealLogged={() => { 
+            window.location.reload();
+          }} />
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <h3 className="text-lg font-bold mb-4">Analyze Meal</h3>
@@ -162,6 +178,7 @@ const Nutritionist: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKey 
             )}
           </div>
         </div>
+        )}
 
         {user.mealLogs && user.mealLogs.length > 0 && (
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
@@ -192,8 +209,8 @@ const Nutritionist: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKey 
                 </div>
               ))}
             </div>
-          </div>
-        )}
+</div>
+          )}
       </AuthGuard>
 
       {showCamera && (
@@ -216,5 +233,100 @@ const MacroCard: React.FC<{ label: string; value: number; unit: string; color: s
     </div>
   </div>
 );
+
+const ManualMealInput: React.FC<{ user: User; onMealLogged: () => void }> = ({ user, onMealLogged }) => {
+  const [mealName, setMealName] = useState('');
+  const [calories, setCalories] = useState('');
+  const [protein, setProtein] = useState('');
+  const [carbs, setCarbs] = useState('');
+  const [fat, setFat] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!mealName || !calories) return;
+    setIsSaving(true);
+    try {
+      await logMeal(user.id, mealName, parseInt(calories), parseInt(protein) || 0, parseInt(carbs) || 0, parseInt(fat) || 0);
+      setMealName('');
+      setCalories('');
+      setProtein('');
+      setCarbs('');
+      setFat('');
+      onMealLogged();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to log meal');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+      <h3 className="text-lg font-bold mb-6">Manually Enter Meal</h3>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Meal Name</label>
+          <input
+            type="text"
+            value={mealName}
+            onChange={(e) => setMealName(e.target.value)}
+            placeholder="e.g., Breakfast, Lunch, Snack..."
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none focus:ring-2 ring-primary-500 transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Calories (kcal)</label>
+          <input
+            type="number"
+            value={calories}
+            onChange={(e) => setCalories(e.target.value)}
+            placeholder="0"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none focus:ring-2 ring-primary-500 transition-all"
+          />
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Protein (g)</label>
+            <input
+              type="number"
+              value={protein}
+              onChange={(e) => setProtein(e.target.value)}
+              placeholder="0"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none focus:ring-2 ring-primary-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Carbs (g)</label>
+            <input
+              type="number"
+              value={carbs}
+              onChange={(e) => setCarbs(e.target.value)}
+              placeholder="0"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none focus:ring-2 ring-primary-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Fat (g)</label>
+            <input
+              type="number"
+              value={fat}
+              onChange={(e) => setFat(e.target.value)}
+              placeholder="0"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none focus:ring-2 ring-primary-500 transition-all"
+            />
+          </div>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !mealName || !calories}
+          className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving ? 'Saving...' : 'Log Meal'}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default Nutritionist;

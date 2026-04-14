@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { User } from '../types';
 import { WeightChart } from '../components/WeightChart';
 import { AuthGuard } from '../components/AuthGuard';
-import { getUserGymLogs } from '../services/DB';
+import { getUserGymLogs, logWorkout } from '../services/DB';
 
 interface DashboardProps {
   user: User;
@@ -14,6 +14,10 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }) => {
   const [newWeight, setNewWeight] = useState('');
   const [gymLogs, setGymLogs] = useState<any[]>([]);
+  const [showManualWorkout, setShowManualWorkout] = useState(false);
+  const [workoutName, setWorkoutName] = useState('');
+  const [workoutDuration, setWorkoutDuration] = useState('');
+  const [workoutExercises, setWorkoutExercises] = useState('');
 
   useEffect(() => {
     getUserGymLogs(user.id).then(setGymLogs).catch(console.error);
@@ -193,6 +197,53 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }
           <div className="mt-4 text-xs font-medium text-slate-500">
             This week: <span className="text-emerald-600 font-bold">{gymAttendance.thisWeek}</span> visits
           </div>
+          <button 
+            onClick={() => setShowManualWorkout(!showManualWorkout)}
+            className="mt-4 text-xs font-bold text-primary-600 hover:underline"
+          >
+            + Log Manual Workout
+          </button>
+          {showManualWorkout && (
+            <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-3">
+              <input
+                type="text"
+                value={workoutName}
+                onChange={(e) => setWorkoutName(e.target.value)}
+                placeholder="Workout name..."
+                className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 outline-none"
+              />
+              <input
+                type="text"
+                value={workoutDuration}
+                onChange={(e) => setWorkoutDuration(e.target.value)}
+                placeholder="Duration (e.g., 45 mins)..."
+                className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 outline-none"
+              />
+              <input
+                type="text"
+                value={workoutExercises}
+                onChange={(e) => setWorkoutExercises(e.target.value)}
+                placeholder="Exercises (comma separated)..."
+                className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 outline-none"
+              />
+              <button
+                onClick={async () => {
+                  if (workoutName) {
+                    const exercises = workoutExercises.split(',').map(e => e.trim()).filter(Boolean);
+                    await logWorkout(user.id, workoutName, workoutDuration, exercises);
+                    setWorkoutName('');
+                    setWorkoutDuration('');
+                    setWorkoutExercises('');
+                    setShowManualWorkout(false);
+                    window.location.reload();
+                  }
+                }}
+                className="w-full bg-primary-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-primary-700"
+              >
+                Save Workout
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Weight Management */}

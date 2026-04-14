@@ -272,6 +272,62 @@ class UserViewSet(viewsets.ModelViewSet):
             
         return Response({'status': 'activity recorded'})
 
+    @action(detail=True, methods=['post'])
+    def log_workout(self, request, pk=None):
+        """
+        Manually log a workout entry.
+        Accepts: { "date": "YYYY-MM-DD", "workoutName": "string", "duration": "string", "exercises": [] }
+        """
+        user = self.get_object()
+        date = request.data.get('date', timezone.now().date().isoformat())
+        workout_name = request.data.get('workoutName', '')
+        duration = request.data.get('duration', '')
+        exercises = request.data.get('exercises', [])
+        
+        workout_entry = {
+            'date': date,
+            'workoutName': workout_name,
+            'duration': duration,
+            'exercises': exercises
+        }
+        
+        logs = user.activity_logs or []
+        logs.append(workout_entry)
+        user.activity_logs = logs
+        user.save()
+        
+        return Response({'status': 'workout logged', 'workout': workout_entry})
+
+    @action(detail=True, methods=['post'])
+    def log_meal(self, request, pk=None):
+        """
+        Manually log a meal with macros.
+        Accepts: { "date": "YYYY-MM-DD", "mealName": "string", "calories": int, "protein": int, "carbs": int, "fat": int }
+        """
+        user = self.get_object()
+        date = request.data.get('date', timezone.now().date().isoformat())
+        meal_name = request.data.get('mealName', '')
+        calories = request.data.get('calories', 0)
+        protein = request.data.get('protein', 0)
+        carbs = request.data.get('carbs', 0)
+        fat = request.data.get('fat', 0)
+        
+        meal_entry = {
+            'date': date,
+            'mealName': meal_name,
+            'calories': calories,
+            'protein': protein,
+            'carbs': carbs,
+            'fat': fat
+        }
+        
+        logs = user.meal_logs or []
+        logs.append(meal_entry)
+        user.meal_logs = logs
+        user.save()
+        
+        return Response({'status': 'meal logged', 'meal': meal_entry})
+
 class WeightLogViewSet(viewsets.ViewSet):
     def list(self, request):
         if request.user.is_authenticated:

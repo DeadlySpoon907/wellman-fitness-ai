@@ -248,3 +248,33 @@ export const getUserGymLogs = async (userId: string): Promise<GymLog[]> => {
   const allLogs = await getAllGymLogs();
   return allLogs.filter(log => log.userId === userId || log.user === userId);
 };
+
+export const logWorkout = async (userId: string, workoutName: string, duration: string, exercises: string[], date?: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/users/${userId}/log_workout/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      date: date || new Date().toISOString().split('T')[0],
+      workoutName,
+      duration,
+      exercises
+    })
+  });
+  return handleResponse(response);
+};
+
+export const logMeal = async (userId: string, mealName: string, calories: number, protein: number, carbs: number, fat: number, date?: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/users/${userId}/log_meal/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      date: date || new Date().toISOString().split('T')[0],
+      mealName,
+      calories,
+      protein,
+      carbs,
+      fat
+    })
+  });
+  return handleResponse(response);
+};
