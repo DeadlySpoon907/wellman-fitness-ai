@@ -354,7 +354,7 @@ class BMIEstimator:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
         
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
 
     def estimate_bmi(self, image_data):
         try:

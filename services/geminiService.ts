@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { FitnessProfile, MacroData, BmiEstimation, PostureAnalysis } from "../types";
 
-const MODEL_ID = "gemini-2.0-flash-exp";
+const MODEL_ID = "gemini-2.5-flash";
 
 const CACHE_TTL = 15 * 60 * 1000;
 const MAX_CONCURRENT_REQUESTS = 1;
