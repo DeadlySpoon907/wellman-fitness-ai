@@ -426,38 +426,63 @@ class GymLogViewSet(viewsets.ModelViewSet):
                         'applied': applied
                     })
             
-            # Check if gym_logs table exists
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT EXISTS (
-                        SELECT 1
-                        FROM information_schema.tables
-                        WHERE table_name = 'api_gymlog'
-                    );
-                """)
-                status_info['gym_log_table_exists'] = cursor.fetchone()[0]
-            
-            # If table exists, get count and structure
-            if status_info['gym_log_table_exists']:
-                status_info['gym_log_count'] = GymLog.objects.count()
-                
+            # Check if gym_logs table exists — support Postgres and SQLite
+            if connection.vendor == 'sqlite':
+                # SQLite: use sqlite_master and PRAGMA table_info
                 with connection.cursor() as cursor:
                     cursor.execute("""
-                        SELECT column_name, data_type, is_nullable
-                        FROM information_schema.columns
-                        WHERE table_name = 'api_gymlog'
-                        ORDER BY ordinal_position;
+                        SELECT name FROM sqlite_master
+                        WHERE type='table' AND name='api_gymlog';
                     """)
-                    columns = cursor.fetchall()
+                    status_info['gym_log_table_exists'] = cursor.fetchone() is not None
+
+                if status_info['gym_log_table_exists']:
+                    status_info['gym_log_count'] = GymLog.objects.count()
+                    with connection.cursor() as cursor:
+                        cursor.execute("PRAGMA table_info('api_gymlog');")
+                        # PRAGMA table_info returns: cid, name, type, notnull, dflt_value, pk
+                        columns = cursor.fetchall()
+                        status_info['tables']['api_gymlog'] = [
+                            {
+                                'name': col[1],
+                                'type': col[2],
+                                'nullable': not (col[3] == 1)
+                            }
+                            for col in columns
+                        ]
+            else:
+                # Postgres / other DBs supporting information_schema
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM information_schema.tables
+                            WHERE table_name = 'api_gymlog'
+                        );
+                    """)
+                    status_info['gym_log_table_exists'] = cursor.fetchone()[0]
+
+                # If table exists, get count and structure
+                if status_info['gym_log_table_exists']:
+                    status_info['gym_log_count'] = GymLog.objects.count()
                     
-                    status_info['tables']['api_gymlog'] = [
-                        {
-                            'name': col_name,
-                            'type': data_type,
-                            'nullable': is_nullable == 'YES'
-                        }
-                        for col_name, data_type, is_nullable in columns
-                    ]
+                    with connection.cursor() as cursor:
+                        cursor.execute("""
+                            SELECT column_name, data_type, is_nullable
+                            FROM information_schema.columns
+                            WHERE table_name = 'api_gymlog'
+                            ORDER BY ordinal_position;
+                        """)
+                        columns = cursor.fetchall()
+                        
+                        status_info['tables']['api_gymlog'] = [
+                            {
+                                'name': col_name,
+                                'type': data_type,
+                                'nullable': is_nullable == 'YES'
+                            }
+                            for col_name, data_type, is_nullable in columns
+                        ]
             
             return Response(status_info)
             

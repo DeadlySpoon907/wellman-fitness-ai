@@ -212,6 +212,20 @@ export const getActiveGymLogs = async (): Promise<GymLog[]> => {
   return handleResponse(response);
 };
 
+// Runtime DB status check for gym logs table (useful for verifying which DB/backend is active)
+export const getGymLogsDbStatus = async (): Promise<any> => {
+  const url = `${API_URL}/gym-logs/db_status/`;
+  console.log('[DB] getGymLogsDbStatus - Full URL:', url);
+  try {
+    const response = await fetch(url);
+    console.log('[DB] getGymLogsDbStatus - Response status:', response.status);
+    return handleResponse(response);
+  } catch (error) {
+    console.error('[DB] getGymLogsDbStatus - ERROR:', error);
+    throw error;
+  }
+};
+
 export const timeInUser = async (userId: string, _username: string): Promise<GymLog> => {
   const response = await fetch(`${API_URL}/gym-logs/time_in/`, {
     method: 'POST',

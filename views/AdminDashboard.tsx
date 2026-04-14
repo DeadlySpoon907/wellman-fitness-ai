@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, GymLog } from '../types';
-import { getAllUsers, saveUser, deleteUser, getAllGymLogs, timeInUser, timeOutUser, getActiveGymLogs } from '../services/DB';
+import { getAllUsers, saveUser, deleteUser, getAllGymLogs, timeInUser, timeOutUser, getActiveGymLogs, getGymLogsDbStatus } from '../services/DB';
 
 type TabType = 'users' | 'analytics' | 'health' | 'settings' | 'logbook';
 
@@ -8,9 +8,13 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('users');
   const [loading, setLoading] = useState(true);
+  const [dbStatus, setDbStatus] = useState<any>(null);
+  const [dbLoading, setDbLoading] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsers();
+    loadDbStatus();
   }, []);
 
   const loadUsers = async () => {
@@ -18,6 +22,19 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
     const data = await getAllUsers();
     setUsers(data);
     setLoading(false);
+  };
+
+  const loadDbStatus = async () => {
+    setDbLoading(true);
+    setDbError(null);
+    try {
+      const status = await getGymLogsDbStatus();
+      setDbStatus(status);
+    } catch (err: any) {
+      setDbError(err?.message || String(err));
+    } finally {
+      setDbLoading(false);
+    }
   };
 
   const stats = useMemo(() => {
@@ -96,6 +113,22 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
           ))}
         </div>
       </section>
+
+      <div className="mt-4">
+        <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-800 text-sm">
+          {dbLoading ? (
+            <div>Checking gym logs DB status…</div>
+          ) : dbError ? (
+            <div className="text-rose-600">DB check error: {dbError}</div>
+          ) : dbStatus ? (
+            <div>
+              <strong>GymLog table:</strong> {dbStatus.gym_log_table_exists ? 'present' : 'missing'} — <strong>Count:</strong> {dbStatus.gym_log_count}
+            </div>
+          ) : (
+            <div>DB status not available</div>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <StatCard label="Total Users" value={stats.total} icon="👥" color="bg-primary-500" />
