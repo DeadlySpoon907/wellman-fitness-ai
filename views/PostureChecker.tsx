@@ -94,7 +94,9 @@ const PostureChecker: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKe
         ]
       });
 
-      const text = (response as any).text;
+      const rawResponse = (response as any);
+      const text = typeof rawResponse.text === 'function' ? rawResponse.text() : rawResponse.text;
+      if (!text) throw new Error("No response text from AI");
       const jsonString = text.replace(/```json|```/g, '').trim();
       const data = JSON.parse(jsonString);
       setAnalysis(data);

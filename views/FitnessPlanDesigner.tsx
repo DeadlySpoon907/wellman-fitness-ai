@@ -58,7 +58,8 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
         contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
 
-      const text = (response as any).text;
+      const rawResponse = (response as any);
+      const text = typeof rawResponse.text === 'function' ? rawResponse.text() : rawResponse.text;
       const jsonString = text.replace(/```json|```/g, '').trim();
       const plan = JSON.parse(jsonString);
       const completePlan = { ...plan, generatedAt: new Date().toISOString() };
