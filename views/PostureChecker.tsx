@@ -94,7 +94,7 @@ const PostureChecker: React.FC<{ user: User; apiKey?: string }> = ({ user, apiKe
         ]
       });
 
-      const text = (response as any).text();
+      const text = (response as any).text;
       const jsonString = text.replace(/```json|```/g, '').trim();
       const data = JSON.parse(jsonString);
       setAnalysis(data);

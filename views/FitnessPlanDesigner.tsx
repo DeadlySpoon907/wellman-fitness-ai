@@ -54,11 +54,11 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
       Return ONLY valid JSON, no markdown.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
 
-      const text = (response as any).text();
+      const text = (response as any).text;
       const jsonString = text.replace(/```json|```/g, '').trim();
       const plan = JSON.parse(jsonString);
       const completePlan = { ...plan, generatedAt: new Date().toISOString() };
