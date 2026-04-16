@@ -234,7 +234,7 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     if (!landmarks || landmarks.length < 28) return null;
 
     const result = predictExercise(landmarks);
-    if (result && result.confidence > 0.3) {
+    if (result && result.confidence > 0.6) {
       const exType = getExerciseType(result.exercise);
       if (exType) return exType;
     }
