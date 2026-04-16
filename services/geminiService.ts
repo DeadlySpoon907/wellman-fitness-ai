@@ -129,7 +129,14 @@ export const generateDailyFitnessPlan = async (
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
-    const text = response.text;
+    let text = '';
+    if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      text = response.candidates[0].content.parts[0].text;
+    } else if (typeof (response as any).text === 'function') {
+      text = (response as any).text();
+    } else if ((response as any).text) {
+      text = (response as any).text;
+    }
     if (!text) throw new Error("No response from AI");
     const result = JSON.parse(cleanJson(text));
     setCache(cacheKey, result);
@@ -178,7 +185,14 @@ export const analyzeMacros = async (base64Image: string, apiKey?: string): Promi
       }]
     });
 
-    const text = response.text;
+    let text = '';
+    if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      text = response.candidates[0].content.parts[0].text;
+    } else if (typeof (response as any).text === 'function') {
+      text = (response as any).text();
+    } else if ((response as any).text) {
+      text = (response as any).text;
+    }
     if (!text) throw new Error("No response from AI");
     const result = JSON.parse(cleanJson(text));
     setCache(cacheKey, result);
@@ -227,7 +241,14 @@ export const estimateBmiFromPhoto = async (base64Image: string, apiKey?: string)
       }]
     });
 
-    const text = response.text;
+    let text = '';
+    if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      text = response.candidates[0].content.parts[0].text;
+    } else if (typeof (response as any).text === 'function') {
+      text = (response as any).text();
+    } else if ((response as any).text) {
+      text = (response as any).text;
+    }
     if (!text) throw new Error("No response from AI");
     const result = JSON.parse(cleanJson(text));
     setCache(cacheKey, result);
@@ -274,7 +295,14 @@ export const checkPosture = async (base64Image: string, apiKey?: string): Promis
       }]
     });
 
-    const text = response.text;
+    let text = '';
+    if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      text = response.candidates[0].content.parts[0].text;
+    } else if (typeof (response as any).text === 'function') {
+      text = (response as any).text();
+    } else if ((response as any).text) {
+      text = (response as any).text;
+    }
     if (!text) throw new Error("No response from AI");
     const result = JSON.parse(cleanJson(text));
     setCache(cacheKey, result);

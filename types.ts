@@ -84,4 +84,121 @@ export interface FitnessPlan {
   }[];
   motivation: string;
   generatedAt: string;
+  nutrition?: {
+    protein: string;
+    carbs: string;
+    fats: string;
+  };
 }
+
+// Pose tracking types
+export type ExerciseType = 'bicep_curl' | 'squat' | 'pushup' | 'lunge' | 'situp';
+
+export type RepPhase = 'up' | 'down' | 'bottom';
+
+export interface Landmark {
+  x: number;
+  y: number;
+  z: number;
+  visibility: number;
+}
+
+export interface NormalizedLandmark {
+  x: number;
+  y: number;
+  z?: number;
+  visibility?: number;
+}
+
+export interface Violation {
+  type: 'elbow_movement' | 'shoulder_drop' | 'knee_valgus' | 'back_rounding' | 'hips_rising';
+  message: string;
+  severity: 'warning' | 'error';
+}
+
+export interface RepState {
+  phase: RepPhase;
+  count: number;
+  elbowAngle: number;
+}
+
+export interface ExerciseConfig {
+  name: string;
+  elbowAngleDown?: number;
+  elbowAngleUp?: number;
+  kneeAngleDown?: number;
+  kneeAngleUp?: number;
+  minRepDuration: number;
+  detectionMode: 'angle';
+}
+
+export const EXERCISE_CONFIGS: Record<ExerciseType, ExerciseConfig> = {
+  bicep_curl: {
+    name: 'Bicep Curl',
+    elbowAngleDown: 60,
+    elbowAngleUp: 160,
+    minRepDuration: 300,
+    detectionMode: 'angle',
+  },
+  squat: {
+    name: 'Squat',
+    elbowAngleDown: 90,
+    elbowAngleUp: 170,
+    minRepDuration: 500,
+    detectionMode: 'angle',
+  },
+  pushup: {
+    name: 'Push-up',
+    elbowAngleDown: 80,
+    elbowAngleUp: 170,
+    minRepDuration: 400,
+    detectionMode: 'angle',
+  },
+  lunge: {
+    name: 'Lunge',
+    kneeAngleDown: 70,
+    kneeAngleUp: 170,
+    minRepDuration: 500,
+    detectionMode: 'angle',
+  },
+  situp: {
+    name: 'Sit-up',
+    elbowAngleDown: 90,
+    elbowAngleUp: 170,
+    minRepDuration: 400,
+    detectionMode: 'angle',
+  },
+};
+
+export const POSE_CONNECTIONS: [number, number][] = [
+  [11, 12],
+  [11, 13], [13, 15],
+  [12, 14], [14, 16],
+  [11, 23], [12, 24],
+  [23, 24],
+  [23, 25], [25, 27],
+  [24, 26], [26, 28],
+];
+
+// Hand tracking types
+export interface HandLandmark {
+  x: number;
+  y: number;
+  z: number;
+  visibility?: number;
+}
+
+export interface Hand {
+  landmarks: HandLandmark[];
+  handedness: 'Left' | 'Right';
+  confidence: number;
+}
+
+export const HAND_CONNECTIONS: [number, number][] = [
+  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 5], [5, 6], [6, 7], [7, 8],
+  [0, 9], [9, 10], [10, 11], [11, 12],
+  [0, 13], [13, 14], [14, 15], [15, 16],
+  [0, 17], [17, 18], [18, 19], [19, 20],
+  [5, 9], [9, 13], [13, 17]
+];
