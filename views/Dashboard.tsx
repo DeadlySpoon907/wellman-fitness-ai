@@ -17,6 +17,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }
 
   const fitnessPlan = user.activePlan;
 
+  const todaySession = useMemo(() => {
+    if (!fitnessPlan?.sessions?.length || !fitnessPlan.startDate) return null;
+    const startDate = new Date(fitnessPlan.startDate);
+    const today = new Date();
+    const diffDays = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const dayNum = diffDays + 1;
+    return fitnessPlan.sessions.find(s => s.day === dayNum) || null;
+  }, [fitnessPlan]);
+
+  const planProgress = useMemo(() => {
+    if (!fitnessPlan?.sessions?.length) return 0;
+    const completed = fitnessPlan.sessions.filter(s => s.completed).length;
+    return Math.round((completed / fitnessPlan.sessions.length) * 100);
+  }, [fitnessPlan]);
+
   const sortedWeightLogs = useMemo(() => {
     return [...(user.weightLogs || [])]
       .filter(log => log.date && !isNaN(new Date(log.date).getTime()))
@@ -217,28 +232,41 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan }
                     <p className="italic text-primary-800 dark:text-primary-200 text-sm">"{fitnessPlan.motivation}"</p>
                   </div>
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Last Sync: {new Date(fitnessPlan.generatedAt).toLocaleDateString()}
+                    {planProgress}% Complete
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {fitnessPlan.dailyWorkouts?.map((workout, idx) => (
-                    <div key={idx} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-transparent hover:border-primary-200 transition-all group">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-bold text-lg group-hover:text-primary-600 transition-colors">{workout.name}</h4>
-                        <span className="text-xs font-bold bg-white dark:bg-slate-700 px-2 py-1 rounded-md text-slate-500">{workout.duration}</span>
+                {todaySession ? (
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-primary-200 dark:border-primary-800">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">Today's Session</span>
+                        <h4 className="font-bold text-lg">{todaySession.title}</h4>
                       </div>
-                      <ul className="space-y-2">
-                        {workout.exercises.map((ex, i) => (
-                          <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-primary-500 rounded-full" />
-                            {ex}
-                          </li>
-                        ))}
-                      </ul>
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${todaySession.completed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {todaySession.completed ? '✓ Complete' : '○ Pending'}
+                      </span>
                     </div>
-                  ))}
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{todaySession.focus}</p>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <span>⏱️ {todaySession.duration}</span>
+                      <span>•</span>
+                      <span>Day {todaySession.day}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-slate-500">
+                    No session scheduled for today
+                  </div>
+                )}
+
+                <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-500"
+                    style={{ width: `${planProgress}%` }}
+                  />
                 </div>
+                <p className="text-center text-xs text-slate-500">{fitnessPlan.sessions?.filter(s => s.completed).length || 0} of {fitnessPlan.sessions?.length || 0} sessions completed</p>
               </div>
             ) : (
               <div className="text-center py-12 flex flex-col items-center">
