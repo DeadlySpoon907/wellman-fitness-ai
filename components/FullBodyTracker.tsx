@@ -78,9 +78,9 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
         },
         runningMode: 'VIDEO',
         numPoses: 1,
-        minPoseDetectionConfidence: 0.25,
-        minPosePresenceConfidence: 0.25,
-        minTrackingConfidence: 0.25,
+        minPoseDetectionConfidence: 0.15,
+        minPosePresenceConfidence: 0.15,
+        minTrackingConfidence: 0.15,
       });
 
       console.log('Pose detector initialized successfully!');
@@ -256,19 +256,19 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     const requiredPoints = [leftShoulder, rightShoulder, leftHip, rightHip, 
                            leftKnee, rightKnee, leftAnkle, rightAnkle, nose];
     for (const point of requiredPoints) {
-      if (point.visibility !== undefined && point.visibility < 0.3) return false;
+      if (point.visibility !== undefined && point.visibility < 0.2) return false;
     }
 
     const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
     const hipWidth = Math.abs(rightHip.x - leftHip.x);
     const bodyWidth = (shoulderWidth + hipWidth) / 2;
-    if (bodyWidth < 0.05 || bodyWidth > 0.7) return false;
+    if (bodyWidth < 0.04 || bodyWidth > 0.8) return false;
 
     const torsoLength = Math.abs(leftHip.y - leftShoulder.y);
-    if (torsoLength < 0.08 || torsoLength > 0.55) return false;
+    if (torsoLength < 0.05 || torsoLength > 0.6) return false;
 
     const legLength = Math.abs(leftAnkle.y - leftHip.y);
-    if (legLength < 0.1 || legLength > 0.8) return false;
+    if (legLength < 0.08 || legLength > 0.85) return false;
 
     const leftArmLength = Math.sqrt(
       Math.pow(leftWrist.x - leftElbow.x, 2) + Math.pow(leftWrist.y - leftElbow.y, 2)
@@ -276,8 +276,8 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     const rightArmLength = Math.sqrt(
       Math.pow(rightWrist.x - rightElbow.x, 2) + Math.pow(rightWrist.y - rightElbow.y, 2)
     );
-    if (leftArmLength < 0.03 || rightArmLength < 0.03) return false;
-    if (leftArmLength > 0.6 || rightArmLength > 0.6) return false;
+    if (leftArmLength < 0.02 || rightArmLength < 0.02) return false;
+    if (leftArmLength > 0.7 || rightArmLength > 0.7) return false;
 
     return true;
   };
