@@ -11,7 +11,7 @@ class User(AbstractUser):
     display_name = models.CharField(max_length=100, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     avatar_seed = models.CharField(max_length=100, blank=True, null=True)
-    avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    avatar_url = models.TextField(blank=True, null=True)
     height_cm = models.FloatField(null=True, blank=True)
     estimated_body_type = models.CharField(max_length=50, blank=True, null=True)
     is_premium = models.BooleanField(default=False, db_index=True)
@@ -20,7 +20,7 @@ class User(AbstractUser):
     # Structured Data
     # { "goal": str, "intensity": str, "location": str, "focusAreas": [str] }
     fitness_profile = models.JSONField(null=True, blank=True)
-    # { "motivation": str, "generatedAt": str, "dailyWorkouts": [...] }
+    # { "motivation": str, "generatedAt": str, "startDate": str, "endDate": str, "sessions": [{ "id": str, "day": int, "week": int, "dayOfWeek": str, "title": str, "focus": str, "exercises": [{ "name": str, "sets": int, "reps": int, "restSeconds": int }], "duration": str, "completed": bool, "completedAt": str }], "nutrition": { "protein": str, "carbs": str, "fats": str } }
     active_plan = models.JSONField(null=True, blank=True)
 
     # Activity & Health Logs
