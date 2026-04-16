@@ -63,7 +63,7 @@ This body type influences:
 - Endomorph: Tends to store fat, benefits from cardio and higher protein`;
       }
 
-      const prompt = `Generate a daily fitness plan for a user with:
+      const prompt = `Generate a daily fitness and diet plan for a user with:
 Weight: ${currentWeight}kg
 Height: ${user.heightCm}cm
 Goal: ${profile.goal}
@@ -71,11 +71,16 @@ Level: ${profile.intensity}
 Location: ${profile.location}
 Focus: ${profile.focusAreas.join(', ')}
 ${bodyTypeContext}
-      
+
+IMPORTANT: Only include exercises from this list that the AI pose detection system can track:
+- Squat
+- Push-up
+- Lunge
+
 Return a JSON object with:
 - motivation: string (short quote)
-- dailyWorkouts: array of objects { name: string, duration: string, exercises: string[] }
-- nutrition: object { protein: string, carbs: string, fats: string }
+- dailyWorkouts: array of objects { name: string, duration: string, exercises: string[] } - only use exercises from the list above
+- dietPlan: object { meals: array of { name: string, foods: string[], calories: number, protein: number, carbs: number, fats: number }[], hydration: string, notes: string }
 Return ONLY valid JSON, no markdown.`;
 
       const response = await ai.models.generateContent({

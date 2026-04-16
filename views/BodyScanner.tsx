@@ -324,38 +324,36 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
           </div>
 
           {scanState === 'scanning' ? (
-            <div className="relative">
+            <div>
               <FullBodyTracker 
                 exercise={null}
                 freedomMode={false}
                 onLandmarksUpdate={handleLiveBodyAnalysis}
               />
-              <div className="absolute bottom-4 left-4 right-4 z-10">
-                <div className={`px-4 py-3 rounded-xl ${positionStatus === 'invalid' ? 'bg-red-600' : positionStatus === 'ready' ? 'bg-green-600' : 'bg-black/70'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white font-bold text-sm">
-                      {positionStatus === 'checking' ? 'CHECKING POSITION...' : 
-                       positionStatus === 'ready' ? 'SCANNING BODY...' : 
-                       'POSITION CHECK'}
-                    </span>
-                    {positionStatus === 'ready' && (
-                      <span className="text-white font-black">{scanProgress}%</span>
-                    )}
-                  </div>
-                  {positionStatus === 'ready' ? (
-                    <>
-                      <div className="w-full h-2 bg-slate-600 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-300"
-                          style={{ width: `${scanProgress}%` }}
-                        />
-                      </div>
-                      <p className="text-slate-300 text-xs mt-2">Stand still - analyzing body type</p>
-                    </>
-                  ) : (
-                    <p className="text-white text-xs mt-1">{positionMessage}</p>
+              <div className={`mt-4 p-3 rounded-xl ${positionStatus === 'invalid' ? 'bg-red-600' : positionStatus === 'ready' ? 'bg-green-600' : 'bg-black/70'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white font-bold text-sm">
+                    {positionStatus === 'checking' ? 'CHECKING POSITION...' : 
+                     positionStatus === 'ready' ? 'SCANNING BODY...' : 
+                     'POSITION CHECK'}
+                  </span>
+                  {positionStatus === 'ready' && (
+                    <span className="text-white font-black">{scanProgress}%</span>
                   )}
                 </div>
+                {positionStatus === 'ready' ? (
+                  <>
+                    <div className="w-full h-2 bg-slate-600 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-300"
+                        style={{ width: `${scanProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-slate-300 text-xs mt-2">Stand still - analyzing body type</p>
+                  </>
+                ) : (
+                  <p className="text-white text-xs mt-1">{positionMessage}</p>
+                )}
               </div>
             </div>
           ) : scanState === 'ready' && bodyAnalysis ? (
