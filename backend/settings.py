@@ -117,7 +117,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 # CSRF trusted origins for POST requests - specific domains
 CSRF_TRUSTED_ORIGINS = [
-    'https://wellman-fitness-version-136-a6yibchix-deadlyspoon907s-projects.vercel.app',
+    'https://wellman-fitness-version-136.vercel.app',
     'https://wellman-backend-production.up.railway.app',
     'http://localhost:5173',
     'http://127.0.0.1:5173',

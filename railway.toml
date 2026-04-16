@@ -30,7 +30,7 @@ PORT = "8000"
 # DEBUG should be "False" in production
 DEBUG = "False"
 # ALLOWED_HOSTS - explicitly list domains for security (Django settings.py has fallback)
-ALLOWED_HOSTS = "wellman-backend-production.up.railway.app,wellman-fitness-version-136.vercel.app"
+ALLOWED_HOSTS = "wellman-backend-production.up.railway.app,wellman-fitness-version-136.vercel.app,wellman-fitness-version-136-a6yibchix-deadlyspoon907s-projects.vercel.app"
 # Note: CORS settings are handled by django-cors-headers in backend/settings.py
 # CORS_ALLOW_ALL_ORIGINS and CSRF_TRUSTED_ORIGINS are already configured there
 
