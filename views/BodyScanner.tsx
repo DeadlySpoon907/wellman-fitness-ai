@@ -71,45 +71,26 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
     const nose = landmarks[0];
 
     if (!leftShoulder || !rightShoulder || !leftHip || !rightHip) {
-      return { valid: false, message: 'Body not fully visible. Please step back.' };
+      return { valid: true, message: 'Body detected - continuing scan' };
     }
 
     const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
     const hipWidth = Math.abs(rightHip.x - leftHip.x);
     const bodyWidth = (shoulderWidth + hipWidth) / 2;
 
-    if (bodyWidth < 0.15) {
-      return { valid: false, message: 'Too far from camera. Please step closer.' };
+    if (bodyWidth < 0.12) {
+      return { valid: true, message: 'Too far - scanning anyway' };
     }
-    if (bodyWidth > 0.45) {
-      return { valid: false, message: 'Too close to camera. Please step back.' };
+    if (bodyWidth > 0.5) {
+      return { valid: true, message: 'Close to camera - scanning anyway' };
     }
 
     const verticalSpan = Math.max(
       Math.abs((nose?.y || 0) - (leftAnkle?.y || 0)),
       Math.abs((nose?.y || 0) - (rightAnkle?.y || 0))
     );
-    if (verticalSpan < 0.7) {
-      return { valid: false, message: 'Full body not visible. Please show complete body.' };
-    }
-
-    const shoulderLevel = Math.abs(leftShoulder.y - rightShoulder.y);
-    if (shoulderLevel > 0.08) {
-      return { valid: false, message: 'Please stand straight, not tilted.' };
-    }
-
-    const hipLevel = Math.abs(leftHip.y - rightHip.y);
-    if (hipLevel > 0.06) {
-      return { valid: false, message: 'Please stand straight, not tilted.' };
-    }
-
-    const leftKneeAngle = leftKnee && leftHip && leftAnkle 
-      ? Math.atan2(leftKnee.y - leftHip.y, leftKnee.x - leftHip.x) - Math.atan2(leftAnkle.y - leftKnee.y, leftAnkle.x - leftKnee.x)
-      : 0;
-    const isStanding = Math.abs(leftKneeAngle * 180 / Math.PI) > 150;
-
-    if (!isStanding) {
-      return { valid: false, message: 'Please stand straight for scanning.' };
+    if (verticalSpan < 0.65) {
+      return { valid: true, message: 'Showing most of body - scanning' };
     }
 
     return { valid: true, message: 'Position OK! Scanning...' };
@@ -329,6 +310,9 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
                 exercise={null}
                 freedomMode={false}
                 onLandmarksUpdate={handleLiveBodyAnalysis}
+                showOverlay={true}
+                showPostureAnalysis={false}
+                smoothFactor={0.25}
               />
               <div className={`mt-4 p-3 rounded-xl ${positionStatus === 'invalid' ? 'bg-red-600' : positionStatus === 'ready' ? 'bg-green-600' : 'bg-black/70'}`}>
                 <div className="flex items-center justify-between mb-2">

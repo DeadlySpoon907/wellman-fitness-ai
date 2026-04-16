@@ -6,6 +6,7 @@ interface FullBodySkeletonProps {
   canvasWidth: number;
   canvasHeight: number;
   isCameraRunning: boolean;
+  showOverlay?: boolean;
 }
 
 class FullBodyOverlay {
@@ -93,6 +94,7 @@ export function FullBodySkeleton({
   canvasWidth,
   canvasHeight,
   isCameraRunning,
+  showOverlay = true,
 }: FullBodySkeletonProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<FullBodyOverlay | null>(null);
@@ -108,12 +110,14 @@ export function FullBodySkeleton({
     const overlay = overlayRef.current;
     overlay.setImageDimensions(canvasWidth, canvasHeight);
 
-    if (landmarks.length > 0 && isCameraRunning) {
+    if (landmarks.length > 0 && isCameraRunning && showOverlay) {
       overlay.setLandmarks(landmarks);
     } else {
       overlay.clear();
     }
-  }, [landmarks, canvasWidth, canvasHeight, isCameraRunning]);
+  }, [landmarks, canvasWidth, canvasHeight, isCameraRunning, showOverlay]);
+
+  if (!showOverlay) return null;
 
   return (
     <canvas

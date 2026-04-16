@@ -15,9 +15,12 @@ interface FullBodyTrackerProps {
   exercise: ExerciseType | null;
   freedomMode?: boolean;
   onLandmarksUpdate?: (landmarks: NormalizedLandmark[]) => void;
+  showOverlay?: boolean;
+  showPostureAnalysis?: boolean;
+  smoothFactor?: number;
 }
 
-export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpdate }: FullBodyTrackerProps) {
+export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpdate, showOverlay = true, showPostureAnalysis = true, smoothFactor = 0.12 }: FullBodyTrackerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const poseLandmarkerRef = useRef<any>(null);
@@ -25,7 +28,6 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
   const isCameraRunningRef = useRef(false);
   const isAIInitializedRef = useRef(false);
   const smoothedLandmarksRef = useRef<NormalizedLandmark[]>([]);
-  const SMOOTH_FACTOR = 0.12;
 
   const [isCameraRunning, setIsCameraRunning] = useState(false);
   const [isAIInitialized, setIsAIInitialized] = useState(false);
@@ -170,8 +172,8 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
             const smoothed = rawLandmarks.map((l: NormalizedLandmark, i: number) => {
               const prev = smoothedLandmarksRef.current[i] || l;
               return {
-                x: prev.x + SMOOTH_FACTOR * (l.x - prev.x),
-                y: prev.y + SMOOTH_FACTOR * (l.y - prev.y),
+                x: prev.x + smoothFactor * (l.x - prev.x),
+                y: prev.y + smoothFactor * (l.y - prev.y),
                 z: l.z,
                 visibility: l.visibility,
               };
@@ -367,7 +369,7 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
             {currentPose ? 'STATUS: TRACKING ACTIVE' : 'STATUS: SCANNING...'}
           </div>
         )}
-        {postureAnalysis && (
+        {showPostureAnalysis && postureAnalysis && (
           <div className="absolute top-12 right-2 bg-black/80 px-4 py-2 rounded text-white text-sm z-10 min-w-[180px]" style={{ 
             background: postureAnalysis.rating === 'good' ? 'rgba(0,200,0,0.85)' : 
                         postureAnalysis.rating === 'acceptable' ? 'rgba(255,165,0,0.85)' : 'rgba(255,0,0,0.85)'
@@ -413,6 +415,7 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
           canvasWidth={640}
           canvasHeight={480}
           isCameraRunning={isCameraRunning}
+          showOverlay={showOverlay}
         />
       </div>
 
