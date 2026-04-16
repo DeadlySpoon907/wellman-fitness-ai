@@ -28,6 +28,8 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
   const [scanProgress, setScanProgress] = useState(0);
   const [scanDuration, setScanDuration] = useState(0);
   const [bodyScans, setBodyScans] = useState<BodyAnalysis[]>([]);
+  const [positionStatus, setPositionStatus] = useState<'idle' | 'checking' | 'ready' | 'invalid'>('idle');
+  const [positionMessage, setPositionMessage] = useState('');
   const scanProgressRef = useRef(0);
   const scanStartTimeRef = useRef(0);
   const bodyScansRef = useRef<BodyAnalysis[]>([]);
@@ -53,18 +55,86 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
     }
   }, [user.estimatedBodyType, user.heightCm]);
 
+  const checkPosition = (landmarks: NormalizedLandmark[]): { valid: boolean; message: string } => {
+    if (!landmarks || landmarks.length < 33) {
+      return { valid: false, message: 'No person detected. Please stand in frame.' };
+    }
+
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    const leftKnee = landmarks[25];
+    const rightKnee = landmarks[26];
+    const leftAnkle = landmarks[27];
+    const rightAnkle = landmarks[28];
+    const nose = landmarks[0];
+
+    if (!leftShoulder || !rightShoulder || !leftHip || !rightHip) {
+      return { valid: false, message: 'Body not fully visible. Please step back.' };
+    }
+
+    const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+    const hipWidth = Math.abs(rightHip.x - leftHip.x);
+    const bodyWidth = (shoulderWidth + hipWidth) / 2;
+
+    if (bodyWidth < 0.15) {
+      return { valid: false, message: 'Too far from camera. Please step closer.' };
+    }
+    if (bodyWidth > 0.45) {
+      return { valid: false, message: 'Too close to camera. Please step back.' };
+    }
+
+    const verticalSpan = Math.max(
+      Math.abs((nose?.y || 0) - (leftAnkle?.y || 0)),
+      Math.abs((nose?.y || 0) - (rightAnkle?.y || 0))
+    );
+    if (verticalSpan < 0.7) {
+      return { valid: false, message: 'Full body not visible. Please show complete body.' };
+    }
+
+    const shoulderLevel = Math.abs(leftShoulder.y - rightShoulder.y);
+    if (shoulderLevel > 0.08) {
+      return { valid: false, message: 'Please stand straight, not tilted.' };
+    }
+
+    const hipLevel = Math.abs(leftHip.y - rightHip.y);
+    if (hipLevel > 0.06) {
+      return { valid: false, message: 'Please stand straight, not tilted.' };
+    }
+
+    const leftKneeAngle = leftKnee && leftHip && leftAnkle 
+      ? Math.atan2(leftKnee.y - leftHip.y, leftKnee.x - leftHip.x) - Math.atan2(leftAnkle.y - leftKnee.y, leftAnkle.x - leftKnee.x)
+      : 0;
+    const isStanding = Math.abs(leftKneeAngle * 180 / Math.PI) > 150;
+
+    if (!isStanding) {
+      return { valid: false, message: 'Please stand straight for scanning.' };
+    }
+
+    return { valid: true, message: 'Position OK! Scanning...' };
+  };
+
   const handleLiveBodyAnalysis = useCallback((landmarks: NormalizedLandmark[]) => {
     if (scanState === 'scanning' && landmarks.length > 0) {
       setLiveLandmarks(landmarks);
       
+      const position = checkPosition(landmarks);
+      setPositionStatus(position.valid ? 'ready' : 'invalid');
+      setPositionMessage(position.message);
+      
+      if (!position.valid) {
+        return;
+      }
+
       const elapsed = Date.now() - scanStartTimeRef.current;
       setScanDuration(elapsed);
       
-      if (elapsed < 5000) {
+      if (elapsed < 10000) {
         const analysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
         bodyScansRef.current = [...bodyScansRef.current, analysis];
         setBodyScans(bodyScansRef.current);
-        setScanProgress(Math.min(Math.floor((elapsed / 5000) * 100), 95));
+        setScanProgress(Math.min(Math.floor((elapsed / 10000) * 100), 95));
       } else {
         if (bodyScansRef.current.length > 0) {
           const avgConfidence = bodyScansRef.current.reduce((sum, s) => sum + s.confidence, 0) / bodyScansRef.current.length;
@@ -83,6 +153,7 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
         }
         setScanProgress(100);
         setScanState('ready');
+        setPositionStatus('idle');
       }
     }
   }, [scanState, calculatedBmi, currentHeight, currentWeight]);
@@ -95,6 +166,8 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
     setBodyScans([]);
     setScanProgress(0);
     setScanDuration(0);
+    setPositionStatus('checking');
+    setPositionMessage('Checking position...');
     scanProgressRef.current = 0;
     scanStartTimeRef.current = Date.now();
   };
@@ -196,6 +269,8 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
     setBodyScans([]);
     setScanProgress(0);
     setScanDuration(0);
+    setPositionStatus('idle');
+    setPositionMessage('');
     scanProgressRef.current = 0;
   };
 
@@ -256,18 +331,30 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
                 onLandmarksUpdate={handleLiveBodyAnalysis}
               />
               <div className="absolute top-4 left-4 right-4 z-10">
-                <div className="bg-black/70 px-4 py-3 rounded-xl">
+                <div className={`px-4 py-3 rounded-xl ${positionStatus === 'invalid' ? 'bg-red-600' : positionStatus === 'ready' ? 'bg-green-600' : 'bg-black/70'}`}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-white font-bold text-sm">SCANNING BODY...</span>
-                    <span className="text-white font-black">{scanProgress}%</span>
+                    <span className="text-white font-bold text-sm">
+                      {positionStatus === 'checking' ? 'CHECKING POSITION...' : 
+                       positionStatus === 'ready' ? 'SCANNING BODY...' : 
+                       'POSITION CHECK'}
+                    </span>
+                    {positionStatus === 'ready' && (
+                      <span className="text-white font-black">{scanProgress}%</span>
+                    )}
                   </div>
-                  <div className="w-full h-2 bg-slate-600 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-300"
-                      style={{ width: `${scanProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-slate-300 text-xs mt-2">Stand still and ensure full body is visible</p>
+                  {positionStatus === 'ready' ? (
+                    <>
+                      <div className="w-full h-2 bg-slate-600 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-300"
+                          style={{ width: `${scanProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-slate-300 text-xs mt-2">Stand still - analyzing body type</p>
+                    </>
+                  ) : (
+                    <p className="text-white text-xs mt-1">{positionMessage}</p>
+                  )}
                 </div>
               </div>
             </div>
