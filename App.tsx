@@ -4,7 +4,7 @@ import { User } from './types';
 import { findUser, registerUser, logWeight, recordActivity, getUser, loginUser } from './services/DB';
 import Dashboard from './views/Dashboard';
 import Nutritionist from './views/Nutritionist';
-import BmiEstimator from './views/BmiEstimator';
+import BodyScanner from './views/BodyScanner';
 import PostureChecker from './views/PostureChecker';
 import FitnessPlanDesigner from './views/FitnessPlanDesigner';
 import AdminDashboard from './views/AdminDashboard';
@@ -231,7 +231,7 @@ const App: React.FC = () => {
           <NavButton active={activeTab === 'designer'} onClick={() => setActiveTab('designer')} icon="🏗️" label="Plan Designer" />
           <NavButton active={activeTab === 'nutrition'} onClick={() => setActiveTab('nutrition')} icon="🥗" label="Nutritionist" />
           <NavButton active={activeTab === 'nutribot'} onClick={() => setActiveTab('nutribot')} icon="🤖" label="NutriBot" />
-          <NavButton active={activeTab === 'bmi'} onClick={() => setActiveTab('bmi')} icon="📏" label="BMI Estimator" />
+          <NavButton active={activeTab === 'bmi'} onClick={() => setActiveTab('bmi')} icon="📏" label="Body Scanner" />
           <NavButton active={activeTab === 'posture'} onClick={() => setActiveTab('posture')} icon="🧍" label="Posture" />
           <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon="👤" label="Profile" />
           <NavButton active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon="⚙️" label="Settings" />
@@ -279,7 +279,7 @@ const App: React.FC = () => {
         {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} apiKey={apiKey} />}
         {activeTab === 'nutrition' && <Nutritionist user={user} apiKey={apiKey} />}
         {activeTab === 'nutribot' && <NutriBot apiKey={apiKey} />}
-        {activeTab === 'bmi' && <BmiEstimator user={user} onUpdateProfile={syncUser} apiKey={apiKey} />}
+        {activeTab === 'bmi' && <BodyScanner user={user} onUpdateProfile={syncUser} apiKey={apiKey} />}
         {activeTab === 'posture' && <PostureChecker user={user} apiKey={apiKey} />}
         {activeTab === 'profile' && <Profile user={user} onUpdate={syncUser} />}
         {activeTab === 'settings' && <Settings user={user} currentApiKey={customApiKey} onSave={handleSaveApiKey} onUpdate={() => {}} onLogout={handleLogout} />}

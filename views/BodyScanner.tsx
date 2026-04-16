@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { User } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { saveUser } from '../services/DB';
@@ -19,11 +19,17 @@ interface LockedBodyProfile {
   confidence: number;
 }
 
-const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: string }> = ({ user, onUpdateProfile }) => {
+const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: string }> = ({ user, onUpdateProfile }) => {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
   const [lockedProfile, setLockedProfile] = useState<LockedBodyProfile | null>(null);
   const [liveLandmarks, setLiveLandmarks] = useState<NormalizedLandmark[]>([]);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanDuration, setScanDuration] = useState(0);
+  const [bodyScans, setBodyScans] = useState<BodyAnalysis[]>([]);
+  const scanProgressRef = useRef(0);
+  const scanStartTimeRef = useRef(0);
+  const bodyScansRef = useRef<BodyAnalysis[]>([]);
 
   const currentWeight = user.weightLogs.length > 0 
     ? user.weightLogs[user.weightLogs.length - 1].weight 
@@ -50,9 +56,33 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
     if (scanState === 'scanning' && landmarks.length > 0) {
       setLiveLandmarks(landmarks);
       
-      const analysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
-      setBodyAnalysis(analysis);
-      setScanState('ready');
+      const elapsed = Date.now() - scanStartTimeRef.current;
+      setScanDuration(elapsed);
+      
+      if (elapsed < 5000) {
+        const analysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
+        bodyScansRef.current = [...bodyScansRef.current, analysis];
+        setBodyScans(bodyScansRef.current);
+        setScanProgress(Math.min(Math.floor((elapsed / 5000) * 100), 95));
+      } else {
+        if (bodyScansRef.current.length > 0) {
+          const avgConfidence = bodyScansRef.current.reduce((sum, s) => sum + s.confidence, 0) / bodyScansRef.current.length;
+          const typeCounts = bodyScansRef.current.reduce((acc, s) => {
+            acc[s.bodyType] = (acc[s.bodyType] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+          const dominantType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0][0];
+          
+          const finalAnalysis: BodyAnalysis = {
+            ...bodyScansRef.current[0],
+            bodyType: dominantType as BodyType,
+            confidence: Math.min(avgConfidence + 0.1, 0.9)
+          };
+          setBodyAnalysis(finalAnalysis);
+        }
+        setScanProgress(100);
+        setScanState('ready');
+      }
     }
   }, [scanState, calculatedBmi, currentHeight, currentWeight]);
 
@@ -60,6 +90,12 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
     setScanState('scanning');
     setLiveLandmarks([]);
     setBodyAnalysis(null);
+    bodyScansRef.current = [];
+    setBodyScans([]);
+    setScanProgress(0);
+    setScanDuration(0);
+    scanProgressRef.current = 0;
+    scanStartTimeRef.current = Date.now();
   };
 
   const lockBodyProfile = async () => {
@@ -98,6 +134,11 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
     setScanState('idle');
     setBodyAnalysis(null);
     setLiveLandmarks([]);
+    bodyScansRef.current = [];
+    setBodyScans([]);
+    setScanProgress(0);
+    setScanDuration(0);
+    scanProgressRef.current = 0;
   };
 
   return (
@@ -106,7 +147,7 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="bg-primary-100 dark:bg-primary-900/40 text-primary-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter">AI Body Scan</span>
-            <h2 className="text-3xl font-black">Body Analyzer</h2>
+            <h2 className="text-3xl font-black">Body Scanner</h2>
           </div>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Scan, detect, and lock your body type for personalized fitness.</p>
         </div>
@@ -156,8 +197,20 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
                 freedomMode={false}
                 onLandmarksUpdate={handleLiveBodyAnalysis}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 px-6 py-3 rounded-xl text-white font-black animate-pulse z-10">
-                SCANNING...
+              <div className="absolute top-4 left-4 right-4 z-10">
+                <div className="bg-black/70 px-4 py-3 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white font-bold text-sm">SCANNING BODY...</span>
+                    <span className="text-white font-black">{scanProgress}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-600 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-300"
+                      style={{ width: `${scanProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-slate-300 text-xs mt-2">Stand still and ensure full body is visible</p>
+                </div>
               </div>
             </div>
           ) : scanState === 'ready' && bodyAnalysis ? (
@@ -234,4 +287,4 @@ const BmiEstimator: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?:
   );
 };
 
-export default BmiEstimator;
+export default BodyScanner;

@@ -206,19 +206,19 @@ function determineBodyType(proportions: BodyProportions, bmi: number): BodyType 
 function calculateConfidence(proportions: BodyProportions, bmi: number): number {
   const { shoulderToHipRatio, waistToHipRatio } = proportions;
   
-  let confidence = 0.5;
+  let confidence = 0.65;
 
   if (shoulderToHipRatio >= 1.0 && shoulderToHipRatio <= 1.3) {
-    confidence += 0.15;
+    confidence += 0.12;
   }
   if (waistToHipRatio >= 0.75 && waistToHipRatio <= 0.95) {
-    confidence += 0.15;
+    confidence += 0.12;
   }
   if (bmi >= 18.5 && bmi <= 30) {
-    confidence += 0.1;
+    confidence += 0.06;
   }
 
-  return Math.min(confidence, 0.95);
+  return Math.min(confidence, 0.9);
 }
 
 function generateRecommendations(
