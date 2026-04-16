@@ -5,7 +5,7 @@ import { saveUser } from '../services/DB';
 import { FullBodyTracker } from '../components/FullBodyTracker';
 import type { ExerciseType } from '../types';
 
-const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; apiKey?: string }> = ({ user, onPlanUpdated }) => {
+const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onStartWorkout?: () => void; apiKey?: string }> = ({ user, onPlanUpdated, onStartWorkout }) => {
   const plan = user.activePlan;
   const [selectedSession, setSelectedSession] = useState<PlanSession | null>(null);
   const [activeExercise, setActiveExercise] = useState<ExerciseType>('squat');
@@ -195,7 +195,13 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; apiK
                 </div>
 
                 <button
-                  onClick={() => setShowTracker(!showTracker)}
+                  onClick={() => {
+                    if (onStartWorkout) {
+                      onStartWorkout();
+                    } else {
+                      setShowTracker(!showTracker);
+                    }
+                  }}
                   className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all"
                 >
                   {showTracker ? 'Hide Tracker' : 'Start Workout'}
