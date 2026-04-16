@@ -1,12 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { User, PostureAnalysis } from '../types';
+import { User } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { getUserGymLogs, logWorkout } from '../services/DB';
 import { FullBodyTracker } from '../components/FullBodyTracker';
-import { HandTracker } from '../components/HandTracker';
 import type { ExerciseType } from '../types';
-
-type TrackerMode = 'fullbody' | 'hand';
 
 const PostureChecker: React.FC<{ user: User; apiKey?: string }> = ({ user }) => {
   const [gymLogs, setGymLogs] = useState<any[]>([]);
@@ -14,7 +11,6 @@ const PostureChecker: React.FC<{ user: User; apiKey?: string }> = ({ user }) => 
   const [workoutName, setWorkoutName] = useState('');
   const [workoutDuration, setWorkoutDuration] = useState('');
   const [workoutExercises, setWorkoutExercises] = useState('');
-  const [trackerMode, setTrackerMode] = useState<TrackerMode>('fullbody');
   const [selectedExercise, setSelectedExercise] = useState<ExerciseType>('bicep_curl');
   const [freedomMode, setFreedomMode] = useState(false);
 
@@ -59,86 +55,52 @@ const PostureChecker: React.FC<{ user: User; apiKey?: string }> = ({ user }) => 
         <p className="text-slate-500 dark:text-slate-400 font-medium">Track your exercises, monitor form, and log workouts.</p>
       </section>
 
-      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-        <button
-          onClick={() => setTrackerMode('fullbody')}
-          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-            trackerMode === 'fullbody' 
-              ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' 
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          🏃 Full Body Tracking
-        </button>
-        <button
-          onClick={() => setTrackerMode('hand')}
-          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-            trackerMode === 'hand' 
-              ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' 
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          👋 Hand Tracking
-        </button>
-      </div>
-
       <AuthGuard user={user} requireMember>
-        {trackerMode === 'fullbody' && (
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div className="mb-6">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                    Select Exercise
-                  </label>
-                  <select
-                    value={selectedExercise}
-                    onChange={(e) => setSelectedExercise(e.target.value as ExerciseType)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium text-sm"
-                  >
-                    <option value="bicep_curl">Bicep Curl</option>
-                    <option value="squat">Squat</option>
-                    <option value="pushup">Push-up</option>
-                    <option value="lunge">Lunge</option>
-                    <option value="situp">Sit-up</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={freedomMode}
-                      onChange={(e) => setFreedomMode(e.target.checked)}
-                      className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                      Auto-Detect Exercise
-                    </span>
-                  </label>
-                </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div className="mb-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                  Select Exercise
+                </label>
+                <select
+                  value={selectedExercise}
+                  onChange={(e) => setSelectedExercise(e.target.value as ExerciseType)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium text-sm"
+                >
+                  <option value="bicep_curl">Bicep Curl</option>
+                  <option value="squat">Squat</option>
+                  <option value="pushup">Push-up</option>
+                  <option value="lunge">Lunge</option>
+                  <option value="situp">Sit-up</option>
+                </select>
               </div>
-              <p className="text-xs text-slate-500 mt-2">
-                {freedomMode 
-                  ? "The system will automatically detect which exercise you're performing"
-                  : "Select an exercise to track your form and count reps"
-                }
-              </p>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={freedomMode}
+                    onChange={(e) => setFreedomMode(e.target.checked)}
+                    className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                    Auto-Detect Exercise
+                  </span>
+                </label>
+              </div>
             </div>
-            <FullBodyTracker 
-              exercise={freedomMode ? null : selectedExercise} 
-              freedomMode={freedomMode}
-            />
-          </div>
-        )}
-
-        {trackerMode === 'hand' && (
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-            <p className="text-sm text-slate-500 mb-4">
-              Track hand movements and gestures in real-time. Show your hands to the camera.
+            <p className="text-xs text-slate-500 mt-2">
+              {freedomMode 
+                ? "The system will automatically detect which exercise you're performing"
+                : "Select an exercise to track your form and count reps"
+              }
             </p>
-            <HandTracker />
           </div>
-        )}
+          <FullBodyTracker 
+            exercise={freedomMode ? null : selectedExercise} 
+            freedomMode={freedomMode}
+          />
+        </div>
       </AuthGuard>
 
       <AuthGuard user={user} requireMember>
