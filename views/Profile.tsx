@@ -54,12 +54,42 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Max dimension for avatar
+      const maxDimension = 200;
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatarUrl(reader.result as string);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > height) {
+            if (width > maxDimension) {
+              height = (height * maxDimension) / width;
+              width = maxDimension;
+            }
+          } else {
+            if (height > maxDimension) {
+              width = (width * maxDimension) / height;
+              height = maxDimension;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Compress to JPEG with 80% quality
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setAvatarUrl(compressedDataUrl);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
-      // Reset input value to allow re-uploading the same file if needed
       e.target.value = '';
     }
   };
