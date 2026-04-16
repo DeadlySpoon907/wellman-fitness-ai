@@ -203,7 +203,6 @@ const App: React.FC = () => {
               <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full transition-colors">
                 {isDarkMode ? '🌙' : '☀️'}
               </button>
-              <button onClick={handleLogout} className="text-sm font-bold text-red-600 px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg">Logout</button>
             </div>
           </div>
         </header>
@@ -254,9 +253,7 @@ const App: React.FC = () => {
               {isMember ? 'Wellman Member' : 'Trial User'}
             </div>
           </div>
-          <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-500 font-bold text-sm hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors">
-            Logout
-          </button>
+          
         </div>
       </aside>
 
@@ -269,11 +266,8 @@ const App: React.FC = () => {
             <div className="flex flex-col"><h1 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Wellman</h1><span className="text-[10px] font-medium text-slate-400">by J&A Fitness Co</span></div>
           </div>
           <div className="flex items-center gap-2">
-             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full transition-colors">
+              <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full transition-colors">
               {isDarkMode ? '🌙' : '☀️'}
-            </button>
-            <button onClick={handleLogout} className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full transition-colors" title="Logout">
-              <span className="text-lg">🚪</span>
             </button>
             <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden border border-slate-300 dark:border-slate-600 shadow-sm cursor-pointer" onClick={() => setActiveTab('profile')}>
               <img src={user.avatarUrl || `https://picsum.photos/seed/${user.avatarSeed || user.id}/100`} alt="Avatar" />
@@ -288,7 +282,7 @@ const App: React.FC = () => {
         {activeTab === 'bmi' && <BmiEstimator user={user} onUpdateProfile={syncUser} apiKey={apiKey} />}
         {activeTab === 'posture' && <PostureChecker user={user} apiKey={apiKey} />}
         {activeTab === 'profile' && <Profile user={user} onUpdate={syncUser} />}
-        {activeTab === 'settings' && <Settings user={user} currentApiKey={customApiKey} onSave={handleSaveApiKey} onUpdate={() => {}} />}
+        {activeTab === 'settings' && <Settings user={user} currentApiKey={customApiKey} onSave={handleSaveApiKey} onUpdate={() => {}} onLogout={handleLogout} />}
       </main>
 
       <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around p-2 z-50">

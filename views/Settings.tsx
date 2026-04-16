@@ -8,9 +8,10 @@ interface SettingsProps {
   currentApiKey: string;
   onSave: (key: string) => void;
   onUpdate: () => void;
+  onLogout: () => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ user, currentApiKey, onSave, onUpdate }) => {
+const Settings: React.FC<SettingsProps> = ({ user, currentApiKey, onSave, onUpdate, onLogout }) => {
   const [key, setKey] = useState(currentApiKey);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -134,12 +135,18 @@ const Settings: React.FC<SettingsProps> = ({ user, currentApiKey, onSave, onUpda
             </form>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 flex gap-4">
             <button
               onClick={handleSave}
               className="px-8 py-4 bg-primary-600 text-white rounded-2xl font-bold hover:bg-primary-700 transition-all shadow-lg shadow-primary-500/20 active:scale-95"
             >
               Save Changes
+            </button>
+            <button
+              onClick={onLogout}
+              className="px-8 py-4 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 active:scale-95"
+            >
+              Logout
             </button>
           </div>
 
