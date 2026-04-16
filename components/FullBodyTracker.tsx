@@ -18,9 +18,10 @@ interface FullBodyTrackerProps {
   showOverlay?: boolean;
   showPostureAnalysis?: boolean;
   smoothFactor?: number;
+  onRepCountChange?: (count: number) => void;
 }
 
-export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpdate, showOverlay = true, showPostureAnalysis = true, smoothFactor = 0.12 }: FullBodyTrackerProps) {
+export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpdate, showOverlay = true, showPostureAnalysis = true, smoothFactor = 0.12, onRepCountChange }: FullBodyTrackerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const poseLandmarkerRef = useRef<any>(null);
@@ -359,6 +360,9 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
       if (currentEx) {
         const reps = countReps(currentPose.landmarks, currentEx);
         setRepCount(reps);
+        if (onRepCountChange) {
+          onRepCountChange(reps);
+        }
       }
     }
   }, [currentPose, freedomMode, exercise]);

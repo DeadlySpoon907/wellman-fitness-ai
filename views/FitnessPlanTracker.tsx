@@ -10,6 +10,7 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onSt
   const [selectedSession, setSelectedSession] = useState<PlanSession | null>(null);
   const [activeExercise, setActiveExercise] = useState<ExerciseType>('squat');
   const [showTracker, setShowTracker] = useState(false);
+  const [currentReps, setCurrentReps] = useState(0);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   if (!plan || !plan.sessions) {
@@ -202,6 +203,7 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onSt
                       onStartWorkout();
                     } else {
                       setShowTracker(!showTracker);
+                      setCurrentReps(0);
                     }
                   }}
                   className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all"
@@ -209,8 +211,29 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onSt
                   {showTracker ? 'Hide Tracker' : 'Start Workout'}
                 </button>
 
+                {showTracker && currentReps > 0 && (
+                  <button
+                    onClick={async () => {
+                      if (selectedSession) {
+                        await toggleSessionComplete(selectedSession);
+                        setCurrentReps(0);
+                        setShowTracker(false);
+                      }
+                    }}
+                    className="w-full mt-3 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all"
+                  >
+                    Log {currentReps} Reps & Complete Session
+                  </button>
+                )}
+
                 {showTracker && (
                   <div className="mt-4">
+                    {currentReps > 0 && (
+                      <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800 text-center">
+                        <div className="text-xs font-bold text-green-600 uppercase tracking-widest">Current Reps</div>
+                        <div className="text-4xl font-black text-green-700 dark:text-green-400">{currentReps}</div>
+                      </div>
+                    )}
                     <div className="mb-4">
                       <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                         Track Exercise
@@ -227,7 +250,11 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onSt
                         <option value="situp">Sit-up</option>
                       </select>
                     </div>
-                    <FullBodyTracker exercise={activeExercise} freedomMode={false} />
+                    <FullBodyTracker 
+                      exercise={activeExercise} 
+                      freedomMode={false}
+                      onRepCountChange={setCurrentReps}
+                    />
                   </div>
                 )}
               </div>
