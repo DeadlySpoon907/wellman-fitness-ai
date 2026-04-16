@@ -98,7 +98,8 @@ export interface FitnessPlan {
     hydration: string;
     notes: string;
   };
-  sessions: PlanSession[];
+  sessions?: PlanSession[];
+  dailyWorkouts?: { name: string; duration: string; exercises: string[] }[];
 }
 
 export interface PlanSession {

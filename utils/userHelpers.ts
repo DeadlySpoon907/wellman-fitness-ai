@@ -9,10 +9,13 @@ export const sanitizeUserForSave = (user: User): User => {
   sanitized.mealLogs = Array.isArray(sanitized.mealLogs) ? sanitized.mealLogs : [];
   sanitized.postureLogs = Array.isArray(sanitized.postureLogs) ? sanitized.postureLogs : [];
 
-  // Ensure optional strings are defined
+  // Ensure optional strings are defined - but don't send empty strings to Django
   sanitized.displayName = sanitized.displayName || '';
   sanitized.bio = sanitized.bio || '';
-  sanitized.avatarUrl = sanitized.avatarUrl || '';
+  // Remove avatarUrl if it's empty to avoid Django "This field may not be blank" error
+  if (!sanitized.avatarUrl || sanitized.avatarUrl.trim() === '') {
+    delete sanitized.avatarUrl;
+  }
   sanitized.avatarSeed = sanitized.avatarSeed || sanitized.id;
 
   // Ensure numeric fields that cannot be null have a default

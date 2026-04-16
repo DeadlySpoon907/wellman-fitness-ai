@@ -175,53 +175,65 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
 
     let monthlyPlan = null;
 
-    const key = apiKey || (import.meta as any).env.VITE_API_KEY;
-    if (key) {
-      try {
-        const ai = new GoogleGenAI({ apiKey: key });
-        const prompt = `Generate a 30-day fitness plan for a user with:
-        Body Type: ${bodyAnalysis.bodyType}
-        BMI: ${calculatedBmi.toFixed(1)}
-        Weight: ${currentWeight}kg
-        Height: ${currentHeight}cm
-        
-        Return a JSON object with:
-        - motivation: string (short quote)
-        - sessions: array of objects { day: number (1-30), week: number (1-4), dayOfWeek: string, title: string, focus: string, exercises: array of { name: string, sets: number, reps: number, restSeconds: number }, duration: string }
-        - nutrition: object { protein: string, carbs: string, fats: string }
-        
-        Create 4 weeks of workouts, 5-6 sessions per week. Alternate between strength, cardio, and rest days.
-        Include variety: strength training, HIIT, cardio, flexibility, and active recovery.
-        Return ONLY valid JSON, no markdown.`;
+    const generateWithRetry = async (retries = 3, delay = 2000): Promise<any> => {
+      const key = apiKey || (import.meta as any).env.VITE_API_KEY;
+      if (!key) return null;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: prompt }] }]
-        });
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const ai = new GoogleGenAI({ apiKey: key });
+          const prompt = `Generate a 30-day fitness plan for a user with:
+          Body Type: ${bodyAnalysis.bodyType}
+          BMI: ${calculatedBmi.toFixed(1)}
+          Weight: ${currentWeight}kg
+          Height: ${currentHeight}cm
+          
+          Return a JSON object with:
+          - motivation: string (short quote)
+          - sessions: array of objects { day: number (1-30), week: number (1-4), dayOfWeek: string, title: string, focus: string, exercises: array of { name: string, sets: number, reps: number, restSeconds: number }, duration: string }
+          - nutrition: object { protein: string, carbs: string, fats: string }
+          
+          Create 4 weeks of workouts, 5-6 sessions per week. Alternate between strength, cardio, and rest days.
+          Include variety: strength training, HIIT, cardio, flexibility, and active recovery.
+          Return ONLY valid JSON, no markdown.`;
 
-        let text = '';
-        if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
-          text = response.candidates[0].content.parts[0].text;
-        } else if (typeof (response as any).text === 'function') {
-          text = (response as any).text();
-        } else if ((response as any).text) {
-          text = (response as any).text;
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }]
+          });
+
+          let text = '';
+          if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+            text = response.candidates[0].content.parts[0].text;
+          } else if (typeof (response as any).text === 'function') {
+            text = (response as any).text();
+          } else if ((response as any).text) {
+            text = (response as any).text;
+          }
+
+          const jsonString = text.replace(/```json|```/g, '').trim();
+          return JSON.parse(jsonString);
+        } catch (err: any) {
+          console.error(`Attempt ${attempt} failed:`, err?.message || err);
+          if (attempt < retries) {
+            await new Promise(r => setTimeout(r, delay * attempt));
+          }
         }
-
-        const jsonString = text.replace(/```json|```/g, '').trim();
-        monthlyPlan = JSON.parse(jsonString);
-        monthlyPlan.generatedAt = new Date().toISOString();
-        monthlyPlan.startDate = startDate.toISOString();
-        monthlyPlan.endDate = endDate.toISOString();
-        
-        monthlyPlan.sessions = monthlyPlan.sessions.map((s: any, idx: number) => ({
-          ...s,
-          id: `session-${idx + 1}`,
-          completed: false
-        }));
-      } catch (err) {
-        console.error("Failed to generate plan:", err);
       }
+      return null;
+    };
+
+    monthlyPlan = await generateWithRetry();
+
+    if (monthlyPlan) {
+      monthlyPlan.generatedAt = new Date().toISOString();
+      monthlyPlan.startDate = startDate.toISOString();
+      monthlyPlan.endDate = endDate.toISOString();
+      monthlyPlan.sessions = monthlyPlan.sessions.map((s: any, idx: number) => ({
+        ...s,
+        id: `session-${idx + 1}`,
+        completed: false
+      }));
     }
 
     const updatedUser = { 

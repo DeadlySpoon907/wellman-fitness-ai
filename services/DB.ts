@@ -119,6 +119,10 @@ export const saveUser = async (user: User): Promise<User> => {
   if (user.avatarUrl) {
     (sanitized as any).avatarUrl = user.avatarUrl;
   }
+  // Preserve original username to avoid validation errors
+  if (user.username) {
+    (sanitized as any).username = user.username;
+  }
 
   // Preserve metrics and logs that might be stripped by sanitization
   if (user.weightLogs) (sanitized as any).weightLogs = user.weightLogs;

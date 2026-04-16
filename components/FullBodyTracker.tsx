@@ -78,9 +78,9 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
         },
         runningMode: 'VIDEO',
         numPoses: 1,
-        minPoseDetectionConfidence: 0.1,
-        minPosePresenceConfidence: 0.1,
-        minTrackingConfidence: 0.1,
+        minPoseDetectionConfidence: 0.5,
+        minPosePresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
       });
 
       console.log('Pose detector initialized successfully!');
@@ -232,8 +232,61 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
 
   const currentPose = poses[0];
 
+  const validateHumanPose = (landmarks: NormalizedLandmark[]): boolean => {
+    if (!landmarks || landmarks.length < 33) return false;
+
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    const leftKnee = landmarks[25];
+    const rightKnee = landmarks[26];
+    const leftAnkle = landmarks[27];
+    const rightAnkle = landmarks[28];
+    const leftElbow = landmarks[13];
+    const rightElbow = landmarks[14];
+    const leftWrist = landmarks[15];
+    const rightWrist = landmarks[16];
+    const nose = landmarks[0];
+
+    if (!leftShoulder || !rightShoulder || !leftHip || !rightHip || 
+        !leftKnee || !rightKnee || !leftAnkle || !rightAnkle) return false;
+    if (!leftElbow || !rightElbow || !leftWrist || !rightWrist || !nose) return false;
+
+    const requiredPoints = [leftShoulder, rightShoulder, leftHip, rightHip, 
+                           leftKnee, rightKnee, leftAnkle, rightAnkle, nose];
+    for (const point of requiredPoints) {
+      if (point.visibility !== undefined && point.visibility < 0.5) return false;
+    }
+
+    const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+    const hipWidth = Math.abs(rightHip.x - leftHip.x);
+    const bodyWidth = (shoulderWidth + hipWidth) / 2;
+    if (bodyWidth < 0.08 || bodyWidth > 0.6) return false;
+
+    const torsoLength = Math.abs(leftHip.y - leftShoulder.y);
+    if (torsoLength < 0.1 || torsoLength > 0.5) return false;
+
+    const legLength = Math.abs(leftAnkle.y - leftHip.y);
+    if (legLength < 0.15 || legLength > 0.7) return false;
+
+    const leftArmLength = Math.sqrt(
+      Math.pow(leftWrist.x - leftElbow.x, 2) + Math.pow(leftWrist.y - leftElbow.y, 2)
+    );
+    const rightArmLength = Math.sqrt(
+      Math.pow(rightWrist.x - rightElbow.x, 2) + Math.pow(rightWrist.y - rightElbow.y, 2)
+    );
+    if (leftArmLength < 0.05 || rightArmLength < 0.05) return false;
+    if (leftArmLength > 0.5 || rightArmLength > 0.5) return false;
+
+    return true;
+  };
+
   const detectExercise = (landmarks: NormalizedLandmark[]): ExerciseType | null => {
     if (!landmarks || landmarks.length < 28) return null;
+
+    const isValidHuman = validateHumanPose(landmarks);
+    if (!isValidHuman) return null;
 
     const result = predictExercise(landmarks);
     if (result && result.confidence > 0.6) {
