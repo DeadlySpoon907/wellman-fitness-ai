@@ -230,8 +230,30 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onSt
                   <div className="mt-4">
                     {currentReps > 0 && (
                       <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800 text-center">
-                        <div className="text-xs font-bold text-green-600 uppercase tracking-widest">Current Reps</div>
-                        <div className="text-4xl font-black text-green-700 dark:text-green-400">{currentReps}</div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-green-600 uppercase tracking-widest">Current Reps</span>
+                          <button
+                            onClick={() => setCurrentReps(0)}
+                            className="text-xs font-bold text-slate-500 hover:text-red-500 underline"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-center gap-4">
+                          <button
+                            onClick={() => setCurrentReps(Math.max(0, currentReps - 1))}
+                            className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600"
+                          >
+                            -
+                          </button>
+                          <div className="text-4xl font-black text-green-700 dark:text-green-400">{currentReps}</div>
+                          <button
+                            onClick={() => setCurrentReps(currentReps + 1)}
+                            className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     )}
                     <div className="mb-4">
