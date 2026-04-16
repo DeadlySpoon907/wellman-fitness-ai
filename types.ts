@@ -77,18 +77,36 @@ export interface PostureAnalysis {
 }
 
 export interface FitnessPlan {
-  dailyWorkouts: {
-    name: string;
-    exercises: string[];
-    duration: string;
-  }[];
   motivation: string;
   generatedAt: string;
+  startDate: string;
+  endDate: string;
   nutrition?: {
     protein: string;
     carbs: string;
     fats: string;
   };
+  sessions: PlanSession[];
+}
+
+export interface PlanSession {
+  id: string;
+  day: number; // 1-30
+  week: number; // 1-4
+  dayOfWeek: string;
+  title: string;
+  focus: string;
+  exercises: PlannedExercise[];
+  duration: string;
+  completed: boolean;
+  completedAt?: string;
+}
+
+export interface PlannedExercise {
+  name: string;
+  sets: number;
+  reps: number;
+  restSeconds: number;
 }
 
 // Pose tracking types

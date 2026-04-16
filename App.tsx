@@ -7,6 +7,7 @@ import Nutritionist from './views/Nutritionist';
 import BodyScanner from './views/BodyScanner';
 import PostureChecker from './views/PostureChecker';
 import FitnessPlanDesigner from './views/FitnessPlanDesigner';
+import FitnessPlanTracker from './views/FitnessPlanTracker';
 import AdminDashboard from './views/AdminDashboard';
 import Profile from './views/Profile';
 import { Login } from './views/Login';
@@ -228,7 +229,7 @@ const App: React.FC = () => {
 
         <nav className="flex-1 space-y-2">
           <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="📊" label="Dashboard" />
-          <NavButton active={activeTab === 'designer'} onClick={() => setActiveTab('designer')} icon="🏗️" label="Plan Designer" />
+          <NavButton active={activeTab === 'designer'} onClick={() => setActiveTab('designer')} icon="🏋️" label="Fitness Plan" />
           <NavButton active={activeTab === 'nutrition'} onClick={() => setActiveTab('nutrition')} icon="🥗" label="Nutritionist" />
           <NavButton active={activeTab === 'nutribot'} onClick={() => setActiveTab('nutribot')} icon="🤖" label="NutriBot" />
           <NavButton active={activeTab === 'bmi'} onClick={() => setActiveTab('bmi')} icon="📏" label="Body Scanner" />
@@ -276,7 +277,7 @@ const App: React.FC = () => {
         </header>
 
         {activeTab === 'dashboard' && <Dashboard user={user} onLogWeight={handleWeightLog} onDesignPlan={() => setActiveTab('designer')} />}
-        {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} apiKey={apiKey} />}
+        {activeTab === 'designer' && <FitnessPlanTracker user={user} onPlanUpdated={syncUser} apiKey={apiKey} />}
         {activeTab === 'nutrition' && <Nutritionist user={user} apiKey={apiKey} />}
         {activeTab === 'nutribot' && <NutriBot apiKey={apiKey} />}
         {activeTab === 'bmi' && <BodyScanner user={user} onUpdateProfile={syncUser} apiKey={apiKey} />}
@@ -287,7 +288,7 @@ const App: React.FC = () => {
 
       <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around p-2 z-50">
         <MobileNavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon="📊" />
-        <MobileNavButton active={activeTab === 'designer'} onClick={() => setActiveTab('designer')} icon="🏗️" />
+        <MobileNavButton active={activeTab === 'designer'} onClick={() => setActiveTab('designer')} icon="🏋️" />
         <MobileNavButton active={activeTab === 'nutrition'} onClick={() => setActiveTab('nutrition')} icon="🥗" />
         <MobileNavButton active={activeTab === 'nutribot'} onClick={() => setActiveTab('nutribot')} icon="🤖" />
         <MobileNavButton active={activeTab === 'bmi'} onClick={() => setActiveTab('bmi')} icon="📏" />

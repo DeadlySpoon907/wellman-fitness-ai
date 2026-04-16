@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { User } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
+import { GoogleGenAI } from "@google/genai";
 import { saveUser } from '../services/DB';
 import { FullBodyTracker } from '../components/FullBodyTracker';
 import { analyzeBodyType, BodyAnalysis, getBodyTypeDescription, getBodyTypeIcon, BodyType } from '../utils/bodyAnalysis';
@@ -19,7 +20,7 @@ interface LockedBodyProfile {
   confidence: number;
 }
 
-const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: string }> = ({ user, onUpdateProfile }) => {
+const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: string }> = ({ user, onUpdateProfile, apiKey }) => {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
   const [lockedProfile, setLockedProfile] = useState<LockedBodyProfile | null>(null);
@@ -114,6 +115,61 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
 
     setLockedProfile(profile);
 
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 30);
+
+    let monthlyPlan = null;
+
+    const key = apiKey || (import.meta as any).env.VITE_API_KEY;
+    if (key) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: key });
+        const prompt = `Generate a 30-day fitness plan for a user with:
+        Body Type: ${bodyAnalysis.bodyType}
+        BMI: ${calculatedBmi.toFixed(1)}
+        Weight: ${currentWeight}kg
+        Height: ${currentHeight}cm
+        
+        Return a JSON object with:
+        - motivation: string (short quote)
+        - sessions: array of objects { day: number (1-30), week: number (1-4), dayOfWeek: string, title: string, focus: string, exercises: array of { name: string, sets: number, reps: number, restSeconds: number }, duration: string }
+        - nutrition: object { protein: string, carbs: string, fats: string }
+        
+        Create 4 weeks of workouts, 5-6 sessions per week. Alternate between strength, cardio, and rest days.
+        Include variety: strength training, HIIT, cardio, flexibility, and active recovery.
+        Return ONLY valid JSON, no markdown.`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        });
+
+        let text = '';
+        if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+          text = response.candidates[0].content.parts[0].text;
+        } else if (typeof (response as any).text === 'function') {
+          text = (response as any).text();
+        } else if ((response as any).text) {
+          text = (response as any).text;
+        }
+
+        const jsonString = text.replace(/```json|```/g, '').trim();
+        monthlyPlan = JSON.parse(jsonString);
+        monthlyPlan.generatedAt = new Date().toISOString();
+        monthlyPlan.startDate = startDate.toISOString();
+        monthlyPlan.endDate = endDate.toISOString();
+        
+        monthlyPlan.sessions = monthlyPlan.sessions.map((s: any, idx: number) => ({
+          ...s,
+          id: `session-${idx + 1}`,
+          completed: false
+        }));
+      } catch (err) {
+        console.error("Failed to generate plan:", err);
+      }
+    }
+
     const updatedUser = { 
       ...user, 
       heightCm: profile.measurements.heightCm,
@@ -121,13 +177,15 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
       weightLogs: [...(user.weightLogs || []), { 
         date: new Date().toISOString(), 
         weight: profile.measurements.weightKg 
-      }]
+      }],
+      activePlan: monthlyPlan
     };
     await saveUser(updatedUser);
     onUpdateProfile();
     
     setScanState('locked');
-    alert(`Body type locked: ${bodyAnalysis.bodyType.toUpperCase()}\n\nYour fitness plan will now be customized based on this body type.`);
+    const planMsg = monthlyPlan ? `\n\nA 30-day personalized plan has been created with ${monthlyPlan.sessions.length} sessions!` : '';
+    alert(`Body type locked: ${bodyAnalysis.bodyType.toUpperCase()}\n\nYour fitness plan will now be customized based on this body type.${planMsg}`);
   };
 
   const resetScan = () => {
