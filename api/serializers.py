@@ -17,10 +17,11 @@ class UserSerializer(serializers.ModelSerializer):
     heightCm = serializers.FloatField(source='height_cm', required=False)
     fitnessProfile = serializers.JSONField(source='fitness_profile', required=False)
     activePlan = serializers.JSONField(source='active_plan', required=False)
+    dietPlan = serializers.JSONField(source='diet_plan', required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'role', 'membershipExpires', 'trialEndsAt', 'isPremium', 'createdAt', 'weightLogs', 'activityLogs', 'mealLogs', 'postureLogs', 'displayName', 'avatarSeed', 'avatarUrl', 'heightCm', 'fitnessProfile', 'activePlan', 'bio']
+        fields = ['id', 'username', 'password', 'role', 'membershipExpires', 'trialEndsAt', 'isPremium', 'createdAt', 'weightLogs', 'activityLogs', 'mealLogs', 'postureLogs', 'displayName', 'avatarSeed', 'avatarUrl', 'heightCm', 'fitnessProfile', 'activePlan', 'dietPlan', 'bio']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

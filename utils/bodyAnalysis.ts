@@ -29,28 +29,28 @@ export interface BodyProportions {
 
 const BODY_TYPE_THRESHOLDS = {
   ectomorph: {
-    shoulderHipMin: 0.9,
-    shoulderHipMax: 1.1,
-    waistHipMin: 0.7,
-    waistHipMax: 0.85,
-    limbTorsoMin: 1.3,
-    bmiRange: [16, 22]
+    shoulderHipMin: 0.85,
+    shoulderHipMax: 1.15,
+    waistHipMin: 0.65,
+    waistHipMax: 0.9,
+    limbTorsoMin: 1.2,
+    bmiRange: [14, 23]
   },
   mesomorph: {
-    shoulderHipMin: 1.1,
-    shoulderHipMax: 1.4,
-    waistHipMin: 0.75,
-    waistHipMax: 0.9,
-    limbTorsoMin: 1.1,
-    bmiRange: [20, 27]
+    shoulderHipMin: 1.05,
+    shoulderHipMax: 1.5,
+    waistHipMin: 0.7,
+    waistHipMax: 0.95,
+    limbTorsoMin: 1.0,
+    bmiRange: [18, 29]
   },
   endomorph: {
-    shoulderHipMin: 0.8,
-    shoulderHipMax: 1.1,
-    waistHipMin: 0.85,
-    waistHipMax: 1.1,
-    limbTorsoMin: 0.9,
-    bmiRange: [24, 35]
+    shoulderHipMin: 0.75,
+    shoulderHipMax: 1.15,
+    waistHipMin: 0.8,
+    waistHipMax: 1.2,
+    limbTorsoMin: 0.8,
+    bmiRange: [22, 40]
   }
 };
 

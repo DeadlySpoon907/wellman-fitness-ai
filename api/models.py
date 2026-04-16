@@ -22,6 +22,8 @@ class User(AbstractUser):
     fitness_profile = models.JSONField(null=True, blank=True)
     # { "motivation": str, "generatedAt": str, "startDate": str, "endDate": str, "sessions": [{ "id": str, "day": int, "week": int, "dayOfWeek": str, "title": str, "focus": str, "exercises": [{ "name": str, "sets": int, "reps": int, "restSeconds": int }], "duration": str, "completed": bool, "completedAt": str }], "nutrition": { "protein": str, "carbs": str, "fats": str } }
     active_plan = models.JSONField(null=True, blank=True)
+    # { "meals": [{ "name": str, "foods": [str], "calories": int, "protein": int, "carbs": int, "fats": int }], "hydration": str, "notes": str }
+    diet_plan = models.JSONField(null=True, blank=True)
 
     # Activity & Health Logs
     # [{ "date": str, "weight": float }]
@@ -38,6 +40,7 @@ class User(AbstractUser):
         indexes = [
             GinIndex(fields=['fitness_profile'], name='idx_fitness_profile'),
             GinIndex(fields=['active_plan'], name='idx_active_plan'),
+            GinIndex(fields=['diet_plan'], name='idx_diet_plan'),
             GinIndex(fields=['weight_logs'], name='idx_weight_logs'),
             GinIndex(fields=['activity_logs'], name='idx_activity_logs'),
             GinIndex(fields=['meal_logs'], name='idx_meal_logs'),
