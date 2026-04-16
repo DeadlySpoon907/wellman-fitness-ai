@@ -120,48 +120,50 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onSt
       </div>
 
       <AuthGuard user={user} requireMember>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-4">
             <h3 className="text-lg font-bold">Sessions</h3>
-            {[1, 2, 3, 4].map(week => {
-              const weekSessions = filteredSessions.filter(s => s.week === week);
-              if (weekSessions.length === 0) return null;
-              
-              return (
-                <div key={week} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <div className="text-sm font-bold text-slate-500 mb-3">{getWeekLabel(week)}</div>
-                  <div className="space-y-2">
-                    {weekSessions.map(session => (
-                      <button
-                        key={session.id}
-                        onClick={() => setSelectedSession(session)}
-                        className={`w-full p-3 rounded-xl text-left transition-all ${
-                          selectedSession?.id === session.id
-                            ? 'bg-primary-50 dark:bg-primary-950/30 border-2 border-primary-500'
-                            : session.completed
-                              ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                              : 'bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-bold text-sm">{session.title}</div>
-                            <div className="text-xs text-slate-500">{session.dayOfWeek} • {session.duration} • {session.focus}</div>
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+              {[1, 2, 3, 4].map(week => {
+                const weekSessions = filteredSessions.filter(s => s.week === week);
+                if (weekSessions.length === 0) return null;
+                
+                return (
+                  <div key={week} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div className="text-sm font-bold text-slate-500 mb-3">{getWeekLabel(week)}</div>
+                    <div className="space-y-2">
+                      {weekSessions.map(session => (
+                        <button
+                          key={session.id}
+                          onClick={() => setSelectedSession(session)}
+                          className={`w-full p-3 rounded-xl text-left transition-all ${
+                            selectedSession?.id === session.id
+                              ? 'bg-primary-50 dark:bg-primary-950/30 border-2 border-primary-500'
+                              : session.completed
+                                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                                : 'bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-bold text-sm">{session.title}</div>
+                              <div className="text-xs text-slate-500">{session.dayOfWeek} • {session.duration}</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {session.completed && <span className="text-green-500 text-lg">✓</span>}
+                              <span className="text-xs text-slate-400">{session.exercises.length} ex</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {session.completed && <span className="text-green-500 text-lg">✓</span>}
-                            <span className="text-xs text-slate-400">{session.exercises.length} ex</span>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             {selectedSession ? (
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-between mb-4">

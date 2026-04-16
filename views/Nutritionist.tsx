@@ -107,112 +107,122 @@ const Nutritionist: React.FC<{ user: User; apiKey?: string; onMealLogged?: () =>
             window.location.reload();
           }} />
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-            <h3 className="text-lg font-bold mb-4">Analyze Meal</h3>
-            <div 
-              className={`aspect-video w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center overflow-hidden relative ${image ? 'border-none' : ''}`}
-            >
-              {image ? (
-                <img src={image} className="w-full h-full object-cover" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <h3 className="text-lg font-bold mb-4">Analyze Meal</h3>
+              <div 
+                className={`aspect-video w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center overflow-hidden relative ${image ? 'border-none' : ''}`}
+              >
+                {image ? (
+                  <img src={image} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center p-4">
+                    <span className="text-4xl mb-2 block">🥗</span>
+                    <p className="text-slate-400 font-medium">Provide a meal image</p>
+                  </div>
+                )}
+                {isAnalyzing && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold flex-col">
+                    <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin mb-2" />
+                    Calculating Macros...
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm min-h-[300px]">
+              <h3 className="text-lg font-bold mb-6">Macro Report</h3>
+              {analysis ? (
+                <div className="space-y-6 animate-in zoom-in duration-300">
+                  <div className="text-center">
+                    <h4 className="text-xl font-black text-primary-600">{analysis.mealName}</h4>
+                    <p className="text-slate-500">Estimated Nutrition</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <MacroCard label="Calories" value={analysis.calories} unit="kcal" color="bg-orange-500" />
+                    <MacroCard label="Protein" value={analysis.protein} unit="g" color="bg-blue-500" />
+                    <MacroCard label="Carbs" value={analysis.carbs} unit="g" color="bg-green-500" />
+                    <MacroCard label="Fat" value={analysis.fat} unit="g" color="bg-red-500" />
+                  </div>
+
+                  <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <button 
+                      onClick={handleSave}
+                      className="w-full bg-primary-600 text-white py-3 rounded-2xl font-bold hover:bg-primary-700 transition-all"
+                    >
+                      Log Meal to Daily Log
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <div className="text-center p-4">
-                  <span className="text-4xl mb-2 block">🥗</span>
-                  <p className="text-slate-400 font-medium">Provide a meal image</p>
-                </div>
-              )}
-              {isAnalyzing && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold flex-col">
-                  <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin mb-2" />
-                  Calculating Macros...
+                <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+                  <div className="text-6xl mb-4">📋</div>
+                  <p className="font-medium text-slate-500">Provide a meal photo to see<br/>detailed nutritional breakdown</p>
                 </div>
               )}
             </div>
-            
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <button 
-                onClick={() => setShowCamera(true)}
-                className="py-3 bg-primary-600 text-white rounded-2xl font-bold hover:bg-primary-700 transition-all shadow-lg shadow-primary-500/10 flex items-center justify-center gap-2"
-              >
-                <span>📸</span> Live Cam
-              </button>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="py-3 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <span>📁</span> Upload
-              </button>
-            </div>
-            
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
           </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm min-h-[300px]">
-            <h3 className="text-lg font-bold mb-6">Macro Report</h3>
-            {analysis ? (
-              <div className="space-y-6 animate-in zoom-in duration-300">
-                <div className="text-center">
-                  <h4 className="text-xl font-black text-primary-600">{analysis.mealName}</h4>
-                  <p className="text-slate-500">Estimated Nutrition</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <MacroCard label="Calories" value={analysis.calories} unit="kcal" color="bg-orange-500" />
-                  <MacroCard label="Protein" value={analysis.protein} unit="g" color="bg-blue-500" />
-                  <MacroCard label="Carbs" value={analysis.carbs} unit="g" color="bg-green-500" />
-                  <MacroCard label="Fat" value={analysis.fat} unit="g" color="bg-red-500" />
-                </div>
-
-                <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-                  <button 
-                    onClick={handleSave}
-                    className="w-full bg-primary-600 text-white py-3 rounded-2xl font-bold hover:bg-primary-700 transition-all"
-                  >
-                    Log Meal to Daily Log
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
-                <div className="text-6xl mb-4">📋</div>
-                <p className="font-medium text-slate-500">Provide a meal photo to see<br/>detailed nutritional breakdown</p>
-              </div>
-            )}
-          </div>
-        </div>
         )}
 
-        {user.mealLogs && user.mealLogs.length > 0 && (
+        {user.dietPlan && (
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold">Recent Meal History</h3>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{user.mealLogs.length} Meals Logged</span>
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-2xl">🍽️</span>
+              <h3 className="text-lg font-bold">Your Personalized Diet Plan</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...user.mealLogs].reverse().slice(0, 6).map((log: any, i: number) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-primary-200 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-lg shadow-sm">
-                      🍽️
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-800 dark:text-slate-200">{log.mealName}</div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {new Date(log.date).toLocaleDateString()} • {new Date(log.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </div>
-                    </div>
+            
+            {user.dietPlan.hydration && (
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <div className="font-bold text-blue-800 dark:text-blue-200 mb-1">💧 Hydration</div>
+                <p className="text-sm text-blue-700 dark:text-blue-300">{user.dietPlan.hydration}</p>
+              </div>
+            )}
+
+            {user.dietPlan.notes && (
+              <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                <div className="font-bold text-amber-800 dark:text-amber-200 mb-1">📝 Notes</div>
+                <p className="text-sm text-amber-700 dark:text-amber-300">{user.dietPlan.notes}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {user.dietPlan.meals?.map((meal, idx) => (
+                <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xl">
+                      {idx === 0 ? '🌅' : idx === 1 ? '☀️' : idx === 2 ? '🌇' : '🌙'}
+                    </span>
+                    <h4 className="font-bold text-slate-800 dark:text-slate-200">{meal.name}</h4>
                   </div>
-                  <div className="text-right">
-                    <div className="font-black text-slate-800 dark:text-slate-200">{log.calories} <span className="text-xs font-bold text-slate-400">kcal</span></div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      P:{log.protein} C:{log.carbs} F:{log.fat}
+                  <div className="space-y-2 mb-3">
+                    {meal.foods?.map((food, fIdx) => (
+                      <div key={fIdx} className="text-sm text-slate-600 dark:text-slate-400">• {food}</div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <div className="text-center">
+                      <div className="text-xs text-slate-400">Cal</div>
+                      <div className="font-bold text-sm">{meal.calories}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-slate-400">P</div>
+                      <div className="font-bold text-sm">{meal.protein}g</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-slate-400">C</div>
+                      <div className="font-bold text-sm">{meal.carbs}g</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-slate-400">F</div>
+                      <div className="font-bold text-sm">{meal.fats}g</div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-</div>
-          )}
+          </div>
+        )}
       </AuthGuard>
 
       {showCamera && (

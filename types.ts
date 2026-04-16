@@ -21,6 +21,7 @@ export interface User {
   estimatedBodyType?: string;
   fitnessProfile?: FitnessProfile;
   activePlan?: FitnessPlan;
+  dietPlan?: FitnessPlan['dietPlan'];
   gymLogs?: GymLog[];
 }
 
