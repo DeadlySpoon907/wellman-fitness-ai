@@ -330,7 +330,7 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
                 freedomMode={false}
                 onLandmarksUpdate={handleLiveBodyAnalysis}
               />
-              <div className="absolute top-4 left-4 right-4 z-10">
+              <div className="absolute bottom-4 left-4 right-4 z-10">
                 <div className={`px-4 py-3 rounded-xl ${positionStatus === 'invalid' ? 'bg-red-600' : positionStatus === 'ready' ? 'bg-green-600' : 'bg-black/70'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-white font-bold text-sm">
