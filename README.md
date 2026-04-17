@@ -14,20 +14,23 @@ Wellman is a high-performance, AI-powered fitness application designed for moder
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 19.2.4** - Modern UI framework
+- **React 19.2.4** - UI framework
 - **TypeScript 5.0** - Type-safe development
-- **Vite 7.3.1** - Lightning-fast build tool
-- **Tailwind CSS 3.4.0** - Utility-first styling
-- **Google GenAI SDK** - Gemini API integration
-- **Recharts 3.7.0** - Data visualization components
+- **Vite 7.3.1** - Build tool
+- **Tailwind CSS 3.4.0** - Utility-first CSS
+- **Google GenAI SDK** - Gemini API client
+- **Recharts 3.7.0** - Data visualization
+- **MediaPipe Tasks Vision** - Pose detection and body metrics
 
 ### Backend
-- **Django 4.2** - Robust web framework
-- **Django REST Framework 3.14+** - REST API development
+- **Django 4.2** - Web framework
+- **Django REST Framework 3.14** - REST API
 - **Google GenerativeAI** - Gemini API integration
-- **PostgreSQL/SQLite** - Data persistence
-- **Pillow** - Image processing
-- **NumPy** - Numerical operations
+- **PostgreSQL/SQLite** - Database
+- **Pillow 10.0+** - Image processing
+- **NumPy 1.24+** - Numerical operations
+- **Gunicorn** - WSGI server
+- **WhiteNoise** - Static file serving
 
 ---
 
@@ -197,6 +200,9 @@ VITE_API_KEY=your_google_gemini_api_key
 
 # Backend API URL
 VITE_API_BASE_URL=http://localhost:8000
+
+# Frontend Port (default: 3000)
+VITE_PORT=3000
 ```
 
 ### Development
@@ -238,8 +244,8 @@ After seeding the database (or manual creation):
 | **Admin** | `admin_jafitness` | `admin123` | Admin access |
 
 ### Access Points
-- **Frontend Login**: `http://localhost:5173/#/`
-- **Admin Panel**: `http://localhost:5173/#/admin`
+- **Frontend Login**: `http://localhost:3000/#/`
+- **Admin Panel**: `http://localhost:3000/#/admin`
 - **Django Admin**: `http://localhost:8000/admin/`
 
 ---
@@ -272,49 +278,58 @@ After seeding the database (or manual creation):
 
 ### Frontend Dependencies (npm)
 ```
-Core Framework:
-  - react@19.2.4
-  - react-dom@19.2.4
-  - typescript@5.0.0
+Core:
+  - react@^19.2.4
+  - react-dom@^19.2.4
 
 Build Tools:
-  - vite@7.3.1
-  - @vitejs/plugin-react@5.1.2
+  - vite@^7.3.1
+  - @vitejs/plugin-react@^5.1.2
+  - typescript@^5.0.0
 
 Styling:
-  - tailwindcss@3.4.0
+  - tailwindcss@^3.4.0
+  - autoprefixer@^10.4.27
 
-AI:
-  - @google/genai@1.0.0
+AI & ML:
+  - @google/genai@^1.0.0
+  - @mediapipe/tasks-vision@^0.10.34
 
 Data Visualization:
-  - recharts@3.7.0
+  - recharts@^3.7.0
+
+Testing:
+  - vitest@^4.1.4
+  - @testing-library/react@^16.3.2
+  - jsdom@^29.0.2
 ```
 
 ### Backend Dependencies (pip)
 ```
 Framework:
-  - Django>=4.2
-  - djangorestframework>=3.14.0
-  - django-cors-headers>=4.3.0
+  - Django>=4.2,<4.3
+  - djangorestframework>=3.14.0,<3.15.0
+  - django-cors-headers>=4.3.0,<4.4.0
 
 Database:
-  - psycopg2-binary>=2.9.9
-  - dj-database-url>=2.1.0
+  - psycopg2-binary>=2.9.9,<3.0.0
+  - dj-database-url>=2.1.0,<3.0.0
+  - sqlparse>=0.4.4,<0.5.0
 
-AI APIs:
-  - google-generativeai>=0.2.0
+AI & APIs:
+  - google-generativeai>=0.8.0,<1.0.0
+  - requests>=2.31.0,<3.0.0
 
 Production:
-  - gunicorn>=21.2.0
-  - whitenoise>=6.6.0
+  - gunicorn>=21.2.0,<22.0.0
+  - whitenoise>=6.6.0,<7.0.0
 
 Environment:
-  - python-dotenv>=1.0.0
+  - python-dotenv>=1.0.0,<1.1.0
 
 Image Processing:
-  - pillow>=10.0.0
-  - numpy>=1.24.0
+  - pillow>=10.0.0,<11.0.0
+  - numpy>=1.24.0,<1.25.0
 ```
 
 ---

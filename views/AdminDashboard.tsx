@@ -52,8 +52,38 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
     const withWeightLogs = users.filter(u => u.weightLogs && u.weightLogs.length > 0).length;
     const withActivityLogs = users.filter(u => u.activityLogs && u.activityLogs.length > 0).length;
     const withMealLogs = users.filter(u => u.mealLogs && u.mealLogs.length > 0).length;
+    const withPostureLogs = users.filter(u => u.postureLogs && u.postureLogs.length > 0).length;
     const withFitnessProfile = users.filter(u => u.fitnessProfile).length;
     const withActivePlan = users.filter(u => u.activePlan).length;
+    const withCompletedSessions = users.filter(u => 
+      u.activePlan?.dailyWorkouts?.some(w => w.completed)
+    ).length;
+
+    // Calculate aggregated health metrics
+    const totalWeightLogs = users.reduce((acc, u) => acc + (u.weightLogs?.length || 0), 0);
+    const totalActivities = users.reduce((acc, u) => acc + (u.activityLogs?.length || 0), 0);
+    const totalMeals = users.reduce((acc, u) => acc + (u.mealLogs?.length || 0), 0);
+    const totalPostureChecks = users.reduce((acc, u) => acc + (u.postureLogs?.length || 0), 0);
+
+    // Nutrition totals
+    const totalCaloriesLogged = users.reduce((acc, u) => 
+      acc + (u.mealLogs?.reduce((sum, meal) => sum + (meal.calories || 0), 0) || 0), 0
+    );
+    const avgDailyProtein = totalMeals > 0 ? 
+      Math.round(users.reduce((acc, u) => 
+        acc + (u.mealLogs?.reduce((sum, meal) => sum + (meal.protein || 0), 0) || 0), 0
+      ) / totalMeals) : 0;
+
+    // Average BMI (only for users with weight logs and height)
+    const usersWithBmi = users.filter(u => 
+      u.weightLogs && u.weightLogs.length > 0 && u.heightCm
+    );
+    const avgBmi = usersWithBmi.length > 0 ? 
+      (usersWithBmi.reduce((acc, u) => {
+        const latestWeight = u.weightLogs[u.weightLogs.length - 1]?.weight || 0;
+        const heightM = (u.heightCm || 0) / 100;
+        return acc + (heightM > 0 ? latestWeight / (heightM * heightM) : 0);
+      }, 0) / usersWithBmi.length).toFixed(1) : 0;
 
     return {
       total,
@@ -65,8 +95,17 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
       withWeightLogs,
       withActivityLogs,
       withMealLogs,
+      withPostureLogs,
       withFitnessProfile,
-      withActivePlan
+      withActivePlan,
+      withCompletedSessions,
+      totalWeightLogs,
+      totalActivities,
+      totalMeals,
+      totalPostureChecks,
+      totalCaloriesLogged,
+      avgDailyProtein,
+      avgBmi
     };
   }, [users]);
 
@@ -134,9 +173,20 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
         <StatCard label="Total Users" value={stats.total} icon="👥" color="bg-primary-500" />
         <StatCard label="Admins" value={stats.admins} icon="👑" color="bg-red-500" />
         <StatCard label="Members" value={stats.members} icon="💎" color="bg-indigo-500" />
-        <StatCard label="Basic Users" value={stats.basic} icon="🍃" color="bg-emerald-500" />
+        <StatCard label="Basic" value={stats.basic} icon="🍃" color="bg-emerald-500" />
         <StatCard label="New (30d)" value={stats.active30Days} icon="🆕" color="bg-amber-500" />
-        <StatCard label="With Data" value={stats.withFitnessProfile} icon="📊" color="bg-cyan-500" />
+        <StatCard label="With Profile" value={stats.withFitnessProfile} icon="📊" color="bg-cyan-500" />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <StatCard label="Weight Logs" value={stats.totalWeightLogs} icon="⚖️" color="bg-orange-500" />
+        <StatCard label="Activities" value={stats.totalActivities} icon="🏃" color="bg-lime-500" />
+        <StatCard label="Meals" value={stats.totalMeals} icon="🍽️" color="bg-rose-500" />
+        <StatCard label="Posture Checks" value={stats.totalPostureChecks} icon="🧘" color="bg-teal-500" />
+        <StatCard label="Active Plans" value={stats.withActivePlan} icon="📋" color="bg-violet-500" />
+        <StatCard label="Completed Sessions" value={stats.withCompletedSessions} icon="✅" color="bg-emerald-600" />
+        <StatCard label="Calories Logged" value={stats.totalCaloriesLogged.toLocaleString()} icon="🔥" color="bg-orange-600" />
+        <StatCard label="Avg Protein" value={`${stats.avgDailyProtein}g`} icon="💪" color="bg-blue-500" />
       </div>
 
       {loading ? (
@@ -600,13 +650,52 @@ const AnalyticsTab: React.FC<{ users: User[]; stats: any }> = ({ users, stats })
 
   const engagementData = useMemo(() => {
     return [
-      { label: 'Weight Logs', value: stats.withWeightLogs, percent: stats.total > 0 ? Math.round(stats.withWeightLogs / stats.total * 100) : 0 },
-      { label: 'Activity Logs', value: stats.withActivityLogs, percent: stats.total > 0 ? Math.round(stats.withActivityLogs / stats.total * 100) : 0 },
-      { label: 'Meal Logs', value: stats.withMealLogs, percent: stats.total > 0 ? Math.round(stats.withMealLogs / stats.total * 100) : 0 },
-      { label: 'Fitness Profile', value: stats.withFitnessProfile, percent: stats.total > 0 ? Math.round(stats.withFitnessProfile / stats.total * 100) : 0 },
-      { label: 'Active Plan', value: stats.withActivePlan, percent: stats.total > 0 ? Math.round(stats.withActivePlan / stats.total * 100) : 0 }
+      { label: 'With Weight Logs', value: stats.withWeightLogs, percent: stats.total > 0 ? Math.round(stats.withWeightLogs / stats.total * 100) : 0 },
+      { label: 'With Activity', value: stats.withActivityLogs, percent: stats.total > 0 ? Math.round(stats.withActivityLogs / stats.total * 100) : 0 },
+      { label: 'With Meals', value: stats.withMealLogs, percent: stats.total > 0 ? Math.round(stats.withMealLogs / stats.total * 100) : 0 },
+      { label: 'With Posture', value: stats.withPostureLogs, percent: stats.total > 0 ? Math.round(stats.withPostureLogs / stats.total * 100) : 0 },
+      { label: 'With Profile', value: stats.withFitnessProfile, percent: stats.total > 0 ? Math.round(stats.withFitnessProfile / stats.total * 100) : 0 },
+      { label: 'With Active Plan', value: stats.withActivePlan, percent: stats.total > 0 ? Math.round(stats.withActivePlan / stats.total * 100) : 0 },
+      { label: 'Sessions Completed', value: stats.withCompletedSessions, percent: stats.total > 0 ? Math.round(stats.withCompletedSessions / stats.total * 100) : 0 }
     ];
   }, [stats]);
+
+  const nutritionData = useMemo(() => {
+    const usersWithMeals = users.filter(u => u.mealLogs && u.mealLogs.length > 0);
+    const totalCalories = stats.totalCaloriesLogged;
+    const avgCaloriesPerUser = usersWithMeals.length > 0 ? Math.round(totalCalories / usersWithMeals.length) : 0;
+    return {
+      usersTrackingMeals: stats.withMealLogs,
+      totalCalories,
+      avgCaloriesPerUser,
+      avgProtein: stats.avgDailyProtein
+    };
+  }, [users, stats]);
+
+  const workoutStats = useMemo(() => {
+    const usersWithPlans = users.filter(u => u.activePlan);
+    const totalSessions = usersWithPlans.reduce((acc, u) => 
+      acc + (u.activePlan?.dailyWorkouts?.length || 0), 0
+    );
+    const completedSessions = usersWithPlans.reduce((acc, u) => 
+      acc + (u.activePlan?.dailyWorkouts?.filter(w => w.completed).length || 0), 0
+    );
+    const completionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+    return { totalSessions, completedSessions, completionRate, usersWithPlans: stats.withActivePlan };
+  }, [users, stats]);
+
+  const postureStats = useMemo(() => {
+    const usersWithPosture = users.filter(u => u.postureLogs && u.postureLogs.length > 0);
+    const avgScore = usersWithPosture.length > 0 ?
+      (usersWithPosture.reduce((acc, u) => 
+        acc + (u.postureLogs?.reduce((sum, p) => sum + (p.score || 0), 0) || 0), 0) /
+      usersWithPosture.reduce((acc, u) => acc + (u.postureLogs?.length || 0), 0)).toFixed(1) : 0;
+    return {
+      usersWithPosture: stats.withPostureLogs,
+      totalChecks: stats.totalPostureChecks,
+      avgScore
+    };
+  }, [users, stats]);
 
   return (
     <div className="space-y-6">
@@ -620,6 +709,7 @@ const AnalyticsTab: React.FC<{ users: User[]; stats: any }> = ({ users, stats })
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* User Signups */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
           <h3 className="text-lg font-bold mb-4">User Signups</h3>
           <div className="h-48 flex items-end gap-1">
@@ -635,6 +725,7 @@ const AnalyticsTab: React.FC<{ users: User[]; stats: any }> = ({ users, stats })
           </div>
         </div>
 
+        {/* Role Distribution */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
           <h3 className="text-lg font-bold mb-4">Role Distribution</h3>
           <div className="space-y-4">
@@ -652,16 +743,86 @@ const AnalyticsTab: React.FC<{ users: User[]; stats: any }> = ({ users, stats })
           </div>
         </div>
 
+        {/* Engagement Metrics */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 lg:col-span-2">
-          <h3 className="text-lg font-bold mb-4">Engagement Metrics</h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {engagementData.map(e => (
+          <h3 className="text-lg font-bold mb-4">Feature Adoption</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {engagementData.slice(0, 7).map(e => (
               <div key={e.label} className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                <div className="text-3xl font-black text-primary-600">{e.percent}%</div>
+                <div className="text-2xl font-black text-primary-600">{e.percent}%</div>
                 <div className="text-xs font-bold text-slate-400 uppercase mt-1">{e.label}</div>
                 <div className="text-xs text-slate-500">{e.value} users</div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Nutrition Overview */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+          <h3 className="text-lg font-bold mb-4">Nutrition Tracking</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center">
+              <div className="text-2xl font-black text-rose-600">{nutritionData.usersTrackingMeals}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Users Tracking Meals</div>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center">
+              <div className="text-2xl font-black text-orange-600">{nutritionData.totalCalories.toLocaleString()}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Total Calories</div>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center">
+              <div className="text-2xl font-black text-amber-600">{nutritionData.avgCaloriesPerUser}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Avg Calories/User</div>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center">
+              <div className="text-2xl font-black text-blue-600">{nutritionData.avgProtein}g</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Avg Protein/Day</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Workout Progress */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+          <h3 className="text-lg font-bold mb-4">Workout Progress</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+              <span className="text-sm font-bold">Active Plans</span>
+              <span className="text-xl font-black text-indigo-600">{workoutStats.usersWithPlans}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+              <span className="text-sm font-bold">Total Sessions</span>
+              <span className="text-xl font-black text-primary-600">{workoutStats.totalSessions}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+              <span className="text-sm font-bold">Completed</span>
+              <span className="text-xl font-black text-emerald-600">{workoutStats.completedSessions}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+              <span className="text-sm font-bold">Completion Rate</span>
+              <span className="text-xl font-black text-amber-600">{workoutStats.completionRate}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Posture Analysis Stats */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 lg:col-span-2">
+          <h3 className="text-lg font-bold mb-4">Posture Analysis</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+              <div className="text-2xl font-black text-teal-600">{postureStats.usersWithPosture}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Users Analyzed</div>
+            </div>
+            <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+              <div className="text-2xl font-black text-cyan-600">{postureStats.totalChecks}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Total Checks</div>
+            </div>
+            <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+              <div className="text-2xl font-black text-blue-600">{postureStats.avgScore}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Avg Score</div>
+            </div>
+            <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+              <div className="text-2xl font-black text-emerald-600">{stats.avgBmi}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Avg BMI</div>
+            </div>
           </div>
         </div>
       </div>
@@ -671,12 +832,14 @@ const AnalyticsTab: React.FC<{ users: User[]; stats: any }> = ({ users, stats })
 
 const HealthMetricsTab: React.FC<{ users: User[] }> = ({ users }) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [activeSection, setActiveSection] = useState<'overview' | 'posture' | 'nutrition'>('overview');
 
   const usersWithData = useMemo(() => {
     return users.filter(u => 
       (u.weightLogs && u.weightLogs.length > 0) ||
       (u.activityLogs && u.activityLogs.length > 0) ||
       (u.mealLogs && u.mealLogs.length > 0) ||
+      (u.postureLogs && u.postureLogs.length > 0) ||
       (u.fitnessProfile) ||
       (u.activePlan)
     );
@@ -696,119 +859,511 @@ const HealthMetricsTab: React.FC<{ users: User[] }> = ({ users }) => {
     return usersWithData.reduce((acc, u) => acc + (u.mealLogs?.length || 0), 0);
   }, [usersWithData]);
 
+  const totalPostureChecks = useMemo(() => {
+    return usersWithData.reduce((acc, u) => acc + (u.postureLogs?.length || 0), 0);
+  }, [usersWithData]);
+
+  const avgBmi = useMemo(() => {
+    const usersWithBmi = usersWithData.filter(u => u.heightCm && u.weightLogs?.length);
+    if (usersWithBmi.length === 0) return 'N/A';
+    const bmis = usersWithBmi.map(u => {
+      const latestWeight = u.weightLogs[u.weightLogs.length - 1]?.weight || 0;
+      const heightM = u.heightCm / 100;
+      return heightM > 0 ? latestWeight / (heightM * heightM) : 0;
+    });
+    return (bmis.reduce((a, b) => a + b, 0) / bmis.length).toFixed(1);
+  }, [usersWithData]);
+
+  const postureScoreDistribution = useMemo(() => {
+    const scores = users.flatMap(u => u.postureLogs || []).map(p => p.score);
+    if (scores.length === 0) return { excellent: 0, good: 0, fair: 0, poor: 0 };
+    return {
+      excellent: scores.filter(s => s >= 80).length,
+      good: scores.filter(s => s >= 60 && s < 80).length,
+      fair: scores.filter(s => s >= 40 && s < 60).length,
+      poor: scores.filter(s => s < 40).length
+    };
+  }, [users]);
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
-          <div className="text-3xl font-black text-primary-600">{usersWithData.length}</div>
-          <div className="text-xs font-bold text-slate-400 uppercase">Users with Data</div>
-        </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
-          <div className="text-3xl font-black text-indigo-600">{avgWeight}kg</div>
-          <div className="text-xs font-bold text-slate-400 uppercase">Avg Weight</div>
-        </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
-          <div className="text-3xl font-black text-emerald-600">{totalActivities}</div>
-          <div className="text-xs font-bold text-slate-400 uppercase">Activities Logged</div>
-        </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
-          <div className="text-3xl font-black text-amber-600">{totalMeals}</div>
-          <div className="text-xs font-bold text-slate-400 uppercase">Meals Logged</div>
-        </div>
+      {/* Section Tabs */}
+      <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-100 dark:border-slate-800">
+        {(['overview', 'posture', 'nutrition'] as const).map((section) => (
+          <button
+            key={section}
+            onClick={() => setActiveSection(section)}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+              activeSection === section
+                ? 'bg-primary-600 text-white'
+                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            {section.charAt(0).toUpperCase() + section.slice(1)}
+          </button>
+        ))}
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-          <h3 className="text-xl font-bold">User Health Data</h3>
-        </div>
-        <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-          <table className="w-full text-left">
-            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/50">
-              <tr className="text-[10px] font-black text-slate-400 uppercase">
-                <th className="px-6 py-3">User</th>
-                <th className="px-6 py-3">Weight Logs</th>
-                <th className="px-6 py-3">Activity</th>
-                <th className="px-6 py-3">Meals</th>
-                <th className="px-6 py-3">Profile</th>
-                <th className="px-6 py-3">Plan</th>
-                <th className="px-6 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {usersWithData.map(u => (
-                <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                  <td className="px-6 py-4 font-bold">{u.username}</td>
-                  <td className="px-6 py-4">{u.weightLogs?.length || 0}</td>
-                  <td className="px-6 py-4">{u.activityLogs?.length || 0}</td>
-                  <td className="px-6 py-4">{u.mealLogs?.length || 0}</td>
-                  <td className="px-6 py-4">
-                    {u.fitnessProfile ? (
-                      <span className="text-xs font-bold text-indigo-600">{u.fitnessProfile.goal}</span>
-                    ) : '-'}
-                  </td>
-                  <td className="px-6 py-4">
-                    {u.activePlan ? (
-                      <span className="text-xs font-bold text-emerald-600">{u.activePlan.dailyWorkouts?.length || 0} workouts</span>
-                    ) : '-'}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setSelectedUser(u)}
-                      className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {activeSection === 'overview' && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-primary-600">{usersWithData.length}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Users with Data</div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-indigo-600">{avgWeight}kg</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Avg Weight</div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-emerald-600">{totalActivities}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Activities</div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-amber-600">{totalMeals}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Meals</div>
+            </div>
+          </div>
 
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-xl font-bold">User Health Data</h3>
+            </div>
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              <table className="w-full text-left">
+                <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-black text-slate-400 uppercase">
+                    <th className="px-6 py-3">User</th>
+                    <th className="px-6 py-3">Height</th>
+                    <th className="px-6 py-3">Latest Wt</th>
+                    <th className="px-6 py-3">BMI</th>
+                    <th className="px-6 py-3">Activity</th>
+                    <th className="px-6 py-3">Goal</th>
+                    <th className="px-6 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {usersWithData.map(u => {
+                    const latestWeight = u.weightLogs?.[u.weightLogs.length - 1]?.weight || 'N/A';
+                    const bmi = u.heightCm && latestWeight !== 'N/A' ? 
+                      (latestWeight / ((u.heightCm / 100) ** 2)).toFixed(1) : 'N/A';
+                    return (
+                      <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <td className="px-6 py-4 font-bold">{u.username}</td>
+                        <td className="px-6 py-4">{u.heightCm ? `${u.heightCm}cm` : '-'}</td>
+                        <td className="px-6 py-4">{latestWeight !== 'N/A' ? `${latestWeight}kg` : '-'}</td>
+                        <td className="px-6 py-4">{bmi !== 'N/A' ? bmi : '-'}</td>
+                        <td className="px-6 py-4">{u.activityLogs?.length || 0}</td>
+                        <td className="px-6 py-4">
+                          {u.fitnessProfile ? (
+                            <span className="text-xs font-bold text-indigo-600">{u.fitnessProfile.goal}</span>
+                          ) : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => setSelectedUser(u)}
+                            className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeSection === 'posture' && (
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-xl font-bold">Posture Analysis Summary</h3>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                <div className="text-3xl font-black text-teal-600">{totalPostureChecks}</div>
+                <div className="text-xs font-bold text-slate-400 uppercase">Total Checks</div>
+              </div>
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                <div className="text-3xl font-black text-cyan-600">{users.filter(u => u.postureLogs?.length).length}</div>
+                <div className="text-xs font-bold text-slate-400 uppercase">Users Analyzed</div>
+              </div>
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                <div className="text-3xl font-black text-blue-600">{postureScoreDistribution.excellent + postureScoreDistribution.good}</div>
+                <div className="text-xs font-bold text-slate-400 uppercase">Good/Excellent Scores</div>
+              </div>
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                <div className="text-3xl font-black text-amber-600">{postureScoreDistribution.fair + postureScoreDistribution.poor}</div>
+                <div className="text-xs font-bold text-slate-400 uppercase">Needs Improvement</div>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h4 className="text-sm font-black uppercase text-slate-400 mb-4">Score Distribution</h4>
+              <div className="space-y-3">
+                {[
+                  { label: 'Excellent (80+)', count: postureScoreDistribution.excellent, color: 'bg-emerald-500' },
+                  { label: 'Good (60-79)', count: postureScoreDistribution.good, color: 'bg-lime-500' },
+                  { label: 'Fair (40-59)', count: postureScoreDistribution.fair, color: 'bg-amber-500' },
+                  { label: 'Poor (<40)', count: postureScoreDistribution.poor, color: 'bg-rose-500' }
+                ].map(d => {
+                  const total = Object.values(postureScoreDistribution).reduce((a, b) => a + b, 0);
+                  const percent = total > 0 ? (d.count / total * 100).toFixed(1) : 0;
+                  return (
+                    <div key={d.label} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>{d.label}</span>
+                        <span>{d.count} ({percent}%)</span>
+                      </div>
+                      <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className={`h-full ${d.color} rounded-full`} style={{ width: `${percent}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-black uppercase text-slate-400 mb-4">Latest Posture Checks</h4>
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                <table className="w-full text-left">
+                  <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/50">
+                    <tr className="text-[10px] font-black text-slate-400 uppercase">
+                      <th className="px-4 py-3">User</th>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Score</th>
+                      <th className="px-4 py-3">Findings</th>
+                      <th className="px-4 py-3">Recommendations</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {users.flatMap(u => 
+                      (u.postureLogs || []).slice(-3).map(log => ({ ...log, username: u.username }))
+                    ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 20).map((log, i) => (
+                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <td className="px-4 py-3 font-bold">{log.username}</td>
+                        <td className="px-4 py-3 text-sm">{new Date(log.date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-sm font-bold px-2 py-1 rounded ${
+                            log.score >= 80 ? 'bg-emerald-100 text-emerald-700' :
+                            log.score >= 60 ? 'bg-lime-100 text-lime-700' :
+                            log.score >= 40 ? 'bg-amber-100 text-amber-700' :
+                            'bg-rose-100 text-rose-700'
+                          }`}>
+                            {log.score}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs max-w-xs truncate" title={log.findings?.join(', ')}>
+                          {log.findings?.join(', ') || 'None'}
+                        </td>
+                        <td className="px-4 py-3 text-xs max-w-xs truncate" title={log.recommendations?.join(', ')}>
+                          {log.recommendations?.join(', ') || 'None'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeSection === 'nutrition' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-rose-600">{stats.withMealLogs}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Users Tracking Meals</div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-orange-600">{stats.totalCaloriesLogged.toLocaleString()}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Total Calories</div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-blue-600">{stats.avgDailyProtein}g</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Avg Protein/Day</div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-3xl font-black text-emerald-600">{stats.totalMeals}</div>
+              <div className="text-xs font-bold text-slate-400 uppercase">Total Meals</div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-xl font-bold">Meal Log Details</h3>
+            </div>
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              <table className="w-full text-left">
+                <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/50">
+                  <tr className="text-[10px] font-black text-slate-400 uppercase">
+                    <th className="px-6 py-3">User</th>
+                    <th className="px-6 py-3">Meal</th>
+                    <th className="px-6 py-3">Calories</th>
+                    <th className="px-6 py-3">Protein</th>
+                    <th className="px-6 py-3">Carbs</th>
+                    <th className="px-6 py-3">Fat</th>
+                    <th className="px-6 py-3">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {users.flatMap(u => 
+                    (u.mealLogs || []).slice(-5).map(log => ({ ...log, username: u.username }))
+                  ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 20).map((log, i) => (
+                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                      <td className="px-6 py-4 font-bold">{log.username}</td>
+                      <td className="px-6 py-4 text-sm">{log.mealName}</td>
+                      <td className="px-6 py-4">{log.calories}</td>
+                      <td className="px-6 py-4 text-emerald-600">{log.protein}g</td>
+                      <td className="px-6 py-4 text-orange-600">{log.carbs}g</td>
+                      <td className="px-6 py-4 text-rose-600">{log.fat}g</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{new Date(log.date).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced User Detail Modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-8 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-8 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-black">{selectedUser.username}</h3>
-                <p className="text-slate-500">Health Data Details</p>
+                <p className="text-slate-500">Comprehensive Health & Activity Profile</p>
               </div>
               <button onClick={() => setSelectedUser(null)} className="text-2xl">×</button>
             </div>
 
+            {/* Body Metrics */}
+            <div className="mb-6">
+              <h4 className="text-sm font-black uppercase text-slate-400 mb-3">Body Metrics</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="text-xs text-slate-400">Height</div>
+                  <div className="text-lg font-bold">{selectedUser.heightCm ? `${selectedUser.heightCm}cm` : 'Not set'}</div>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="text-xs text-slate-400">Current Weight</div>
+                  <div className="text-lg font-bold">
+                    {selectedUser.weightLogs?.[selectedUser.weightLogs.length - 1]?.weight || 'N/A'}kg
+                  </div>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="text-xs text-slate-400">BMI</div>
+                  <div className="text-lg font-bold">
+                    {selectedUser.heightCm && selectedUser.weightLogs?.length ? 
+                      (selectedUser.weightLogs[selectedUser.weightLogs.length - 1].weight / ((selectedUser.heightCm / 100) ** 2)).toFixed(1) : 
+                      'N/A'}
+                  </div>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="text-xs text-slate-400">Body Type</div>
+                  <div className="text-lg font-bold">{selectedUser.estimatedBodyType || 'Not estimated'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fitness Profile */}
             {selectedUser.fitnessProfile && (
               <div className="mb-6">
-                <h4 className="text-sm font-black uppercase text-slate-400 mb-2">Fitness Profile</h4>
+                <h4 className="text-sm font-black uppercase text-slate-400 mb-3">Fitness Profile</h4>
                 <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><span className="text-xs text-slate-400">Goal:</span> <span className="font-bold">{selectedUser.fitnessProfile.goal}</span></div>
-                    <div><span className="text-xs text-slate-400">Intensity:</span> <span className="font-bold">{selectedUser.fitnessProfile.intensity}</span></div>
-                    <div><span className="text-xs text-slate-400">Location:</span> <span className="font-bold">{selectedUser.fitnessProfile.location}</span></div>
-                    <div><span className="text-xs text-slate-400">Focus:</span> <span className="font-bold">{selectedUser.fitnessProfile.focusAreas?.join(', ')}</span></div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <div className="text-xs text-slate-400">Goal</div>
+                      <div className="font-bold">{selectedUser.fitnessProfile.goal}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400">Intensity</div>
+                      <div className="font-bold">{selectedUser.fitnessProfile.intensity}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400">Location</div>
+                      <div className="font-bold">{selectedUser.fitnessProfile.location}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400">Focus Areas</div>
+                      <div className="font-bold text-sm">{selectedUser.fitnessProfile.focusAreas?.join(', ')}</div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Active Plan with Progress */}
             {selectedUser.activePlan && (
               <div className="mb-6">
-                <h4 className="text-sm font-black uppercase text-slate-400 mb-2">Active Plan</h4>
-                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl space-y-2">
-                  <div className="font-bold">{selectedUser.activePlan.motivation}</div>
-                  {selectedUser.activePlan.dailyWorkouts?.map((w, i) => (
-                    <div key={i} className="text-sm">
-                      <span className="font-bold">{w.name}</span> ({w.duration}) - {w.exercises?.join(', ')}
+                <h4 className="text-sm font-black uppercase text-slate-400 mb-3">Active Fitness Plan</h4>
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                  <div className="font-bold mb-2">{selectedUser.activePlan.motivation}</div>
+                  <div className="text-xs text-slate-400 mb-3">
+                    Generated: {new Date(selectedUser.activePlan.generatedAt).toLocaleDateString()}
+                  </div>
+
+                  {selectedUser.activePlan.dailyWorkouts && selectedUser.activePlan.dailyWorkouts.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm font-bold">
+                        <span>Daily Workouts</span>
+                        <span>
+                          {selectedUser.activePlan.dailyWorkouts.filter(w => w.completed).length} / {selectedUser.activePlan.dailyWorkouts.length} completed
+                        </span>
+                      </div>
+                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-emerald-500 rounded-full transition-all"
+                          style={{ 
+                            width: `${(selectedUser.activePlan.dailyWorkouts.filter(w => w.completed).length / selectedUser.activePlan.dailyWorkouts.length) * 100}%` 
+                          }}
+                        />
+                      </div>
+                      <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
+                        {selectedUser.activePlan.dailyWorkouts.map((w, i) => (
+                          <div 
+                            key={i} 
+                            className={`p-3 rounded-lg text-sm ${
+                              w.completed 
+                                ? 'bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800' 
+                                : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold">{w.name}</span>
+                              {w.completed && <span className="text-xs text-emerald-600 font-bold">✓ Completed</span>}
+                            </div>
+                            <div className="text-xs text-slate-500">{w.duration} • {w.exercises?.join(', ')}</div>
+                            {w.completedAt && (
+                              <div className="text-xs text-slate-400 mt-1">
+                                Completed: {new Date(w.completedAt).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
 
-            <div>
-              <h4 className="text-sm font-black uppercase text-slate-400 mb-2">Recent Weight Logs</h4>
-              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl max-h-40 overflow-y-auto">
-                {selectedUser.weightLogs?.length ? (
+            {/* Posture Logs */}
+            {selectedUser.postureLogs && selectedUser.postureLogs.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-sm font-black uppercase text-slate-400 mb-3">Posture Analysis History</h4>
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="text-center p-2 bg-white dark:bg-slate-700 rounded-lg">
+                      <div className="text-xl font-bold text-teal-600">{selectedUser.postureLogs.length}</div>
+                      <div className="text-xs text-slate-400">Total Checks</div>
+                    </div>
+                    <div className="text-center p-2 bg-white dark:bg-slate-700 rounded-lg">
+                      <div className="text-xl font-bold text-cyan-600">
+                        {Math.round(selectedUser.postureLogs.reduce((a, b) => a + b.score, 0) / selectedUser.postureLogs.length)}
+                      </div>
+                      <div className="text-xs text-slate-400">Avg Score</div>
+                    </div>
+                    <div className="text-center p-2 bg-white dark:bg-slate-700 rounded-lg">
+                      <div className="text-xl font-bold text-blue-600">
+                        {selectedUser.postureLogs[selectedUser.postureLogs.length - 1]?.score}
+                      </div>
+                      <div className="text-xs text-slate-400">Latest</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {selectedUser.postureLogs.slice().reverse().slice(0, 10).map((log, i) => (
+                      <div key={i} className="p-3 bg-white dark:bg-slate-700 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-bold">{new Date(log.date).toLocaleDateString()}</span>
+                          <span className={`text-sm font-bold px-2 py-0.5 rounded ${
+                            log.score >= 80 ? 'bg-emerald-100 text-emerald-700' :
+                            log.score >= 60 ? 'bg-lime-100 text-lime-700' :
+                            log.score >= 40 ? 'bg-amber-100 text-amber-700' :
+                            'bg-rose-100 text-rose-700'
+                          }`}>
+                            {log.score}
+                          </span>
+                        </div>
+                        {log.findings?.length > 0 && (
+                          <div className="text-xs text-slate-500">
+                            <strong>Findings:</strong> {log.findings.join(', ')}
+                          </div>
+                        )}
+                        {log.recommendations?.length > 0 && (
+                          <div className="text-xs text-slate-500 mt-1">
+                            <strong>Tips:</strong> {log.recommendations.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Nutrition Summary */}
+            {selectedUser.mealLogs && selectedUser.mealLogs.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-sm font-black uppercase text-slate-400 mb-3">Nutrition Summary</h4>
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div className="text-center p-2 bg-white dark:bg-slate-700 rounded-lg">
+                      <div className="text-xl font-bold text-rose-600">{selectedUser.mealLogs.length}</div>
+                      <div className="text-xs text-slate-400">Total Meals</div>
+                    </div>
+                    <div className="text-center p-2 bg-white dark:bg-slate-700 rounded-lg">
+                      <div className="text-xl font-bold text-orange-600">
+                        {selectedUser.mealLogs.reduce((sum, m) => sum + m.calories, 0)}
+                      </div>
+                      <div className="text-xs text-slate-400">Total Calories</div>
+                    </div>
+                    <div className="text-center p-2 bg-white dark:bg-slate-700 rounded-lg">
+                      <div className="text-xl font-bold text-blue-600">
+                        {Math.round(selectedUser.mealLogs.reduce((sum, m) => sum + m.protein, 0))}g
+                      </div>
+                      <div className="text-xs text-slate-400">Total Protein</div>
+                    </div>
+                    <div className="text-center p-2 bg-white dark:bg-slate-700 rounded-lg">
+                      <div className="text-xl font-bold text-emerald-600">
+                        {Math.round(selectedUser.mealLogs.reduce((sum, m) => sum + m.carbs, 0))}g
+                      </div>
+                      <div className="text-xs text-slate-400">Total Carbs</div>
+                    </div>
+                  </div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {selectedUser.mealLogs.slice().reverse().slice(0, 10).map((log, i) => (
+                      <div key={i} className="flex justify-between items-center p-2 bg-white dark:bg-slate-700 rounded text-sm">
+                        <div>
+                          <span className="font-bold">{log.mealName}</span>
+                          <span className="text-xs text-slate-400 ml-2">{new Date(log.date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex gap-3 text-xs">
+                          <span className="text-rose-600">{log.calories} cal</span>
+                          <span className="text-blue-600">{log.protein}g P</span>
+                          <span className="text-orange-600">{log.carbs}g C</span>
+                          <span className="text-emerald-600">{log.fat}g F</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Weight History */}
+            {selectedUser.weightLogs && selectedUser.weightLogs.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-sm font-black uppercase text-slate-400 mb-2">Weight History</h4>
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl max-h-40 overflow-y-auto">
                   <div className="space-y-1">
                     {selectedUser.weightLogs.slice(-10).map((w, i) => (
                       <div key={i} className="flex justify-between text-sm">
@@ -817,11 +1372,9 @@ const HealthMetricsTab: React.FC<{ users: User[] }> = ({ users }) => {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-slate-400">No weight logs</p>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

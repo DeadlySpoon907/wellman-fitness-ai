@@ -4,14 +4,16 @@ This document details the client-side architecture of the Wellman Fitness applic
 
 ## 1. Technology Stack
 
-| Component | Package | Purpose |
-|-----------|---------|---------|
-| **Core Framework** | `react` (v19) | Component-based UI library. |
-| **Build Tool** | `vite` | Fast development server and bundler. |
-| **State Management** | React Context API | Local and global state management for user sessions and data. |
-| **Styling** | `tailwindcss` | Utility-first CSS framework for responsive design. |
-| **Visualization** | `recharts` | Rendering weight history and activity charts. |
-| **AI Client** | `@google/genai` | Client-side interaction with Gemini for vision tasks. |
+| Component | Package | Version | Purpose |
+|-----------|---------|---------|---------|
+| **Core Framework** | `react` | ^19.2.4 | Component-based UI library. |
+| **Build Tool** | `vite` | ^7.3.1 | Fast development server and bundler. |
+| **Language** | `typescript` | ^5.0.0 | Type-safe development. |
+| **Styling** | `tailwindcss` | ^3.4.0 | Utility-first CSS framework for responsive design. |
+| **State Management** | React Context API | - | Local and global state management for user sessions and data. |
+| **Visualization** | `recharts` | ^3.7.0 | Rendering weight history and activity charts. |
+| **AI Client** | `@google/genai` | ^1.0.0 | Client-side interaction with Gemini for vision tasks. |
+| **ML/Vision** | `@mediapipe/tasks-vision` | ^0.10.34 | In-browser pose detection and body metric estimation. |
 
 ## 2. Project Structure
 
@@ -37,8 +39,8 @@ The frontend source code is located in the project root:
 ### AI Integration (Client-Side)
 The frontend interacts directly with Google's Gemini API for low-latency, interactive features, particularly those involving computer vision.
 - **Nutritionist**: Captures/uploads images to Gemini for caloric and macro-nutrient estimation.
-- **Posture Checker**: Analyzes video/image frames using TensorFlow.js pose detection for alignment feedback.
-- **BMI Estimator**: Uses TensorFlow.js for in-browser body metric estimation.
+- **Posture Checker**: Analyzes video/image frames using MediaPipe Tasks Vision for alignment feedback.
+- **BMI Estimator**: Uses MediaPipe Tasks Vision for in-browser body metric estimation.
 
 ### State Management
 React Context API is used to manage:

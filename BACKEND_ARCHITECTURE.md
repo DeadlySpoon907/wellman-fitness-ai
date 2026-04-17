@@ -8,10 +8,13 @@ The backend relies on a modern Django stack defined in `requirements.txt`:
 
 | Component | Package | Version | Purpose |
 |-----------|---------|---------|---------|
-| **Core Framework** | `django` | `>=5.0` | The primary web framework handling routing, ORM, and authentication. |
-| **API Toolkit** | `djangorestframework` | Latest | Provides tools for building Web APIs (serialization, viewsets). |
-| **CORS Handling** | `django-cors-headers` | Latest | Middleware to allow the React frontend (running on a different port) to communicate with the API. |
-| **AI Engine** | `google-generativeai` | Latest | Python client for Google's Gemini models, enabling server-side AI reasoning. |
+| **Core Framework** | `django` | >=4.2,<4.3 | The primary web framework handling routing, ORM, and authentication. |
+| **API Toolkit** | `djangorestframework` | >=3.14.0,<3.15.0 | Provides tools for building Web APIs (serialization, viewsets). |
+| **CORS Handling** | `django-cors-headers` | >=4.3.0,<4.4.0 | Middleware to allow the React frontend (running on a different port) to communicate with the API. |
+| **AI Engine** | `google-generativeai` | >=0.8.0,<1.0.0 | Python client for Google's Gemini models, enabling server-side AI reasoning. |
+| **Database** | `psycopg2-binary` / `sqlite3` | - | PostgreSQL for production, SQLite for development. |
+| **Image Processing** | `pillow` | >=10.0.0 | Image handling for meal analysis. |
+| **Production** | `gunicorn`, `whitenoise` | - | WSGI server and static file serving. |
 
 ## 2. Project Structure
 

@@ -6,7 +6,7 @@ This document provides a high-level overview of how the Wellman Fitness system c
 
 Wellman Fitness follows a decoupled **Client-Server Architecture**:
 
-- **Frontend (Client)**: A Single Page Application (SPA) built with React. It handles user interaction, visualization, and direct AI vision tasks using TensorFlow.js.
+- **Frontend (Client)**: A Single Page Application (SPA) built with React. It handles user interaction, visualization, and direct AI vision tasks using MediaPipe Tasks Vision.
 - **Backend (Server)**: A Django REST API that manages data persistence, user authentication, and complex business logic.
 - **Database**: SQLite (Dev) / PostgreSQL (Prod) for storing user profiles, logs, and plans.
 - **AI Services**: Google Gemini models utilized by both the frontend and backend for intelligent features.
@@ -48,7 +48,7 @@ graph TD
 
 4.  **BMI Estimation (In-Browser)**:
     - Frontend captures video/image.
-    - Processes directly in browser using TensorFlow.js.
+    - Processes directly in browser using MediaPipe Tasks Vision.
     - Returns metrics without external service required.
 
 ## 4. File Organization

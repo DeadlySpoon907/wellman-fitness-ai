@@ -4,9 +4,9 @@
 
 Wellman Fitness is an AI-powered fitness tracking application with:
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
-- **Backend**: Django REST Framework
+- **Backend**: Django REST Framework 3.14 + Django 4.2
 - **AI**: Google Gemini API for fitness plans, nutrition analysis, posture checking
-- **ML**: TensorFlow.js for in-browser pose detection and BMI estimation
+- **ML**: MediaPipe Tasks Vision for in-browser pose detection and BMI estimation
 
 ## Project Structure
 
@@ -121,6 +121,7 @@ This project uses Kilo CLI for AI-assisted development. Configuration is stored 
 ## Development Notes
 
 1. The project uses React 19 with client-side routing (hash-based: `/#/`)
-2. Backend runs on port 8000, frontend on port 5173
+2. Backend runs on port 8000, frontend on port 3000
 3. AI features require Google Gemini API key
 4. PostgreSQL is used for production, SQLite for development
+5. Uses MediaPipe Tasks Vision for pose detection (not TensorFlow.js)
