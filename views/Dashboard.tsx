@@ -5,6 +5,21 @@ import { WeightChart } from '../components/WeightChart';
 import { AuthGuard } from '../components/AuthGuard';
 import { getUserGymLogs, logWorkout } from '../services/DB';
 
+function getLast7Days(logs: string[]) {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    days.push({
+      date: dateStr,
+      label: d.toLocaleDateString('en-US', { weekday: 'narrow', timeZone: 'UTC' }),
+      active: logs.includes(dateStr)
+    });
+  }
+  return days;
+}
+
 interface DashboardProps {
   user: User;
   onLogWeight: (weight: number) => void;
@@ -24,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
     getUserGymLogs(user.id).then(setGymLogs).catch(console.error);
   }, [user.id]);
 
-  const isMember = user.role === 'admin' || user.role === 'member' || new Date(user.membershipExpires) > new Date();
+  const isMember = user.role === 'admin' || user.role === 'member' || (user.membershipExpires && new Date(user.membershipExpires) > new Date());
 
   const fitnessPlan = user.activePlan;
 
@@ -94,23 +109,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
     return { streak, last7Days: getLast7Days(normalizedLogs) };
   }, [user.activityLogs]);
 
-   function getLast7Days(logs: string[]) {
-     const days = [];
-     for (let i = 6; i >= 0; i--) {
-       const d = new Date();
-       d.setUTCDate(d.getUTCDate() - i);
-       const dateStr = d.toISOString().split('T')[0];
-       days.push({
-         date: dateStr,
-         label: d.toLocaleDateString('en-US', { weekday: 'narrow', timeZone: 'UTC' }),
-         active: logs.includes(dateStr)
-       });
-     }
-     return days;
-   }
-
    const gymAttendance = useMemo(() => {
-     if (!gymLogs || gymLogs.length === 0) return { total: 0, thisWeek: 0, last7Days: [] };
+     if (!gymLogs || gymLogs.length === 0) return { total: 0, thisWeek: 0, last7Days: getLast7Days([]) };
      
      const normalizedLogs = gymLogs.map(log => log.date?.split('T')[0] || log.date).filter(Boolean);
      const uniqueDays = [...new Set(normalizedLogs)].sort();
@@ -129,20 +129,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <section className="flex justify-between items-start">
-        <div className="flex items-center gap-6">
-          <div className="hidden sm:block w-20 h-20 rounded-[2rem] overflow-hidden border-2 border-primary-100 dark:border-primary-900 shadow-lg">
+      <section className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[2rem] overflow-hidden border-2 border-primary-100 dark:border-primary-900 shadow-lg flex-shrink-0">
              <img src={user.avatarUrl || `https://picsum.photos/seed/${user.avatarSeed || user.id}/100`} alt="Profile" className="w-full h-full object-cover" />
           </div>
           <div>
-            <h2 className="text-3xl font-black mb-1">Hello, {user.displayName || user.username}!</h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">{user.bio || "Ready to smash your goals today?"}</p>
+            <h2 className="text-2xl sm:text-3xl font-black mb-1">Hello, {user.displayName || user.username}!</h2>
+            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium">{user.bio || "Ready to smash your goals today?"}</p>
           </div>
         </div>
-        <div className="hidden md:block text-right">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Current BMI</div>
+        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto px-4 py-3 sm:p-0 bg-slate-50 sm:bg-transparent dark:bg-slate-800/40 rounded-2xl sm:rounded-none border border-slate-100 sm:border-none">
+          <div className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest sm:mb-1">Current BMI</div>
           {user.heightCm && currentWeight ? (
-            <div className="text-2xl font-black text-primary-600">
+            <div className="text-xl sm:text-2xl font-black text-primary-600">
               {(currentWeight / Math.pow(user.heightCm / 100, 2)).toFixed(1)}
             </div>
           ) : (
@@ -233,9 +233,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
         </div>
 
         {/* Gym Attendance - Member Only */}
-        <AuthGuard user={user} requireMember>
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
-            <div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between min-h-[220px]">
+          {isMember ? (
+            <>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold flex items-center gap-2">
                   <span className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">🏋️</span>
@@ -260,11 +260,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
               <div className="mt-4 text-xs font-medium text-slate-500">
                 This week: <span className="text-emerald-600 font-bold">{gymAttendance.thisWeek}</span> visits
               </div>
-            </div>
-            <button 
-              onClick={() => setShowManualWorkout(!showManualWorkout)}
-              className="mt-4 text-xs font-bold text-primary-600 hover:underline"
-            >
+              <button 
+                onClick={() => setShowManualWorkout(!showManualWorkout)}
+                className="mt-4 text-xs font-bold text-primary-600 hover:underline"
+              >
               + Log Manual Workout
             </button>
             {showManualWorkout && (
@@ -308,8 +307,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
                 </button>
               </div>
             )}
-          </div>
-        </AuthGuard>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center py-6 space-y-2 opacity-40 grayscale">
+              <span className="text-3xl">🔒</span>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Attendance Locked</p>
+              <p className="text-[10px] text-slate-500 font-bold">Member exclusive feature</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
@@ -331,66 +337,70 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
           )}
         </div>
 
-        <AuthGuard user={user} requireMember>
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-            {fitnessPlan ? (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <div className="bg-primary-50 dark:bg-primary-950/20 px-4 py-2 rounded-2xl border border-primary-100 dark:border-primary-900/50">
-                    <p className="italic text-primary-800 dark:text-primary-200 text-sm">"{fitnessPlan.motivation}"</p>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm min-h-[160px] flex flex-col justify-center">
+          {isMember ? (
+              fitnessPlan ? (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div className="bg-primary-50 dark:bg-primary-950/20 px-4 py-2 rounded-2xl border border-primary-100 dark:border-primary-900/50">
+                      <p className="italic text-primary-800 dark:text-primary-200 text-sm">"{fitnessPlan.motivation}"</p>
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {planProgress}% Complete
+                    </span>
                   </div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    {planProgress}% Complete
-                  </span>
-                </div>
-                
-                {todaySession ? (
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-primary-200 dark:border-primary-800">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">Today's Session</span>
-                        <h4 className="font-bold text-lg">{todaySession.title}</h4>
+                  
+                  {todaySession ? (
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-primary-200 dark:border-primary-800">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">Today's Session</span>
+                          <h4 className="font-bold text-lg">{todaySession.title}</h4>
+                        </div>
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${todaySession.completed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {todaySession.completed ? '✓ Complete' : '○ Pending'}
+                        </span>
                       </div>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${todaySession.completed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {todaySession.completed ? '✓ Complete' : '○ Pending'}
-                      </span>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{todaySession.focus}</p>
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <span>⏱️ {todaySession.duration}</span>
+                        <span>•</span>
+                        <span>Day {todaySession.day}</span>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{todaySession.focus}</p>
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <span>⏱️ {todaySession.duration}</span>
-                      <span>•</span>
-                      <span>Day {todaySession.day}</span>
+                  ) : (
+                    <div className="text-center py-4 text-slate-500">
+                      No session scheduled for today
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-slate-500">
-                    No session scheduled for today
-                  </div>
-                )}
+                  )}
 
-                <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-500"
-                    style={{ width: `${planProgress}%` }}
-                  />
+                  <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-500"
+                      style={{ width: `${planProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-center text-xs text-slate-500">{fitnessPlan.sessions?.filter(s => s.completed).length || 0} of {fitnessPlan.sessions?.length || 0} sessions completed</p>
                 </div>
-                <p className="text-center text-xs text-slate-500">{fitnessPlan.sessions?.filter(s => s.completed).length || 0} of {fitnessPlan.sessions?.length || 0} sessions completed</p>
-              </div>
+              ) : (
+                <div className="text-center py-12 flex flex-col items-center">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl mb-4">🏗️</div>
+                  <h4 className="text-lg font-bold mb-2">No Active Plan</h4>
+                  <p className="text-slate-500 text-sm mb-6 max-w-xs">Use our AI Designer to create a bespoke workout plan tailored to your body and goals.</p>
+                  <button 
+                    onClick={onDesignPlan}
+                    className="bg-primary-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary-500/20"
+                  >
+                    Go to Designer
+                  </button>
+                </div>
+              )
             ) : (
-              <div className="text-center py-12 flex flex-col items-center">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl mb-4">🏗️</div>
-                <h4 className="text-lg font-bold mb-2">No Active Plan</h4>
-                <p className="text-slate-500 text-sm mb-6 max-w-xs">Use our AI Designer to create a bespoke workout plan tailored to your body and goals.</p>
-                <button 
-                  onClick={onDesignPlan}
-                  className="bg-primary-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary-500/20"
-                >
-                  Go to Designer
-                </button>
+              <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Plan Locked</h4>
               </div>
             )}
           </div>
-        </AuthGuard>
       </section>
     </div>
   );
