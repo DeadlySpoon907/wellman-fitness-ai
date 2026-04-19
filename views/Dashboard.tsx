@@ -1,9 +1,7 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { User } from '../types';
 import { WeightChart } from '../components/WeightChart';
-import { AuthGuard } from '../components/AuthGuard';
-import { getUserGymLogs, logWorkout } from '../services/DB';
+import { getUserGymLogs } from '../services/DB';
 
 function getLast7Days(logs: string[]) {
   const days = [];
@@ -30,10 +28,6 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, apiKey }) => {
   const [newWeight, setNewWeight] = useState('');
   const [gymLogs, setGymLogs] = useState<any[]>([]);
-  const [showManualWorkout, setShowManualWorkout] = useState(false);
-  const [workoutName, setWorkoutName] = useState('');
-  const [workoutDuration, setWorkoutDuration] = useState('');
-  const [workoutExercises, setWorkoutExercises] = useState('');
 
   useEffect(() => {
     getUserGymLogs(user.id).then(setGymLogs).catch(console.error);
@@ -71,7 +65,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
   const streakInfo = useMemo(() => {
     if (!user.activityLogs || user.activityLogs.length === 0) return { streak: 0, last7Days: getLast7Days([]) };
     
-    // Normalize logs to handle potential ISO timestamps and deduplicate
     const normalizedLogs = Array.from(new Set(user.activityLogs.map((log: any) => {
       const dateStr = typeof log === 'string' ? log : log.date;
       return dateStr ? dateStr.split('T')[0] : '';
@@ -83,7 +76,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
     yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
     const yesterday = yesterdayDate.toISOString().split('T')[0];
     
-    // Check if streak is still active
     if (!sortedLogs.includes(today) && !sortedLogs.includes(yesterday)) {
       return { streak: 0, last7Days: getLast7Days(normalizedLogs) };
     }
@@ -91,7 +83,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
     let streak = 0;
     let curr = new Date();
     
-    // If they haven't logged in today yet, check starting from yesterday
     if (!sortedLogs.includes(today)) {
       curr.setUTCDate(curr.getUTCDate() - 1);
     }
@@ -128,7 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
    }, [gymLogs]);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <section className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[2rem] overflow-hidden border-2 border-primary-100 dark:border-primary-900 shadow-lg flex-shrink-0">
@@ -151,8 +142,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Consistency Metric */}
+      {/* Row 1: 2 cards (Consistency + Weight) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold flex items-center gap-2">
@@ -177,7 +168,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
           </div>
         </div>
 
-        {/* Weight Management */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold flex items-center gap-2">
@@ -186,7 +176,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
             </h3>
             <span className="text-2xl font-black text-primary-600">{currentWeight} kg</span>
           </div>
-
           <div className="flex gap-2">
             <input 
               type="number" 
@@ -208,8 +197,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Membership Card */}
+      {/* Row 2: 2 cards (Membership + Gym Attendance) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gradient-to-br from-primary-600 to-primary-800 p-6 rounded-3xl shadow-xl text-white relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
           <div className="relative z-10 flex flex-col justify-between h-full">
@@ -226,14 +217,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
             )}
             {isMember && (
               <div className="mt-4 text-[10px] font-bold opacity-80 uppercase tracking-widest">
-                Expires: {new Date(user.membershipExpires).toLocaleDateString()}
+                Expires: {user.membershipExpires ? new Date(user.membershipExpires).toLocaleDateString() : 'N/A'}
               </div>
             )}
           </div>
         </div>
 
-        {/* Gym Attendance - Member Only */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between min-h-[220px]">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between min-h-[180px]">
           {isMember ? (
             <>
               <div className="flex justify-between items-center mb-4">
@@ -260,53 +250,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
               <div className="mt-4 text-xs font-medium text-slate-500">
                 This week: <span className="text-emerald-600 font-bold">{gymAttendance.thisWeek}</span> visits
               </div>
-              <button 
-                onClick={() => setShowManualWorkout(!showManualWorkout)}
-                className="mt-4 text-xs font-bold text-primary-600 hover:underline"
-              >
-              + Log Manual Workout
-            </button>
-            {showManualWorkout && (
-              <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-3">
-                <input
-                  type="text"
-                  value={workoutName}
-                  onChange={(e) => setWorkoutName(e.target.value)}
-                  placeholder="Workout name..."
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 outline-none"
-                />
-                <input
-                  type="text"
-                  value={workoutDuration}
-                  onChange={(e) => setWorkoutDuration(e.target.value)}
-                  placeholder="Duration (e.g., 45 mins)..."
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 outline-none"
-                />
-                <input
-                  type="text"
-                  value={workoutExercises}
-                  onChange={(e) => setWorkoutExercises(e.target.value)}
-                  placeholder="Exercises (comma separated)..."
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 outline-none"
-                />
-                <button
-                  onClick={async () => {
-                    if (workoutName) {
-                      const exercises = workoutExercises.split(',').map(e => e.trim()).filter(Boolean);
-                      await logWorkout(user.id, workoutName, workoutDuration, exercises);
-                      setWorkoutName('');
-                      setWorkoutDuration('');
-                      setWorkoutExercises('');
-                      setShowManualWorkout(false);
-                      window.location.reload();
-                    }
-                  }}
-                  className="w-full bg-primary-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-primary-700"
-                >
-                  Save Workout
-                </button>
-              </div>
-            )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center py-6 space-y-2 opacity-40 grayscale">
@@ -318,12 +261,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
         </div>
       </div>
 
+      {/* Row 3: 1 card (Weight History) */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
         <h3 className="text-lg font-bold mb-4">Weight History</h3>
         <WeightChart data={sortedWeightLogs} />
       </div>
 
-      {/* AI Fitness Plan */}
+      {/* Row 4: 1 card (Active Plan) */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold">Your Active Plan</h3>

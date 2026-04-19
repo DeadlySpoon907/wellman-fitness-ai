@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { User, FitnessProfile } from '../types';
+import { User, FitnessProfile, FitnessPlan } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { GoogleGenAI } from "@google/genai";
-import { saveUser } from '../services/DB';
+import { saveUser, deletePlanFromHistory } from '../services/DB';
 import { FullBodyTracker } from '../components/FullBodyTracker';
 import { getBodyTypeDescription, getBodyTypeIcon, BodyType } from '../utils/bodyAnalysis';
 import type { ExerciseType } from '../types';
@@ -24,6 +24,7 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
   const [selectedExercise, setSelectedExercise] = useState<ExerciseType>('squat');
   const [liveStats, setLiveStats] = useState({ reps: 0, duration: 0, calories: 0 });
   const [isLiveActive, setIsLiveActive] = useState(false);
+  const [autoDetect, setAutoDetect] = useState(false);
 
   const bodyType = user.estimatedBodyType as BodyType | undefined;
 
@@ -114,11 +115,26 @@ Return ONLY valid JSON, no markdown.`;
       } else {
         throw new Error("Unable to parse AI response");
       }
-      
+       
       const jsonString = text.replace(/```json|```/g, '').trim();
       const plan = JSON.parse(jsonString);
-      const completePlan = { ...plan, generatedAt: new Date().toISOString() };
-      const updatedUser = { ...user, fitnessProfile: profile, activePlan: completePlan };
+      const completePlan = { ...plan, generatedAt: new Date().toISOString(), id: crypto.randomUUID() };
+
+      // Move current active plan to history before saving new one
+      const planHistory = user.planHistory || [];
+      if (user.activePlan) {
+        planHistory.push({
+          ...user.activePlan,
+          endedAt: new Date().toISOString()
+        });
+      }
+
+      const updatedUser = { 
+        ...user, 
+        fitnessProfile: profile, 
+        activePlan: completePlan,
+        planHistory: planHistory
+      };
       await saveUser(updatedUser);
       onPlanGenerated();
       alert("Success! Your personalized plan is ready on your dashboard.");
@@ -272,6 +288,44 @@ Return ONLY valid JSON, no markdown.`;
               </div>
             )}
 
+            {/* Past Plans History */}
+            {user.planHistory && user.planHistory.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <span className="text-slate-500">📚</span> Past Plans
+                </h3>
+                <div className="space-y-3">
+                  {user.planHistory.map((plan: FitnessPlan, idx: number) => (
+                    <div key={plan.id || idx} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-bold text-sm">{plan.motivation || 'Plan'}</div>
+                          <div className="text-xs text-slate-500">
+                            Generated {new Date(plan.generatedAt).toLocaleDateString()}
+                            {plan.endedAt && ` • Ended ${new Date(plan.endedAt).toLocaleDateString()}`}
+                          </div>
+                          <div className="text-xs text-slate-400 mt-1">
+                            {plan.dailyWorkouts?.length || 0} workouts • {plan.dailyWorkouts?.reduce((acc, w) => acc + (w.exercises?.length || 0), 0) || 0} total exercises
+                          </div>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (!plan.id) return;
+                            if (!confirm('Delete this past plan?')) return;
+                            await deletePlanFromHistory(user.id, plan.id);
+                            onPlanGenerated(); // Refresh user data
+                          }}
+                          className="text-red-500 hover:text-red-700 text-sm font-medium px-2 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-10">
               
               <div className="space-y-4">
@@ -411,13 +465,12 @@ Return ONLY valid JSON, no markdown.`;
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={false}
-                      onChange={() => {}}
+                      checked={autoDetect}
+                      onChange={() => setAutoDetect(!autoDetect)}
                       className="w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                      disabled
                     />
                     <span className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                      Auto-Detect (Pro)
+                      Auto-Detect
                     </span>
                   </label>
                 </div>
@@ -425,7 +478,7 @@ Return ONLY valid JSON, no markdown.`;
 
               <FullBodyTracker 
                 exercise={selectedExercise}
-                freedomMode={false}
+                freedomMode={autoDetect}
               />
             </div>
 
