@@ -124,7 +124,7 @@ export interface PlannedExercise {
 }
 
 // Pose tracking types
-export type ExerciseType = 'bicep_curl' | 'squat' | 'pushup' | 'lunge' | 'situp';
+export type ExerciseType = 'bicep_curl' | 'squat' | 'pushup' | 'lunge' | 'situp' | 'dumbbell_shoulder_press' | 'dumbbell_rows' | 'tricep_extensions' | 'lateral_shoulder_raises' | 'jumping_jacks';
 
 export type RepPhase = 'up' | 'down' | 'bottom';
 
@@ -198,6 +198,39 @@ export const EXERCISE_CONFIGS: Record<ExerciseType, ExerciseConfig> = {
     elbowAngleDown: 90,
     elbowAngleUp: 170,
     minRepDuration: 400,
+    detectionMode: 'angle',
+  },
+  dumbbell_shoulder_press: {
+    name: 'Dumbbell Shoulder Press',
+    elbowAngleDown: 90,
+    elbowAngleUp: 170,
+    minRepDuration: 400,
+    detectionMode: 'angle',
+  },
+  dumbbell_rows: {
+    name: 'Dumbbell Rows',
+    elbowAngleDown: 90,
+    elbowAngleUp: 170,
+    minRepDuration: 500,
+    detectionMode: 'angle',
+  },
+  tricep_extensions: {
+    name: 'Tricep Extensions',
+    elbowAngleDown: 60,
+    elbowAngleUp: 170,
+    minRepDuration: 400,
+    detectionMode: 'angle',
+  },
+  lateral_shoulder_raises: {
+    name: 'Lateral Shoulder Raises',
+    elbowAngleDown: 45,
+    elbowAngleUp: 170,
+    minRepDuration: 400,
+    detectionMode: 'angle',
+  },
+  jumping_jacks: {
+    name: 'Jumping Jacks',
+    minRepDuration: 300,
     detectionMode: 'angle',
   },
 };

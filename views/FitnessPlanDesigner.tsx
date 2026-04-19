@@ -85,6 +85,13 @@ IMPORTANT: Only include exercises from this list that the AI pose detection syst
 - Squat
 - Push-up
 - Lunge
+- Sit-up
+- Bicep Curl
+- Dumbbell Shoulder Press
+- Dumbbell Rows
+- Tricep Extensions
+- Lateral Shoulder Raises
+- Jumping Jacks
 
 Return a JSON object with:
 - motivation: string (short quote)
@@ -393,6 +400,11 @@ Return ONLY valid JSON, no markdown.`;
                     <option value="pushup">Push-up</option>
                     <option value="lunge">Lunge</option>
                     <option value="situp">Sit-up</option>
+                    <option value="dumbbell_shoulder_press">Dumbbell Shoulder Press</option>
+                    <option value="dumbbell_rows">Dumbbell Rows</option>
+                    <option value="tricep_extensions">Tricep Extensions</option>
+                    <option value="lateral_shoulder_raises">Lateral Shoulder Raises</option>
+                    <option value="jumping_jacks">Jumping Jacks</option>
                   </select>
                 </div>
                 <div className="flex items-center gap-3">

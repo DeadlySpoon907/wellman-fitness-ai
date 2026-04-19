@@ -270,6 +270,11 @@ const FitnessPlanTracker: React.FC<{ user: User; onPlanUpdated: () => void; onSt
                         <option value="pushup">Push-up</option>
                         <option value="lunge">Lunge</option>
                         <option value="situp">Sit-up</option>
+                        <option value="dumbbell_shoulder_press">Dumbbell Shoulder Press</option>
+                        <option value="dumbbell_rows">Dumbbell Rows</option>
+                        <option value="tricep_extensions">Tricep Extensions</option>
+                        <option value="lateral_shoulder_raises">Lateral Shoulder Raises</option>
+                        <option value="jumping_jacks">Jumping Jacks</option>
                       </select>
                     </div>
                     <FullBodyTracker 
