@@ -124,13 +124,14 @@ export const saveUser = async (user: User): Promise<User> => {
     (sanitized as any).username = user.username;
   }
 
-  // Preserve metrics and logs that might be stripped by sanitization
-  if (user.weightLogs) (sanitized as any).weightLogs = user.weightLogs;
-  if (user.activityLogs) (sanitized as any).activityLogs = user.activityLogs;
-  if (user.mealLogs) (sanitized as any).mealLogs = user.mealLogs;
-  if (user.postureLogs) (sanitized as any).postureLogs = user.postureLogs;
-  if (user.fitnessProfile) (sanitized as any).fitnessProfile = user.fitnessProfile;
-  if (user.activePlan) (sanitized as any).activePlan = user.activePlan;
+   // Preserve metrics and logs that might be stripped by sanitization
+   if (user.weightLogs) (sanitized as any).weightLogs = user.weightLogs;
+   if (user.activityLogs) (sanitized as any).activityLogs = user.activityLogs;
+   if (user.mealLogs) (sanitized as any).mealLogs = user.mealLogs;
+   if (user.postureLogs) (sanitized as any).postureLogs = user.postureLogs;
+   if (user.fitnessProfile) (sanitized as any).fitnessProfile = user.fitnessProfile;
+   if (user.activePlan) (sanitized as any).activePlan = user.activePlan;
+   if (user.planHistory) (sanitized as any).plan_history = user.planHistory;
   
   const response = await fetch(`${API_URL}/users/${user.id}/`, {
     method: 'PATCH',
@@ -279,6 +280,15 @@ export const logMeal = async (userId: string, mealName: string, calories: number
       carbs,
       fat
     })
+  });
+  return handleResponse(response);
+};
+
+export const deletePlanFromHistory = async (userId: string, planId: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/users/${userId}/delete-plan-history/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId })
   });
   return handleResponse(response);
 };

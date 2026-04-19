@@ -23,6 +23,7 @@ export interface User {
   activePlan?: FitnessPlan;
   dietPlan?: FitnessPlan['dietPlan'];
   gymLogs?: GymLog[];
+  planHistory?: FitnessPlan[];
 }
 
 export interface GymLog {
