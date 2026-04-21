@@ -202,6 +202,12 @@ Return ONLY valid JSON, no markdown.`;
 
   const activePlan = user.activePlan;
 
+  // Redirect to body scanner if no active plan in plan mode
+  if (mode === 'plan' && !activePlan) {
+    window.location.hash = '#/bmi';
+    return null;
+  }
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
       <section>

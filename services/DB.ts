@@ -130,7 +130,7 @@ export const saveUser = async (user: User): Promise<User> => {
    if (user.mealLogs) (sanitized as any).mealLogs = user.mealLogs;
    if (user.postureLogs) (sanitized as any).postureLogs = user.postureLogs;
    if (user.fitnessProfile) (sanitized as any).fitnessProfile = user.fitnessProfile;
-   if (user.activePlan) (sanitized as any).activePlan = user.activePlan;
+    if (user.activePlan !== undefined) (sanitized as any).activePlan = user.activePlan;
    if (user.planHistory) (sanitized as any).plan_history = user.planHistory;
   
   const response = await fetch(`${API_URL}/users/${user.id}/`, {
