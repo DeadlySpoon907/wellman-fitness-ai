@@ -138,7 +138,16 @@ export const saveUser = async (user: User): Promise<User> => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(sanitized)
   });
-  return handleResponse(response);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[DB] saveUser failed:', response.status, errorText);
+    throw new Error(`Save failed: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await handleResponse(response);
+  console.log('[DB] saveUser success, activePlan:', data.activePlan);
+  return data;
 };
 
 export const deleteUser = async (id: string): Promise<void> => {
