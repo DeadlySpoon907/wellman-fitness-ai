@@ -71,19 +71,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# Database - PostgreSQL for production, SQLite for development
+# Database - PostgreSQL for production (Railway), SQLite for development
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-if DATABASE_URL and not DEBUG:
-    # Use PostgreSQL in production
+# Use PostgreSQL on Railway when DATABASE_URL is set (production)
+if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=600
+            conn_max_age=600,
+            ssl_require=True  # Railway requires SSL
         )
     }
 else:
-    # Use SQLite for local development
+    # Fallback to SQLite for local development when no DATABASE_URL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

@@ -1,80 +1,109 @@
 # Wellman Fitness - General System Architecture
 
-This document provides a high-level overview of how the Wellman Fitness system components interact.
+This document provides a high-level overview of the Wellman Fitness system, including its goals, features, and component interactions.
 
 ## 1. System Overview
 
-Wellman Fitness follows a decoupled **Client-Server Architecture**:
+**Wellman Fitness** is an AI-powered fitness tracking application designed to help users achieve their health goals through personalized workout plans, body analysis, nutrition tracking, and real-time exercise monitoring.
 
-- **Frontend (Client)**: A Single Page Application (SPA) built with React. It handles user interaction, visualization, and direct AI vision tasks using MediaPipe Tasks Vision.
-- **Backend (Server)**: A Django REST API that manages data persistence, user authentication, and complex business logic.
-- **Database**: SQLite (Dev) / PostgreSQL (Prod) for storing user profiles, logs, and plans.
-- **AI Services**: Google Gemini models utilized by both the frontend and backend for intelligent features.
+### Core Goals:
+1. **Personalization**: Generate workout plans tailored to user's body type, goals, and fitness level
+2. **Accessibility**: Provide AI-driven analysis without requiring expensive equipment
+3. **Tracking**: Enable comprehensive tracking of weight, workouts, meals, and posture
+4. **Engagement**: Maintain user motivation through streaks, progress tracking, and AI conversations
+5. **Management**: Give administrators tools to monitor platform health and user engagement
 
-## 2. Architecture Diagram
+### Architecture:
+- **Frontend (Client)**: React 19 SPA with real-time AI/ML capabilities in-browser
+- **Backend (Server)**: Django REST API for data persistence and server-side AI
+- **Database**: SQLite (dev) / PostgreSQL (prod)
+- **AI Services**: Google Gemini for plan generation, meal analysis, body estimation
 
-```mermaid
-graph TD
-    User[User] -->|HTTPS| Client[React Frontend]
-    Client -->|REST API / JSON| Server[Django Backend]
-    Server -->|SQL| DB[(Database)]
-    
-    subgraph AI_Integration
-    Client -->|Direct API Call (Vision)| Gemini[Google Gemini API]
-    Server -->|Server-side Call (Planning)| Gemini
-    end
-```
+---
+
+## 2. All System Features
+
+### Feature Overview with Goals
+
+| # | Feature | Goal |
+|---|---------|------|
+| 1 | **Smart Dashboard** | Central overview with weight, BMI, activity streak, active plan |
+| 2 | **AI Fitness Plan Designer** | Generate personalized workout + diet plans via Gemini AI |
+| 3 | **Body Scanner** | Detect body type (Ecto/Meso/Endo) via MediaPipe + auto-generate 30-day plan |
+| 4 | **Posture Checker** | Real-time exercise tracking with pose detection + gym attendance |
+| 5 | **AI Nutritionist** | Vision-based meal analysis + meal logging |
+| 6 | **NutriBot** | Conversational AI for nutrition advice |
+| 7 | **Fitness Plan Tracker** | Track 30-day plan progress with completion toggles |
+| 8 | **Admin Dashboard** | User management, analytics, health metrics, gym logbook |
+| 9 | **User Profile** | View/edit personal info, membership status |
+| 10 | **Settings** | API key config, dark mode, logout |
+| 11 | **Authentication** | Register/login with 30-day trial, role-based access |
+| 12 | **Gym Check-In** | Track facility usage via time-in/time-out |
+
+---
 
 ## 3. Data Flow
 
-1.  **Authentication**:
-    - User logs in via Frontend.
-    - Credentials sent to Backend.
-    - Backend validates and returns a session/token.
-    - Frontend stores token in Redux/LocalStorage.
+### Authentication
+1. User submits credentials to Frontend
+2. Frontend calls `/api/users/login/`
+3. Backend validates and returns user data
+4. Frontend stores user ID in localStorage
 
-2.  **Fitness Planning (Server-Side AI)**:
-    - User submits goals in Frontend.
-    - Request sent to Backend (`/api/generate-plan/`).
-    - Backend constructs a prompt and calls Gemini API.
-    - Gemini returns structured JSON plan.
-    - Backend saves plan to DB and returns it to Frontend.
+### AI Plan Generation
+1. User selects goals/focus areas in FitnessPlanDesigner
+2. Frontend sends prompt to Gemini API
+3. Gemini returns JSON plan (workouts + nutrition)
+4. Frontend saves to user profile via API
 
-3.  **Nutrition Analysis (Client-Side AI)**:
-    - User uploads food image in Frontend.
-    - Frontend sends image directly to Gemini API (using `VITE_API_KEY`).
-    - Gemini returns nutritional data.
-    - Frontend displays data (and optionally sends to Backend for logging).
+### Body Scanning
+1. User activates BodyScanner, positions in camera
+2. MediaPipe detects body landmarks in real-time
+3. Frontend analyzes proportions, calculates body type
+4. If locked, triggers 30-day plan generation via Gemini
+5. Saves body type + plan to user profile
 
-4.  **BMI Estimation (In-Browser)**:
-    - Frontend captures video/image.
-    - Processes directly in browser using MediaPipe Tasks Vision.
-    - Returns metrics without external service required.
+### Meal Analysis
+1. User uploads photo in Nutritionist
+2. Frontend sends to Gemini Vision API
+3. Returns: mealName, calories, protein, carbs, fat
+4. User can log to meal history
 
-## 4. File Organization
+### Posture/Exercise Tracking
+1. User selects exercise in PostureChecker
+2. Camera captures video, MediaPipe processes frames
+3. Skeleton overlay renders on screen
+4. Rep counting and form feedback (future: auto-detect)
 
-The backend is organized as follows:
+---
+
+## 4. Project Organization
+
 ```
-backend/
-├── manage.py               # Django management utility
-├── seed.py                 # Database seeding script
-├── requirements.txt        # Python dependencies
-├── backend/                # Django project settings
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-└── api/                    # REST API application
-    ├── models.py
-    ├── views.py
-    ├── serializers.py
-    └── migrations/
+wellman-fitness-version-1.3.6/
+├── views/           # React page components (12 features)
+├── components/      # Reusable UI (FullBodyTracker, WeightChart, etc.)
+├── services/        # DB.ts, geminiService.ts
+├── api/             # Django REST API
+│   ├── models.py    # User, GymLog schemas
+│   ├── views.py     # Endpoints
+│   └── serializers.py
+└── backend/         # Django project config
 ```
 
-Use `start_all.bat` to launch all services automatically.
+---
 
 ## 5. Security & Configuration
 
-- **CORS**: Configured via `django-cors-headers` to allow cross-origin requests from the React frontend.
-- **Environment Variables**: Sensitive configuration is managed via `.env` files (using `python-dotenv` on the backend).
-    - **Backend**: Stores `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, and server-side `GOOGLE_API_KEY`.
-    - **Frontend**: Stores `VITE_API_KEY` for client-side AI operations.
+- **CORS**: django-cors-headers enabled for frontend-backend communication
+- **Environment Variables**:
+  - Frontend: `VITE_API_KEY`, `VITE_API_BASE_URL`
+  - Backend: `GEMINI_API_KEY`, `SECRET_KEY`, `DATABASE_URL`
+- **Authentication**: Session via localStorage, role-based route protection
+
+---
+
+## 6. Deployment
+
+- **Development**: `npm run dev` (port 3000) + `python manage.py runserver` (port 8000)
+- **Production**: Vercel (frontend) + Railway (backend) with PostgreSQL

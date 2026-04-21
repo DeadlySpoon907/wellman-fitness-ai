@@ -1,0 +1,120 @@
+{
+  "version": "1.0",
+  "description": "Reference posture dataset for comparison with tracked poses",
+  "created": "2026-04-16",
+  "reference_poses": {
+    "neutral_standing": {
+      "description": "Ideal standing posture with good alignment",
+      "landmarks": {
+        "nose": { "x": 0.5, "y": 0.1, "z": 0 },
+        "left_shoulder": { "x": 0.4, "y": 0.25, "z": 0 },
+        "right_shoulder": { "x": 0.6, "y": 0.25, "z": 0 },
+        "left_hip": { "x": 0.42, "y": 0.5, "z": 0 },
+        "right_hip": { "x": 0.58, "y": 0.5, "z": 0 },
+        "left_knee": { "x": 0.42, "y": 0.7, "z": 0 },
+        "right_knee": { "x": 0.58, "y": 0.7, "z": 0 },
+        "left_ankle": { "x": 0.42, "y": 0.9, "z": 0 },
+        "right_ankle": { "x": 0.58, "y": 0.9, "z": 0 }
+      },
+      "angles": {
+        "neck_angle": 180,
+        "shoulder_alignment": 180,
+        "spine_angle": 175,
+        "hip_alignment": 180,
+        "knee_angle": 175,
+        "ankle_angle": 90
+      }
+    },
+    "slouched": {
+      "description": "Poor posture with rounded back",
+      "landmarks": {
+        "nose": { "x": 0.5, "y": 0.15, "z": 0 },
+        "left_shoulder": { "x": 0.38, "y": 0.3, "z": 0 },
+        "right_shoulder": { "x": 0.62, "y": 0.3, "z": 0 },
+        "left_hip": { "x": 0.44, "y": 0.52, "z": 0 },
+        "right_hip": { "x": 0.56, "y": 0.52, "z": 0 },
+        "left_knee": { "x": 0.42, "y": 0.7, "z": 0 },
+        "right_knee": { "x": 0.58, "y": 0.7, "z": 0 },
+        "left_ankle": { "x": 0.42, "y": 0.9, "z": 0 },
+        "right_ankle": { "x": 0.58, "y": 0.9, "z": 0 }
+      },
+      "angles": {
+        "neck_angle": 150,
+        "shoulder_alignment": 165,
+        "spine_angle": 140,
+        "hip_alignment": 170,
+        "knee_angle": 175,
+        "ankle_angle": 90
+      }
+    },
+    "forward_head": {
+      "description": "Head positioned forward (text neck)",
+      "landmarks": {
+        "nose": { "x": 0.35, "y": 0.12, "z": 0.1 },
+        "left_shoulder": { "x": 0.4, "y": 0.25, "z": 0 },
+        "right_shoulder": { "x": 0.6, "y": 0.25, "z": 0 },
+        "left_hip": { "x": 0.42, "y": 0.5, "z": 0 },
+        "right_hip": { "x": 0.58, "y": 0.5, "z": 0 },
+        "left_knee": { "x": 0.42, "y": 0.7, "z": 0 },
+        "right_knee": { "x": 0.58, "y": 0.7, "z": 0 },
+        "left_ankle": { "x": 0.42, "y": 0.9, "z": 0 },
+        "right_ankle": { "x": 0.58, "y": 0.9, "z": 0 }
+      },
+      "angles": {
+        "neck_angle": 120,
+        "shoulder_alignment": 180,
+        "spine_angle": 175,
+        "hip_alignment": 180,
+        "knee_angle": 175,
+        "ankle_angle": 90
+      }
+    },
+    "left_leaning": {
+      "description": "Body leaning to the left",
+      "landmarks": {
+        "nose": { "x": 0.48, "y": 0.1, "z": 0 },
+        "left_shoulder": { "x": 0.38, "y": 0.26, "z": 0 },
+        "right_shoulder": { "x": 0.62, "y": 0.24, "z": 0 },
+        "left_hip": { "x": 0.4, "y": 0.5, "z": 0 },
+        "right_hip": { "x": 0.6, "y": 0.5, "z": 0 },
+        "left_knee": { "x": 0.4, "y": 0.7, "z": 0 },
+        "right_knee": { "x": 0.6, "y": 0.7, "z": 0 },
+        "left_ankle": { "x": 0.4, "y": 0.9, "z": 0 },
+        "right_ankle": { "x": 0.6, "y": 0.9, "z": 0 }
+      },
+      "angles": {
+        "neck_angle": 175,
+        "shoulder_alignment": 160,
+        "spine_angle": 165,
+        "hip_alignment": 175,
+        "knee_angle": 175,
+        "ankle_angle": 90
+      }
+    }
+  },
+  "thresholds": {
+    "good_posture": {
+      "neck_angle": { "min": 145, "max": 215 },
+      "shoulder_alignment": { "min": 150, "max": 210 },
+      "spine_angle": { "min": 145, "max": 205 },
+      "hip_alignment": { "min": 150, "max": 210 },
+      "knee_angle": { "min": 145, "max": 205 },
+      "ankle_angle": { "min": 60, "max": 120 }
+    },
+    "acceptable_posture": {
+      "neck_angle": { "min": 110, "max": 250 },
+      "shoulder_alignment": { "min": 120, "max": 240 },
+      "spine_angle": { "min": 110, "max": 230 },
+      "hip_alignment": { "min": 120, "max": 240 },
+      "knee_angle": { "min": 110, "max": 230 },
+      "ankle_angle": { "min": 40, "max": 140 }
+    }
+  },
+  "comparison_config": {
+    "angle_tolerance": 30,
+    "position_tolerance": 0.1,
+    "weight_good": 0.5,
+    "weight_acceptable": 0.25,
+    "weight_poor": 0.1
+  }
+}

@@ -22,10 +22,9 @@ export const sanitizeUserForSave = (user: User): User => {
   // Fixes: "heightCm": ["This field may not be null."]
   sanitized.heightCm = (sanitized.heightCm === null || sanitized.heightCm === undefined) ? 0 : sanitized.heightCm;
 
-  // Handle activePlan
-  // Fixes: "activePlan": ["This field may not be null."]
-  // If it's null/undefined, remove it so it's not sent as null.
-  if (!sanitized.activePlan) {
+  // Handle activePlan: allow null to clear the active plan
+  // Only remove if undefined; null is a valid value to indicate deletion.
+  if (sanitized.activePlan === undefined) {
     delete sanitized.activePlan;
   }
 

@@ -6,50 +6,187 @@ This document details the client-side architecture of the Wellman Fitness applic
 
 | Component | Package | Version | Purpose |
 |-----------|---------|---------|---------|
-| **Core Framework** | `react` | ^19.2.4 | Component-based UI library. |
-| **Build Tool** | `vite` | ^7.3.1 | Fast development server and bundler. |
-| **Language** | `typescript` | ^5.0.0 | Type-safe development. |
-| **Styling** | `tailwindcss` | ^3.4.0 | Utility-first CSS framework for responsive design. |
-| **State Management** | React Context API | - | Local and global state management for user sessions and data. |
-| **Visualization** | `recharts` | ^3.7.0 | Rendering weight history and activity charts. |
-| **AI Client** | `@google/genai` | ^1.0.0 | Client-side interaction with Gemini for vision tasks. |
-| **ML/Vision** | `@mediapipe/tasks-vision` | ^0.10.34 | In-browser pose detection and body metric estimation. |
+| **Framework** | `react` | ^19.2.4 | Component-based UI |
+| **Build** | `vite` | ^7.3.1 | Dev server & bundler |
+| **Language** | `typescript` | ^5.0.0 | Type-safe development |
+| **Styling** | `tailwindcss` | ^3.4.0 | Utility CSS |
+| **State** | React Context / useState | - | State management |
+| **Charts** | `recharts` | ^3.7.0 | Weight visualization |
+| **AI** | `@google/generativeai` | ^1.0.0 | Gemini client |
+| **ML** | `@mediapipe/tasks-vision` | ^0.10.34 | Pose detection |
+
+---
 
 ## 2. Project Structure
 
-The frontend source code is located in the project root:
-
-```text
-├── components/         # Reusable UI components (AuthGuard, WeightChart, CameraCapture).
-├── views/              # Main application views (Dashboard, Login, AdminDashboard, etc.).
-├── services/           # API service layers (DB.ts, geminiService.ts).
-├── utils/              # Utility functions and helpers.
-├── App.tsx             # Root component and routing configuration.
-├── index.tsx           # Application entry point.
-├── types.ts            # TypeScript type definitions.
-└── package.json        # npm dependencies.
+```
+├── views/                  # Page components
+│   ├── Dashboard.tsx       # Smart Dashboard
+│   ├── Login.tsx           # Auth (login/register)
+│   ├── AdminDashboard.tsx # Admin Panel
+│   ├── FitnessPlanDesigner.tsx # Plan Designer + Live
+│   ├── BodyScanner.tsx    # Body Scanner + 30-day plan
+│   ├── PostureChecker.tsx # Exercise Tracker
+│   ├── Nutritionist.tsx   # Meal Analysis
+│   ├── NutriBot.tsx       # AI Chatbot
+│   ├── Profile.tsx        # User Profile
+│   └── Settings.tsx       # Settings
+├── components/
+│   ├── FullBodyTracker.tsx # MediaPipe pose
+│   ├── WeightChart.tsx    # Recharts line chart
+│   ├── CameraCapture.tsx  # Image capture
+│   └── AuthGuard.tsx      # Route protection
+├── services/
+│   ├── DB.ts             # API calls
+│   └── geminiService.ts  # Gemini wrapper
+├── App.tsx               # Root + routing
+└── types.ts              # TypeScript definitions
 ```
 
-## 3. Key Features & Implementation
+---
+
+## 3. All Features (Frontend)
 
 ### Dashboard
-- **Implementation**: Aggregates data from `WeightLog` and `ActivityLog`.
-- **Visualization**: Uses `recharts` to render the "Weight History" line chart and "Consistency" heatmap.
+**Goal**: Central overview with key metrics
 
-### AI Integration (Client-Side)
-The frontend interacts directly with Google's Gemini API for low-latency, interactive features, particularly those involving computer vision.
-- **Nutritionist**: Captures/uploads images to Gemini for caloric and macro-nutrient estimation.
-- **Posture Checker**: Analyzes video/image frames using MediaPipe Tasks Vision for alignment feedback.
-- **BMI Estimator**: Uses MediaPipe Tasks Vision for in-browser body metric estimation.
+- User greeting with avatar + display name
+- Current BMI display (from height + latest weight)
+- Weight logging input + weight history chart
+- Consistency streak + 7-day heatmap
+- Membership status card (premium/trial + expiry)
+- Active plan display with today's session + progress bar
 
-### State Management
-React Context API is used to manage:
-- **Authentication State**: User tokens and profile info. Handles persistence via `localStorage`.
-- **UI State**: Sidebar toggles, active modals, and theme preferences (Dark/Light mode).
-- **Data State**: Caching of fetched plans and logs to minimize API calls.
+### FitnessPlanDesigner
+**Goal**: AI-powered personalized plan generation
 
-## 4. Configuration
+**Plan Mode:**
+- Goal selector: weight-loss, muscle-gain, endurance, flexibility
+- Intensity: beginner, intermediate, advanced
+- Location: home, gym, outdoors
+- Focus areas: Core, Legs, Upper Body, Cardio, Mobility, Back
+- Body type context from locked profile
+- AI generates: motivation, daily workouts, nutrition guidelines
+
+**Live Workout Mode:**
+- Exercise selector (10 predefined exercises)
+- FullBodyTracker with real-time pose detection
+- Skeleton overlay visualization
+
+### BodyScanner
+**Goal**: Body type analysis + 30-day plan auto-generation
+
+- Live MediaPipe scan with position feedback
+- Body type detection: Ectomorph, Mesomorph, Endomorph
+- Confidence percentage display
+- Personalized recommendations
+- Lock body profile (saves to user)
+- Auto-generates 30-day plan with:
+  - 4 weeks × 5-6 sessions
+  - Strength, cardio, HIIT, flexibility mix
+  - Nutrition targets (protein, carbs, fats)
+
+### PostureChecker
+**Goal**: Exercise tracking + gym attendance
+
+- Camera-based pose detection
+- Exercise selection + freedom mode (auto-detect)
+- Real-time skeleton overlay
+- Gym attendance from check-in logs
+- Weekly attendance heatmap (last 7 days)
+- Manual workout logging
+
+### Nutritionist
+**Goal**: Vision-based meal analysis + tracking
+
+- Photo upload (file or camera)
+- Gemini Vision analysis returns: mealName, calories, protein, carbs, fat
+- Macro report with color-coded cards
+- Manual meal input option
+- Diet plan display (from AI plan) with meals + macros
+- Meal logging to history
+
+### NutriBot
+**Goal**: Conversational nutrition assistant
+
+- Chat interface with Gemini 3 Flash
+- Streaming responses
+- System instruction for nutrition expertise
+- Topics: meal planning, macros, healthy advice
+
+### FitnessPlanTracker (Integrated in Dashboard)
+**Goal**: Track 30-day plan progress
+
+- Today's session highlight based on start date
+- Session details: title, focus, duration
+- Completion toggle for each session
+- Progress bar with completion %
+
+### AdminDashboard
+**Goal**: Platform management
+
+**Users Tab:**
+- Searchable/filterable user list
+- Edit user (role, membership, bio)
+- Bulk role change + delete
+- CSV/JSON export
+
+**Analytics Tab:**
+- Signup chart (7/30/90 days)
+- Role distribution
+- Feature adoption (% users using each feature)
+- Nutrition stats, workout progress, posture stats
+
+**Health Metrics Tab:**
+- Overview stats
+- User health table (height, weight, BMI)
+- Posture score distribution
+
+**Logbook Tab:**
+- Gym check-in records
+
+### Profile
+**Goal**: Personal info management
+
+- Avatar display
+- Username, display name, bio
+- Height, membership status + expiry
+
+### Settings
+**Goal**: App configuration
+
+- Custom API key (overrides .env)
+- Dark/Light mode toggle
+- Logout
+
+### Authentication
+**Goal**: User registration + session management
+
+- Login with username/password
+- Registration with 30-day free trial
+- Role-based access (admin/member/user)
+- Session persistence via localStorage
+- Hash routing: `/#/` (users), `/#/admin` (admin)
+
+---
+
+## 4. State Management
+
+- **Auth State**: User object + localStorage persistence
+- **UI State**: Active tab, theme preference (dark mode)
+- **Data State**: Cached plans/logs to reduce API calls
+
+---
+
+## 5. Configuration
 
 ### Environment Variables
-The frontend requires specific environment variables defined in a `.env` file at the project root:
-- `VITE_API_KEY`: The Google GenAI API key used for client-side AI requests.
+```
+VITE_API_KEY=your_gemini_api_key
+VITE_API_BASE_URL=http://localhost:8000
+VITE_PORT=3000
+```
+
+### Navigation
+- User view: `/#/`
+- Admin view: `/#/admin`

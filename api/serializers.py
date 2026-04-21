@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
     activityLogs = serializers.JSONField(source='activity_logs', required=False)
     mealLogs = serializers.JSONField(source='meal_logs', required=False)
     postureLogs = serializers.JSONField(source='posture_logs', required=False)
-    
+
     membershipExpires = serializers.DateTimeField(source='membership_expires', required=False)
     trialEndsAt = serializers.DateTimeField(source='trial_ends_at', required=False)
     isPremium = serializers.BooleanField(source='is_premium', required=False)
@@ -16,12 +16,13 @@ class UserSerializer(serializers.ModelSerializer):
     avatarUrl = serializers.CharField(source='avatar_url', required=False)
     heightCm = serializers.FloatField(source='height_cm', required=False)
     fitnessProfile = serializers.JSONField(source='fitness_profile', required=False)
-    activePlan = serializers.JSONField(source='active_plan', required=False)
+    activePlan = serializers.JSONField(source='active_plan', required=False, allow_null=True)
     dietPlan = serializers.JSONField(source='diet_plan', required=False)
+    planHistory = serializers.JSONField(source='plan_history', required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'role', 'membershipExpires', 'trialEndsAt', 'isPremium', 'createdAt', 'weightLogs', 'activityLogs', 'mealLogs', 'postureLogs', 'displayName', 'avatarSeed', 'avatarUrl', 'heightCm', 'fitnessProfile', 'activePlan', 'dietPlan', 'bio']
+        fields = ['id', 'username', 'password', 'role', 'membershipExpires', 'trialEndsAt', 'isPremium', 'createdAt', 'weightLogs', 'activityLogs', 'mealLogs', 'postureLogs', 'displayName', 'avatarSeed', 'avatarUrl', 'heightCm', 'fitnessProfile', 'activePlan', 'dietPlan', 'planHistory', 'bio']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

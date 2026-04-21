@@ -311,7 +311,7 @@ class UserViewSet(viewsets.ModelViewSet):
         protein = request.data.get('protein', 0)
         carbs = request.data.get('carbs', 0)
         fat = request.data.get('fat', 0)
-        
+
         meal_entry = {
             'date': date,
             'mealName': meal_name,
@@ -320,13 +320,33 @@ class UserViewSet(viewsets.ModelViewSet):
             'carbs': carbs,
             'fat': fat
         }
-        
+
         logs = user.meal_logs or []
         logs.append(meal_entry)
         user.meal_logs = logs
         user.save()
-        
+
         return Response({'status': 'meal logged', 'meal': meal_entry})
+
+    @action(detail=True, methods=['post'], url_path='delete-plan-history')
+    def delete_plan_history(self, request, pk=None):
+        """
+        Delete a specific plan from the user's plan history.
+        Accepts: { "planId": string }
+        """
+        user = self.get_object()
+        plan_id = request.data.get('planId')
+        if not plan_id:
+            return Response({'error': 'planId is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        history = user.plan_history or []
+        new_history = [p for p in history if p.get('id') != plan_id]
+        if len(new_history) == len(history):
+            return Response({'error': 'Plan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        user.plan_history = new_history
+        user.save()
+        return Response({'status': 'plan deleted'})
 
 class WeightLogViewSet(viewsets.ViewSet):
     def list(self, request):

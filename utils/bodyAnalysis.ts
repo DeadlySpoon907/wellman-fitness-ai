@@ -6,6 +6,23 @@ export interface BodyAnalysis {
   measurements: BodyMeasurements;
   proportions: BodyProportions;
   recommendations: string[];
+  details?: BodyDetailDescription;
+}
+
+export interface BodyDetailDescription {
+  overall: string;
+  upperBody: string;
+  lowerBody: string;
+  torso: string;
+  limbs: string;
+  bmiCategory: string;
+  stats: {
+    shoulderBreadth: string;
+    waistline: string;
+    hipStructure: string;
+    armDevelopment: string;
+    legLength: string;
+  };
 }
 
 export type BodyType = 'ectomorph' | 'mesomorph' | 'endomorph' | 'balanced';
@@ -70,13 +87,15 @@ export function analyzeBodyType(
   const bodyType = determineBodyType(proportions, bmi);
   const confidence = calculateConfidence(proportions, bmi);
   const recommendations = generateRecommendations(bodyType, proportions, bmi);
+   const details = generateBodyDetails(measurements, proportions, bmi, bodyType, heightCm);
 
   return {
     bodyType,
     confidence,
     measurements,
     proportions,
-    recommendations
+    recommendations,
+    details
   };
 }
 
@@ -259,6 +278,137 @@ function generateRecommendations(
   return recommendations;
 }
 
+function getBmiCategory(bmi: number): string {
+  if (bmi < 18.5) return 'Underweight';
+  if (bmi < 25) return 'Normal weight';
+  if (bmi < 30) return 'Overweight';
+  return 'Obese';
+}
+
+function categorizeShoulderBreadth(ratio: number): string {
+  const narrowThreshold = 0.9;  // shoulders significantly narrower than hips
+  const wideThreshold = 1.25;   // shoulders significantly wider than hips
+  
+  if (ratio < narrowThreshold) return 'Narrow and slender';
+  if (ratio > wideThreshold) return 'Broad and powerful';
+  return 'Well-developed';
+}
+
+function categorizeWaistline(ratio: number): string {
+  const slimThreshold = 0.75;
+  const thickThreshold = 0.95;
+  
+  if (ratio < slimThreshold) return 'Slim and tapered';
+  if (ratio > thickThreshold) return 'Thick and solid';
+  return 'Defined and athletic';
+}
+
+function categorizeHipStructure(shoulderToHipRatio: number): string {
+  // shoulderToHipRatio = shoulderWidth / hipWidth
+  // High ratio (>1.2): shoulders much wider => narrow hips
+  // Low ratio (<0.9): shoulders narrower => wide hips
+  if (shoulderToHipRatio > 1.2) return 'Narrow hips';
+  if (shoulderToHipRatio < 0.9) return 'Wide hips';
+  return 'Balanced hip width';
+}
+
+function categorizeArmCircumference(circumference: number, heightCm: number): string {
+  const relativeSize = circumference / heightCm;
+  const smallThreshold = 0.12;
+  const largeThreshold = 0.18;
+  
+  if (relativeSize < smallThreshold) return 'Slender arms';
+  if (relativeSize > largeThreshold) return 'Muscular arms';
+  return 'Average arm development';
+}
+
+function categorizeLegLength(legLength: number, heightCm: number): string {
+  const ratio = legLength / heightCm;
+  const shortThreshold = 0.45;
+  const longThreshold = 0.55;
+  
+  if (ratio < shortThreshold) return 'Compact legs';
+  if (ratio > longThreshold) return 'Long legs';
+  return 'Average leg length';
+}
+
+function generateBodyDetails(
+  measurements: BodyMeasurements,
+  proportions: BodyProportions,
+  bmi: number,
+  bodyType: BodyType,
+  heightCm: number
+): BodyDetailDescription {
+  const shoulderDesc = categorizeShoulderBreadth(proportions.shoulderToHipRatio);
+  const waistDesc = categorizeWaistline(proportions.waistToHipRatio);
+  const hipDesc = categorizeHipStructure(proportions.shoulderToHipRatio);
+  const armDesc = categorizeArmCircumference(measurements.armCircumference, heightCm);
+  const legDesc = categorizeLegLength(measurements.legLength, heightCm);
+
+  const upperBody = [
+    shoulderDesc,
+    `Shoulder-to-hip ratio: ${proportions.shoulderToHipRatio.toFixed(2)}`
+  ];
+
+  const lowerBody = [
+    waistDesc,
+    hipDesc,
+    `Waist-to-hip ratio: ${proportions.waistToHipRatio.toFixed(2)}`
+  ];
+
+  const limbsArray = [
+    armDesc,
+    legDesc,
+    measurements.armCircumference > 0 ? `Arm circumference: ~${Math.round(measurements.armCircumference)}cm` : '',
+    measurements.legLength > 0 ? `Leg length: ~${Math.round(measurements.legLength)}cm` : ''
+  ].filter(Boolean);
+
+  const limbs = limbsArray.length > 0 ? limbsArray.join('. ') + '.' : 'No specific limb measurements available.';
+
+  const overallPhrases: string[] = [];
+  switch (bodyType) {
+    case 'ectomorph':
+      overallPhrases.push('Thin-boned with lean muscle mass');
+      overallPhrases.push('Fast metabolism, difficulty gaining weight');
+      overallPhrases.push('Long limbs with smaller joints');
+      break;
+    case 'mesomorph':
+      overallPhrases.push('Naturally athletic and muscular');
+      overallPhrases.push('Broad shoulders with defined muscles');
+      overallPhrases.push('Responsive to strength training');
+      break;
+    case 'endomorph':
+      overallPhrases.push('Solid build with higher body fat');
+      overallPhrases.push('Slower metabolism, stores fat easily');
+      overallPhrases.push('Wider waist and hips');
+      break;
+    case 'balanced':
+      overallPhrases.push('Well-proportioned physique');
+      overallPhrases.push('Moderate metabolism and response to training');
+      overallPhrases.push('Balanced muscle-to-fat ratio');
+      break;
+  }
+
+  const bmiCategory = getBmiCategory(bmi);
+  overallPhrases.push(`BMI: ${bmi.toFixed(1)} (${bmiCategory})`);
+
+   return {
+     overall: overallPhrases.join('. ') + '.',
+     upperBody: upperBody.join('. ') + '.',
+     lowerBody: lowerBody.join('. ') + '.',
+     limbs: limbs,
+     torso: `Shoulder span: ${Math.round(measurements.shoulderWidth)}cm. Waist: ${Math.round(measurements.waistWidth)}cm. Hips: ${Math.round(measurements.hipWidth)}cm. Torso length: ${Math.round(measurements.torsoLength)}cm.`,
+     bmiCategory,
+     stats: {
+       shoulderBreadth: shoulderDesc,
+       waistline: waistDesc,
+       hipStructure: hipDesc,
+       armDevelopment: armDesc,
+       legLength: legDesc
+     }
+   };
+}
+
 function getDefaultAnalysis(): BodyAnalysis {
   return {
     bodyType: 'balanced',
@@ -278,20 +428,35 @@ function getDefaultAnalysis(): BodyAnalysis {
       limbToTorsoRatio: 1.2,
       heightToWeight: 2.5
     },
-    recommendations: ['Scan your body to get personalized recommendations']
+    recommendations: ['Scan your body to get personalized recommendations'],
+    details: {
+      overall: 'No body scan data available.',
+      upperBody: '',
+      lowerBody: '',
+      limbs: '',
+      torso: '',
+      bmiCategory: 'Unknown',
+      stats: {
+        shoulderBreadth: 'N/A',
+        waistline: 'N/A',
+        hipStructure: 'N/A',
+        armDevelopment: 'N/A',
+        legLength: 'N/A'
+      }
+    }
   };
 }
 
 export function getBodyTypeDescription(bodyType: BodyType): string {
   switch (bodyType) {
     case 'ectomorph':
-      return 'Lean and long body type, typically with narrow shoulders and hips';
+      return 'Thin-boned with lean muscle mass, narrow shoulders and hips, long limbs. Fast metabolism makes it harder to gain weight. Best with strength training and higher calorie intake.';
     case 'mesomorph':
-      return 'Athletic build with broad shoulders and muscular development';
+      return 'Athletic build with broad shoulders, defined muscles, and responsive metabolism. Gains muscle easily and responds well to varied training. Naturally strong appearance.';
     case 'endomorph':
-      return 'Rounder body type with tendency to store fat easily';
+      return 'Rounder, solid build with wider waist and hips. Tends to store fat easily but can be powerful and strong. Benefits from cardio-focused routines and protein-rich diets.';
     case 'balanced':
-      return 'Well-proportioned body type';
+      return 'Well-proportioned physique with balanced muscle-to-fat ratio. Adapts well to most training styles and diets. Maintain consistency for optimal results.';
   }
 }
 

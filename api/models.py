@@ -22,6 +22,8 @@ class User(AbstractUser):
     fitness_profile = models.JSONField(null=True, blank=True)
     # { "motivation": str, "generatedAt": str, "startDate": str, "endDate": str, "sessions": [{ "id": str, "day": int, "week": int, "dayOfWeek": str, "title": str, "focus": str, "exercises": [{ "name": str, "sets": int, "reps": int, "restSeconds": int }], "duration": str, "completed": bool, "completedAt": str }], "nutrition": { "protein": str, "carbs": str, "fats": str } }
     active_plan = models.JSONField(null=True, blank=True)
+    # Array of past fitness plans: [{ "motivation": str, "generatedAt": str, "dailyWorkouts": [...], "nutrition": {...} }]
+    plan_history = models.JSONField(default=list, blank=True)
     # { "meals": [{ "name": str, "foods": [str], "calories": int, "protein": int, "carbs": int, "fats": int }], "hydration": str, "notes": str }
     diet_plan = models.JSONField(null=True, blank=True)
 

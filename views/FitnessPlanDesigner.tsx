@@ -62,16 +62,69 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
 
       const ai = new GoogleGenAI({ apiKey: key });
 
-      let bodyTypeContext = '';
-      if (bodyType) {
-        const bodyDesc = getBodyTypeDescription(bodyType);
-        bodyTypeContext = `
-Body Type: ${bodyType} - ${bodyDesc}
-This body type influences:
-- Ectomorph: Faster metabolism, harder to gain muscle, responds well to strength training
-- Mesomorph: Gains muscle easily, responds to varied training
-- Endomorph: Tends to store fat, benefits from cardio and higher protein`;
-      }
+       let bodyTypeContext = '';
+       if (bodyType) {
+         const bodyDesc = getBodyTypeDescription(bodyType);
+         const bmi = user.heightCm ? (currentWeight / Math.pow(user.heightCm / 100, 2)).toFixed(1) : 'N/A';
+         bodyTypeContext = `USER BODY PROFILE:
+- Body Type: ${bodyType}
+- Description: ${bodyDesc}
+- Weight: ${currentWeight}kg
+- Height: ${user.heightCm}cm
+- BMI: ${bmi}
+
+BODY TYPE-SPECIFIC RECOMMENDATIONS by AI Coach:
+
+=== ECTOMORPH (lean, fast metabolism, difficulty gaining) ===
+Focus: Strength & muscle building.
+Exercises: Heavy compound lifts (squats, deadlifts, bench press, rows).
+Volume: 3-5 sets × 6-10 reps (heavier weights). Rest 60-90s.
+Cardio: Limit to 2-3x/week (avoid excess).
+Nutrition: Calorie surplus, higher carbs (45-55%), protein 25-30%.
+Frequency: 4-5 days/week, allow full recovery.
+
+=== MESOMORPH (athletic, muscular, responsive) ===
+Focus: Balanced strength & hypertrophy.
+Exercises: Mix compound & isolation, varied intensity.
+Volume: Alternate heavy (4-6 reps) and hypertrophy (8-12 reps). Rest 45-75s.
+Cardio: 2-3 moderate sessions.
+Nutrition: Balanced - carbs 40-50%, protein 25-35%, fat 20-30%.
+Frequency: 5 days (push/pull/legs or upper/lower split).
+
+=== ENDOMORPH (solid build, stores fat easily) ===
+Focus: Fat loss, metabolic conditioning.
+Exercises: Full-body circuits, supersets, HIIT, compound movements.
+Volume: 3-4 sets × 10-15 reps, shorter rest 30-45s.
+Cardio: 4-6 sessions/week including 20-30min post-strength.
+Nutrition: Calorie deficit, lower carbs (30-40%), higher protein (30-40%).
+Frequency: 5-6 days/week with active recovery.
+
+=== BALANCED ===
+Focus: Overall fitness maintenance.
+Exercises: Balanced strength, cardio, flexibility mix.
+Volume: 3-4 sets × 8-12 reps, rest 60s.
+Cardio: 3 sessions/week.
+Nutrition: Carbs 45%, protein 30%, fat 25%.
+Frequency: 4 days strength, 2 cardio, 1 active recovery.
+
+ADDITIONAL TAILORING based on specific measurements (apply if applicable):
+- Narrow shoulders (<0.9 shoulder-hip ratio): Overhead press, lateral raises, push-ups 2x/week
+- Broad shoulders (>1.25): Emphasize back rows, pull-ups, squats for lower-body development
+- Long limbs: Controlled tempo, full ROM; avoid max weight, focus on form
+- Compact build: Handle heavier loads; progressive overload
+- Slim waist: Core stability and oblique work
+- Thick waist: Cardio focus and core definition exercises
+- Long legs: Hip hinge and glute activation; proper squat form crucial
+- Short legs: Quad-dominant movements (squats, leg press)
+
+GOAL-BASED FOCUS:
+- Weight loss: Increase cardio frequency, circuit training, shorter rest periods
+- Muscle gain: Progressive overload, increased volume, calorie surplus focus
+- Endurance: Higher rep ranges (12-20), circuit-style, shorter rest
+- Flexibility: Include mobility drills, dynamic stretches, yoga poses
+
+Create a 30-day progressive plan with 4 weekly phases. Each week should increase intensity or volume gradually.`;
+       }
 
       const prompt = `Generate a daily fitness and diet plan for a user with:
 Weight: ${currentWeight}kg

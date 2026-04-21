@@ -5,6 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import { saveUser } from '../services/DB';
 import { FullBodyTracker } from '../components/FullBodyTracker';
 import { analyzeBodyType, BodyAnalysis, getBodyTypeDescription, getBodyTypeIcon, BodyType } from '../utils/bodyAnalysis';
+import { estimateBMIFromLandmarks, prefetchModel } from '../utils/bmiEstimator';
 import type { NormalizedLandmark } from '../types';
 
 type ScanState = 'idle' | 'scanning' | 'analyzing' | 'ready' | 'locked';
@@ -25,14 +26,15 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
   const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
   const [lockedProfile, setLockedProfile] = useState<LockedBodyProfile | null>(null);
   const [liveLandmarks, setLiveLandmarks] = useState<NormalizedLandmark[]>([]);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [scanDuration, setScanDuration] = useState(0);
-  const [bodyScans, setBodyScans] = useState<BodyAnalysis[]>([]);
-  const [positionStatus, setPositionStatus] = useState<'idle' | 'checking' | 'ready' | 'invalid'>('idle');
-  const [positionMessage, setPositionMessage] = useState('');
-  const scanProgressRef = useRef(0);
-  const scanStartTimeRef = useRef(0);
-  const bodyScansRef = useRef<BodyAnalysis[]>([]);
+   const [scanProgress, setScanProgress] = useState(0);
+   const [scanDuration, setScanDuration] = useState(0);
+   const [estimatedBMI, setEstimatedBMI] = useState<number | null>(null);
+   const [bodyScans, setBodyScans] = useState<BodyAnalysis[]>([]);
+   const [positionStatus, setPositionStatus] = useState<'idle' | 'checking' | 'ready' | 'invalid'>('idle');
+   const [positionMessage, setPositionMessage] = useState('');
+   const scanProgressRef = useRef(0);
+   const scanStartTimeRef = useRef(0);
+   const bodyScansRef = useRef<BodyAnalysis[]>([]);
 
   const currentWeight = user.weightLogs.length > 0 
     ? user.weightLogs[user.weightLogs.length - 1].weight 
@@ -96,76 +98,73 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
     return { valid: true, message: 'Position OK! Scanning...' };
   };
 
-  const handleLiveBodyAnalysis = useCallback((landmarks: NormalizedLandmark[]) => {
+  const handleLiveBodyAnalysis = useCallback(async (landmarks: NormalizedLandmark[]) => {
     if (scanState === 'scanning' && landmarks.length > 0) {
       setLiveLandmarks(landmarks);
-      
+
       const position = checkPosition(landmarks);
       setPositionStatus(position.valid ? 'ready' : 'invalid');
       setPositionMessage(position.message);
-      
+
       if (!position.valid) {
         return;
       }
 
       const elapsed = Date.now() - scanStartTimeRef.current;
       setScanDuration(elapsed);
-      
+
       if (elapsed < 10000) {
-        const analysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
-        bodyScansRef.current = [...bodyScansRef.current, analysis];
-        setBodyScans(bodyScansRef.current);
+        // Just update progress during scanning
         setScanProgress(Math.min(Math.floor((elapsed / 10000) * 100), 95));
       } else {
-        if (bodyScansRef.current.length > 0) {
-          const avgConfidence = bodyScansRef.current.reduce((sum, s) => sum + s.confidence, 0) / bodyScansRef.current.length;
-          const typeCounts = bodyScansRef.current.reduce((acc, s) => {
-            acc[s.bodyType] = (acc[s.bodyType] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          const dominantType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0][0];
-          
-          const finalAnalysis: BodyAnalysis = {
-            ...bodyScansRef.current[0],
-            bodyType: dominantType as BodyType,
-            confidence: Math.min(avgConfidence + 0.1, 0.9)
-          };
+        // Scan complete - estimate BMI using ML model
+        try {
+          const bmiResult = await estimateBMIFromLandmarks(landmarks, currentHeight);
+          setEstimatedBMI(bmiResult.bmi);
+          const finalAnalysis = analyzeBodyType(landmarks, bmiResult.bmi, currentHeight, currentWeight);
           setBodyAnalysis(finalAnalysis);
+        } catch (err) {
+          console.error('BMI estimation failed, using fallback', err);
+          const fallbackAnalysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
+          setBodyAnalysis(fallbackAnalysis);
         }
         setScanProgress(100);
         setScanState('ready');
         setPositionStatus('idle');
       }
     }
-  }, [scanState, calculatedBmi, currentHeight, currentWeight]);
+   }, [scanState, currentHeight, currentWeight, calculatedBmi, estimateBMIFromLandmarks, analyzeBodyType]);
 
-  const startLiveScan = () => {
-    setScanState('scanning');
-    setLiveLandmarks([]);
-    setBodyAnalysis(null);
-    bodyScansRef.current = [];
-    setBodyScans([]);
-    setScanProgress(0);
-    setScanDuration(0);
-    setPositionStatus('checking');
-    setPositionMessage('Checking position...');
-    scanProgressRef.current = 0;
-    scanStartTimeRef.current = Date.now();
-  };
+   const startLiveScan = () => {
+     setScanState('scanning');
+     setLiveLandmarks([]);
+     setBodyAnalysis(null);
+     setEstimatedBMI(null);
+     bodyScansRef.current = [];
+     setBodyScans([]);
+     setScanProgress(0);
+     setScanDuration(0);
+     setPositionStatus('checking');
+     setPositionMessage('Checking position...');
+     scanProgressRef.current = 0;
+     scanStartTimeRef.current = Date.now();
+     // Start loading the ML model in background
+     prefetchModel();
+   };
 
   const lockBodyProfile = async () => {
     if (!bodyAnalysis || !user) return;
 
-    const profile: LockedBodyProfile = {
-      bodyType: bodyAnalysis.bodyType,
-      lockedAt: new Date().toISOString(),
-      measurements: {
-        heightCm: currentHeight,
-        weightKg: currentWeight,
-        bmi: calculatedBmi
-      },
-      confidence: bodyAnalysis.confidence
-    };
+     const profile: LockedBodyProfile = {
+       bodyType: bodyAnalysis.bodyType,
+       lockedAt: new Date().toISOString(),
+       measurements: {
+         heightCm: currentHeight,
+         weightKg: currentWeight,
+         bmi: estimatedBMI ?? calculatedBmi
+       },
+       confidence: bodyAnalysis.confidence
+     };
 
     setLockedProfile(profile);
 
@@ -175,27 +174,75 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
 
     let monthlyPlan = null;
 
-    const generateWithRetry = async (retries = 3, delay = 2000): Promise<any> => {
-      const key = apiKey || (import.meta as any).env.VITE_API_KEY;
-      if (!key) return null;
+     const generateWithRetry = async (retries = 3, delay = 2000): Promise<any> => {
+       const key = apiKey || (import.meta as any).env.VITE_API_KEY;
+       if (!key) return null;
 
-      for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: key });
-          const prompt = `Generate a 30-day fitness plan for a user with:
-          Body Type: ${bodyAnalysis.bodyType}
-          BMI: ${calculatedBmi.toFixed(1)}
-          Weight: ${currentWeight}kg
-          Height: ${currentHeight}cm
-          
-          Return a JSON object with:
-          - motivation: string (short quote)
-          - sessions: array of objects { day: number (1-30), week: number (1-4), dayOfWeek: string, title: string, focus: string, exercises: array of { name: string, sets: number, reps: number, restSeconds: number }, duration: string }
-          - nutrition: object { protein: string, carbs: string, fats: string }
-          
-          Create 4 weeks of workouts, 5-6 sessions per week. Alternate between strength, cardio, and rest days.
-          Include variety: strength training, HIIT, cardio, flexibility, and active recovery.
-          Return ONLY valid JSON, no markdown.`;
+       for (let attempt = 1; attempt <= retries; attempt++) {
+         try {
+           const ai = new GoogleGenAI({ apiKey: key });
+           
+           const { measurements, proportions, details } = bodyAnalysis;
+           
+            const prompt = `You are a personalized fitness coach creating a 30-day plan tailored to this individual's exact body structure.
+
+BODY PROFILE:
+- Body Type: ${bodyAnalysis.bodyType}
+- BMI: ${(estimatedBMI ?? calculatedBmi).toFixed(1)} (${details?.bmiCategory || 'Unknown'})
+- Height: ${currentHeight}cm | Weight: ${currentWeight}kg
+
+PHYSICAL MEASUREMENTS:
+- Shoulder width: ~${Math.round(measurements.shoulderWidth)}cm
+- Waist: ~${Math.round(measurements.waistWidth)}cm
+- Hip width: ~${Math.round(measurements.hipWidth)}cm
+- Arm circumference: ~${Math.round(measurements.armCircumference)}cm
+- Leg length: ~${Math.round(measurements.legLength)}cm
+- Torso length: ~${Math.round(measurements.torsoLength)}cm
+
+BODY PROPORTIONS:
+- Shoulder-to-hip ratio: ${proportions.shoulderToHipRatio.toFixed(2)} → ${details?.stats.shoulderBreadth || 'N/A'}
+- Waist-to-hip ratio: ${proportions.waistToHipRatio.toFixed(2)} → ${details?.stats.waistline || 'N/A'}
+- Hip structure: ${details?.stats.hipStructure || 'N/A'}
+- Limb development: ${details?.stats.armDevelopment || 'N/A'}, ${details?.stats.legLength || 'N/A'}
+
+FULL ANALYSIS:
+${details?.overall || ''}
+
+TRAINING IMPLICATIONS:
+${details?.upperBody || ''}
+${details?.lowerBody || ''}
+${details?.limbs || ''}
+
+Return a JSON object with:
+- motivation: string (short, inspiring quote based on their body type)
+- sessions: array of 30 objects { day: 1-30, week: 1-4, dayOfWeek: e.g. "Mon", title: string, focus: string, exercises: array of { name: string, sets: 3-5, reps: 8-15, restSeconds: 30-90 }, duration: e.g. "45 mins" }
+- nutrition: object { protein: string (e.g. "120g"), carbs: string, fats: string }
+
+CRITICAL PERSONALIZATION RULES:
+1. ECTOMORPH (lean, fast metabolism): Emphasize compound strength movements (squats, deadlifts, bench, rows), longer rest periods (60-90s), higher volume (3-5 sets of 8-12 reps). Limit cardio to 2-3x/week. Prioritize heavy lifting over high-rep endurance.
+2. MESOMORPH (athletic, muscular): Balanced push/pull/legs split. Mix heavy (4-6 reps) and hypertrophy (8-12 reps). Include 2-3 cardio sessions. Responds well to varied intensity.
+3. ENDOMORPH (solid, stores fat): Focus on metabolic conditioning (circuits, HIIT, supersets). Higher frequency workouts (5-6x/week). Include 20-30min cardio after strength. Emphasize full-body movements. Shorter rest (30-60s).
+4. BALANCED: Hybrid approach - 3-4 strength days, 2 cardio days, 1 active recovery.
+
+EXERCISE SELECTION GUIDANCE based on body measurements:
+- Narrow shoulders (ratio < 0.9): Prioritize shoulder and upper chest exercises (overhead press, lateral raises, push-ups)
+- Broad shoulders (ratio > 1.25): Focus on back and leg balance (pull-ups, rows, squats)
+- Long limbs: Use controlled tempo, full range of motion; avoid excessive weight that compromises form
+- Compact build: Can handle heavier loads; focus on progressive overload
+- Slim waist: More focus on core stability and oblique work
+- Thick waist: Emphasize cardio and core definition exercises
+- Long legs: Hip hinge and glute activation is crucial; prioritize proper squat form
+- Short legs: Can include more quad-dominant movements
+
+NUTRITION GUIDANCE:
+- Ectomorph: Higher carbs (45-55%), moderate protein (25-30%), moderate fat (20-25%). Focus on calorie surplus.
+- Mesomorph: Balanced - carbs 40-50%, protein 25-35%, fat 20-30%. Fuel for performance.
+- Endomorph: Lower carbs (30-40%), higher protein (30-40%), moderate fat (25-35%). Focus on calorie deficit.
+- Balanced: Carbs 45%, protein 30%, fat 25%. Maintenance and performance.
+
+Use the specific measurements to tailor exercise selection (e.g., shorter arms may benefit from tricep extensions, longer torsos need more core work). 
+
+Return ONLY valid JSON, no markdown. Include exactly 30 sessions with realistic progression.`;
 
           const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -378,16 +425,58 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
                 </div>
               </div>
 
-              {bodyAnalysis.recommendations && bodyAnalysis.recommendations.length > 0 && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800">
-                  <h4 className="font-bold mb-2 text-green-800 dark:text-green-200">Personalized Recommendations</h4>
-                  <ul className="space-y-1">
-                    {bodyAnalysis.recommendations.map((rec, i) => (
-                      <li key={i} className="text-sm text-green-700 dark:text-green-300">• {rec}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+           {bodyAnalysis.recommendations && bodyAnalysis.recommendations.length > 0 && (
+                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800">
+                   <h4 className="font-bold mb-2 text-green-800 dark:text-green-200">Personalized Recommendations</h4>
+                   <ul className="space-y-1">
+                     {bodyAnalysis.recommendations.map((rec, i) => (
+                       <li key={i} className="text-sm text-green-700 dark:text-green-300">• {rec}</li>
+                     ))}
+                   </ul>
+                 </div>
+               )}
+
+               {bodyAnalysis.details && (
+                 <div className="space-y-4">
+                   <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                     <h4 className="text-sm font-black text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+                       <span className="text-lg">📝</span> Full Body Analysis
+                     </h4>
+                     <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                       {bodyAnalysis.details.overall}
+                     </p>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
+                       <h5 className="text-xs font-bold text-blue-800 dark:text-blue-200 uppercase tracking-wider mb-2">Upper Body</h5>
+                       <p className="text-sm text-blue-700 dark:text-blue-300">{bodyAnalysis.details.upperBody}</p>
+                     </div>
+                     <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
+                       <h5 className="text-xs font-bold text-purple-800 dark:text-purple-200 uppercase tracking-wider mb-2">Lower Body</h5>
+                       <p className="text-sm text-purple-700 dark:text-purple-300">{bodyAnalysis.details.lowerBody}</p>
+                     </div>
+                   </div>
+
+                   <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800">
+                     <h5 className="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wider mb-2">Limbs Observation</h5>
+                     <p className="text-sm text-amber-700 dark:text-amber-300">{bodyAnalysis.details.limbs}</p>
+                   </div>
+
+                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                     <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2">Torso Measurements</h5>
+                     <p className="text-sm text-slate-700 dark:text-slate-300">{bodyAnalysis.details.torso}</p>
+                   </div>
+
+                   <div className="flex flex-wrap gap-2">
+                     {Object.entries(bodyAnalysis.details.stats).map(([key, value]) => (
+                       <span key={key} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300 capitalize">
+                         {key.replace(/([A-Z])/g, ' $1').trim()}: {value}
+                       </span>
+                     ))}
+                   </div>
+                 </div>
+               )}
 
               <button 
                 onClick={lockBodyProfile}

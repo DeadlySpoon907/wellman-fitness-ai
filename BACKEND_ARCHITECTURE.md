@@ -1,122 +1,158 @@
-# Wellman Fitness - Backend Architecture & Documentation
+# Wellman Fitness - Backend Architecture
 
-This document serves as the technical reference for the server-side architecture of the Wellman Fitness application. The backend is built using **Python** and **Django**, serving as the central API and data persistence layer for the React frontend.
+This document details the server-side architecture of the Wellman Fitness application, built with Python and Django.
 
 ## 1. Technology Stack
 
-The backend relies on a modern Django stack defined in `requirements.txt`:
-
 | Component | Package | Version | Purpose |
 |-----------|---------|---------|---------|
-| **Core Framework** | `django` | >=4.2,<4.3 | The primary web framework handling routing, ORM, and authentication. |
-| **API Toolkit** | `djangorestframework` | >=3.14.0,<3.15.0 | Provides tools for building Web APIs (serialization, viewsets). |
-| **CORS Handling** | `django-cors-headers` | >=4.3.0,<4.4.0 | Middleware to allow the React frontend (running on a different port) to communicate with the API. |
-| **AI Engine** | `google-generativeai` | >=0.8.0,<1.0.0 | Python client for Google's Gemini models, enabling server-side AI reasoning. |
-| **Database** | `psycopg2-binary` / `sqlite3` | - | PostgreSQL for production, SQLite for development. |
-| **Image Processing** | `pillow` | >=10.0.0 | Image handling for meal analysis. |
-| **Production** | `gunicorn`, `whitenoise` | - | WSGI server and static file serving. |
+| **Framework** | `django` | >=4.2,<4.3 | Web framework, routing, ORM, auth |
+| **API** | `djangorestframework` | >=3.14.0 | REST API, serializers, viewsets |
+| **CORS** | `django-cors-headers` | >=4.3.0 | Cross-origin requests |
+| **AI** | `google-generativeai` | >=0.8.0 | Gemini API client |
+| **Database** | `psycopg2-binary` / `sqlite3` | - | PostgreSQL (prod) / SQLite (dev) |
+| **Images** | `pillow` | >=10.0.0 | Image processing |
+
+---
 
 ## 2. Project Structure
 
-The backend is organized within the `backend/` directory:
-
-```text
+```
 backend/
-├── manage.py           # Django's command-line utility for administrative tasks.
-├── seed.py             # Custom utility script to populate the database with demo data.
-├── requirements.txt    # Python dependency definitions.
-├── wellman_backend/    # Project configuration (settings, urls, wsgi).
-└── api/                # The main application logic.
-    ├── models.py       # Database schema definitions.
-    ├── views.py        # API request handlers.
-    ├── serializers.py  # Data conversion (Model instances -> JSON).
-    └── urls.py         # API route definitions.
+├── manage.py           # Django CLI
+├── seed.py             # Database seeding
+├── requirements.txt    # Python dependencies
+├── settings.py         # Django settings
+├── urls.py             # URL routing
+└── api/                # REST API app
+    ├── models.py       # User, GymLog schemas
+    ├── views.py        # API endpoints
+    ├── serializers.py  # Data serialization
+    ├── urls.py         # API routes
+    └── migrations/     # DB migrations
 ```
 
-## 3. Database Schema
+---
 
-The application uses a relational database (SQLite by default for dev) managed via Django's ORM. The core models defined in `api/models.py` are:
+## 3. All System Features (Backend)
 
-### `User` (Custom Auth Model)
-Extends Django's `AbstractUser` to include fitness-specific profile data.
-- **`display_name`** (Char): Public-facing name.
-- **`bio`** (Text): User biography.
-- **`avatar_seed`** (Char): String used to generate consistent avatars.
-- **`membership_expires`** (DateTime): Tracks premium status validity.
-- **`height_cm`** (Float): User's height for BMI calculations.
+### Authentication & User Management
+- **Registration** (`/api/users/register/`): Creates user with 30-day free trial
+- **Login** (`/api/users/login/`): Authenticates username/password
+- **Profile** (`/api/users/{id}/`): GET/PUT user data
+- **Role-based access**: admin, member, user roles
 
-### `WeightLog`
-Tracks user progress over time. Used to generate the "Weight History" chart on the dashboard.
-- **`user`** (ForeignKey): Links to the `User` model.
-- **`weight`** (Float): Recorded weight value.
-- **`date`** (DateTime): Timestamp of the log entry (auto-added).
+### Fitness Data Management
+| Endpoint | Description |
+|----------|-------------|
+| `/api/weight-logs/` | Get/post weight entries |
+| `/api/users/{id}/record_activity/` | Log daily activity |
+| `/api/users/{id}/log_workout/` | Log workout session |
+| `/api/users/{id}/log_meal/` | Log meal with macros |
 
-### `FitnessPlan`
-Stores the AI-generated workout architecture.
-- **`user`** (OneToOne): Links strictly to one user.
-- **`motivation`** (Text): The user's input/goal that generated the plan.
-- **`plan_data`** (JSON): Structured data representing the workout routine.
-- **`generated_at`** (DateTime): Timestamp of creation.
+### Gym Check-In System
+| Endpoint | Description |
+|----------|-------------|
+| `/api/gym-logs/` | CRUD for gym sessions |
+| `/api/gym-logs/time-in/` | Check into gym |
+| `/api/gym-logs/time-out/` | Check out of gym |
+| `/api/gym-logs/active/` | Get active sessions |
+| `/api/gym-logs/db-status/` | Check table status |
 
-## 4. Configuration & Setup
+### AI Features
+| Endpoint | Description |
+|----------|-------------|
+| `/api/estimate/` | BMI estimation from image (multipart) |
 
-### Environment Variables
-The backend requires the following environment variable to function fully (specifically for AI features):
-- `API_KEY`: Your Google GenAI API key.
+---
 
-### Django Settings (`settings.py`)
-To support the architecture, the following configurations are critical:
+## 4. Database Schema
 
-1.  **Installed Apps**:
-    ```python
-    INSTALLED_APPS = [
-        ...,
-        'rest_framework',
-        'corsheaders',
-        'api',
-    ]
-    ```
+### User Model
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| username | Char | Unique username |
+| role | Char | admin/member/user |
+| display_name | Char | Public name |
+| bio | Text | Biography |
+| avatar_seed | Char | Avatar generation seed |
+| avatar_url | Text | Custom avatar URL |
+| height_cm | Float | Height in cm |
+| estimated_body_type | Char | Body type (Ecto/Meso/Endo) |
+| is_premium | Boolean | Premium status |
+| membership_expires | DateTime | Expiry date |
+| trial_ends_at | DateTime | Trial end date |
+| fitness_profile | JSON | {goal, intensity, location, focusAreas} |
+| active_plan | JSON | Current 30-day plan |
+| plan_history | JSON | Past plans array |
+| diet_plan | JSON | AI-generated diet |
+| weight_logs | JSON | [{date, weight}] |
+| activity_logs | JSON | Activity entries |
+| meal_logs | JSON | Meal entries with macros |
+| posture_logs | JSON | Posture assessments |
 
-2.  **Middleware**:
-    `CorsMiddleware` must be placed at the top of the middleware list to ensure headers are added before Django processes the request.
+### GymLog Model
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| user | ForeignKey | Link to User |
+| time_in | DateTime | Check-in time |
+| time_out | DateTime | Check-out time (nullable) |
+| date | Date | Log date |
 
-## 5. Operational Commands
+---
 
-### Initialization
-When setting up the backend for the first time:
+## 5. API Endpoints Summary
 
-1.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-2.  **Apply Migrations** (Create DB tables):
-    ```bash
-    python manage.py makemigrations api
-    python manage.py migrate
-    ```
-3.  **Create Admin User**:
-    ```bash
-    python manage.py createsuperuser
-    ```
+```python
+# Authentication
+POST /api/users/register/  # New user with 30-day trial
+POST /api/users/login/     # Login
+GET/PUT /api/users/{id}/   # Profile
 
-### Data Seeding
-A `seed.py` script is provided to populate the database with realistic test data (users, weight logs, activity history).
+# Fitness Data
+GET/POST /api/weight-logs/
+POST /api/users/{id}/record_activity/
+POST /api/users/{id}/log_workout/
+POST /api/users/{id}/log_meal/
+
+# Gym
+GET/POST /api/gym-logs/
+POST /api/gym-logs/time-in/
+POST /api/gym-logs/time-out/
+GET /api/gym-logs/active/
+GET /api/gym-logs/db-status/
+
+# AI
+POST /api/estimate/  # BMI from image
+```
+
+---
+
+## 6. Setup & Commands
+
 ```bash
+# Install
+pip install -r requirements.txt
+
+# Migrate
+python manage.py makemigrations api
+python manage.py migrate
+
+# Create admin
+python manage.py createsuperuser
+
+# Seed data
 python seed.py
+
+# Run server
+python manage.py runserver  # localhost:8000
 ```
-*Note: This creates users `john_doe` (Premium) and `jane_smith` (Basic).*
 
-### Running the Server
-```bash
-python manage.py runserver
-```
-The API will be accessible at `http://localhost:8000`.
+---
 
-## 6. Administrative Interface
-
-Django provides a built-in admin interface for managing database records directly.
+## 7. Admin Interface
 
 - **URL**: `http://localhost:8000/admin`
-- **Default Credentials**:
-    - Username: `admin_fitness`
-    - Password: `admin123`
+- **Credentials**: admin_jafitness / admin123
