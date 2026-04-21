@@ -30,10 +30,17 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
 
   const handleDeletePlan = async () => {
     if (!confirm('Are you sure you want to delete your current plan? This cannot be undone.')) return;
-    const updatedUser = { ...user, activePlan: null };
-    await saveUser(updatedUser);
-    onPlanGenerated();
-    setShowDeleteConfirm(false);
+    try {
+      const updatedUser = { ...user, activePlan: null };
+      await saveUser(updatedUser);
+      onPlanGenerated();
+      setShowDeleteConfirm(false);
+      alert('Plan deleted successfully.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("Failed to delete plan:", err);
+      alert(`Failed to delete plan: ${message}`);
+    }
   };
 
   if (!user) return <div className="p-12 text-center text-slate-400 font-medium">Loading user profile...</div>;
