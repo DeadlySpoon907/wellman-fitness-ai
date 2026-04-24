@@ -21,7 +21,7 @@ interface LockedBodyProfile {
   confidence: number;
 }
 
-const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: string }> = ({ user, onUpdateProfile, apiKey }) => {
+const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplete?: () => void; apiKey?: string }> = ({ user, onUpdateProfile, onComplete, apiKey }) => {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
   const [lockedProfile, setLockedProfile] = useState<LockedBodyProfile | null>(null);
@@ -175,16 +175,16 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void; apiKey?: 
     let monthlyPlan = null;
 
      const generateWithRetry = async (retries = 3, delay = 2000): Promise<any> => {
-       const key = apiKey || (import.meta as any).env.VITE_API_KEY;
-       if (!key) return null;
+        const key = apiKey || (import.meta as any).env.VITE_API_KEY;
+        if (!key) return null;
 
-       for (let attempt = 1; attempt <= retries; attempt++) {
-         try {
-           const ai = new GoogleGenAI({ apiKey: key });
-           
-           const { measurements, proportions, details } = bodyAnalysis;
-           
-            const prompt = `You are a personalized fitness coach creating a 30-day plan tailored to this individual's exact body structure.
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            const ai = new GoogleGenAI({ apiKey: key });
+            
+            const { measurements, proportions, details } = bodyAnalysis;
+            
+             const prompt = `You are a personalized fitness coach creating a 30-day plan tailored to this individual's exact body structure.
 
 BODY PROFILE:
 - Body Type: ${bodyAnalysis.bodyType}
@@ -215,8 +215,10 @@ ${details?.limbs || ''}
 
 Return a JSON object with:
 - motivation: string (short, inspiring quote based on their body type)
+- dailyWorkouts: array of 30 objects { name: string, duration: string (e.g. "45 mins"), exercises: string[] (use only: Squat, Push-up, Lunge, Sit-up, Bicep Curl, Dumbbell Shoulder Press, Dumbbell Rows, Tricep Extensions, Lateral Shoulder Raises, Jumping Jacks) }
 - sessions: array of 30 objects { day: 1-30, week: 1-4, dayOfWeek: e.g. "Mon", title: string, focus: string, exercises: array of { name: string, sets: 3-5, reps: 8-15, restSeconds: 30-90 }, duration: e.g. "45 mins" }
 - nutrition: object { protein: string (e.g. "120g"), carbs: string, fats: string }
+- dietPlan: object { meals: array of { name: string, foods: string[], calories: number, protein: number, carbs: number, fats: number }[], hydration: string (e.g. "2.5 liters"), notes: string }
 
 CRITICAL PERSONALIZATION RULES:
 1. ECTOMORPH (lean, fast metabolism): Emphasize compound strength movements (squats, deadlifts, bench, rows), longer rest periods (60-90s), higher volume (3-5 sets of 8-12 reps). Limit cardio to 2-3x/week. Prioritize heavy lifting over high-rep endurance.
@@ -242,7 +244,7 @@ NUTRITION GUIDANCE:
 
 Use the specific measurements to tailor exercise selection (e.g., shorter arms may benefit from tricep extensions, longer torsos need more core work). 
 
-Return ONLY valid JSON, no markdown. Include exactly 30 sessions with realistic progression.`;
+Return ONLY valid JSON, no markdown. Include exactly 30 sessions with realistic progression. Ensure dailyWorkouts array has 30 entries corresponding to each session for the given day.`;
 
           const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -273,32 +275,73 @@ Return ONLY valid JSON, no markdown. Include exactly 30 sessions with realistic 
     monthlyPlan = await generateWithRetry();
 
     if (monthlyPlan) {
+      monthlyPlan.id = crypto.randomUUID();
       monthlyPlan.generatedAt = new Date().toISOString();
-      monthlyPlan.startDate = startDate.toISOString();
-      monthlyPlan.endDate = endDate.toISOString();
+      monthlyPlan.startDate = startDate.toISOString().split('T')[0];
+      monthlyPlan.endDate = endDate.toISOString().split('T')[0];
+      
+      // Ensure sessions have proper structure with UUIDs
       monthlyPlan.sessions = monthlyPlan.sessions.map((s: any, idx: number) => ({
-        ...s,
-        id: `session-${idx + 1}`,
-        completed: false
+        id: crypto.randomUUID(),
+        day: s.day || idx + 1,
+        week: s.week || Math.floor(idx / 7) + 1,
+        dayOfWeek: s.dayOfWeek || ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][idx % 7],
+        title: s.title || s.name || 'Workout',
+        focus: s.focus || s.title?.split(' ')[0] || 'Full Body',
+        exercises: s.exercises?.map((ex: any) => ({
+          name: ex.name,
+          sets: ex.sets || 3,
+          reps: ex.reps || 12,
+          restSeconds: ex.restSeconds || 60
+        })) || [],
+        duration: s.duration || '45 mins',
+        completed: false,
+        completedAt: undefined
       }));
+
+      // Ensure dailyWorkouts exists and matches sessions
+      if (!monthlyPlan.dailyWorkouts || monthlyPlan.dailyWorkouts.length === 0) {
+        monthlyPlan.dailyWorkouts = monthlyPlan.sessions.map((s: any) => ({
+          name: s.title,
+          duration: s.duration,
+          exercises: s.exercises.map((ex: any) => ex.name)
+        }));
+      }
+
+      // Ensure dietPlan structure with proper meal fields
+      if (!monthlyPlan.dietPlan) {
+        monthlyPlan.dietPlan = {
+          meals: [],
+          hydration: '2.5 liters',
+          notes: 'Follow a balanced diet that supports your fitness goals.'
+        };
+      }
+
+      // Ensure nutrition exists in correct format
+      if (!monthlyPlan.nutrition) {
+        monthlyPlan.nutrition = { protein: '120g', carbs: '200g', fats: '60g' };
+      }
     }
 
-    const updatedUser = { 
-      ...user, 
-      heightCm: profile.measurements.heightCm,
-      estimatedBodyType: profile.bodyType,
-      weightLogs: [...(user.weightLogs || []), { 
-        date: new Date().toISOString(), 
-        weight: profile.measurements.weightKg 
-      }],
-      activePlan: monthlyPlan
-    };
-    await saveUser(updatedUser);
-    onUpdateProfile();
-    
-    setScanState('locked');
-    const planMsg = monthlyPlan ? `\n\nA 30-day personalized plan has been created with ${monthlyPlan.sessions.length} sessions!` : '';
-    alert(`Body type locked: ${bodyAnalysis.bodyType.toUpperCase()}\n\nYour fitness plan will now be customized based on this body type.${planMsg}`);
+     const updatedUser = { 
+       ...user, 
+       heightCm: profile.measurements.heightCm,
+       estimatedBodyType: profile.bodyType,
+       weightLogs: [...(user.weightLogs || []), { 
+         date: new Date().toISOString(), 
+         weight: profile.measurements.weightKg 
+       }],
+       activePlan: monthlyPlan
+     };
+     await saveUser(updatedUser);
+     onUpdateProfile();
+     
+     setScanState('locked');
+     const planMsg = monthlyPlan ? `\n\nA 30-day personalized plan has been created with ${monthlyPlan.sessions.length} sessions!` : '';
+     alert(`Body type locked: ${bodyAnalysis.bodyType.toUpperCase()}\n\nYour fitness plan will now be customized based on this body type.${planMsg}`);
+     
+     // Notify parent to switch tabs
+     onComplete?.();
   };
 
   const resetScan = () => {

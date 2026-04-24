@@ -56,7 +56,7 @@ const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
     const withFitnessProfile = users.filter(u => u.fitnessProfile).length;
     const withActivePlan = users.filter(u => u.activePlan).length;
     const withCompletedSessions = users.filter(u => 
-      u.activePlan?.dailyWorkouts?.some(w => w.completed)
+      u.activePlan?.sessions?.some(s => s.completed)
     ).length;
 
     // Calculate aggregated health metrics
@@ -672,17 +672,17 @@ const AnalyticsTab: React.FC<{ users: User[]; stats: any }> = ({ users, stats })
     };
   }, [users, stats]);
 
-  const workoutStats = useMemo(() => {
-    const usersWithPlans = users.filter(u => u.activePlan);
-    const totalSessions = usersWithPlans.reduce((acc, u) => 
-      acc + (u.activePlan?.dailyWorkouts?.length || 0), 0
-    );
-    const completedSessions = usersWithPlans.reduce((acc, u) => 
-      acc + (u.activePlan?.dailyWorkouts?.filter(w => w.completed).length || 0), 0
-    );
-    const completionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
-    return { totalSessions, completedSessions, completionRate, usersWithPlans: stats.withActivePlan };
-  }, [users, stats]);
+   const workoutStats = useMemo(() => {
+     const usersWithPlans = users.filter(u => u.activePlan);
+     const totalSessions = usersWithPlans.reduce((acc, u) => 
+       acc + (u.activePlan?.sessions?.length || 0), 0
+     );
+     const completedSessions = usersWithPlans.reduce((acc, u) => 
+       acc + (u.activePlan?.sessions?.filter(s => s.completed).length || 0), 0
+     );
+     const completionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+     return { totalSessions, completedSessions, completionRate, usersWithPlans: stats.withActivePlan };
+   }, [users, stats]);
 
   const postureStats = useMemo(() => {
     const usersWithPosture = users.filter(u => u.postureLogs && u.postureLogs.length > 0);
@@ -1211,47 +1211,47 @@ const HealthMetricsTab: React.FC<{ users: User[] }> = ({ users }) => {
                     Generated: {new Date(selectedUser.activePlan.generatedAt).toLocaleDateString()}
                   </div>
 
-                  {selectedUser.activePlan.dailyWorkouts && selectedUser.activePlan.dailyWorkouts.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm font-bold">
-                        <span>Daily Workouts</span>
-                        <span>
-                          {selectedUser.activePlan.dailyWorkouts.filter(w => w.completed).length} / {selectedUser.activePlan.dailyWorkouts.length} completed
-                        </span>
-                      </div>
-                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-emerald-500 rounded-full transition-all"
-                          style={{ 
-                            width: `${(selectedUser.activePlan.dailyWorkouts.filter(w => w.completed).length / selectedUser.activePlan.dailyWorkouts.length) * 100}%` 
-                          }}
-                        />
-                      </div>
-                      <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
-                        {selectedUser.activePlan.dailyWorkouts.map((w, i) => (
-                          <div 
-                            key={i} 
-                            className={`p-3 rounded-lg text-sm ${
-                              w.completed 
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800' 
-                                : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold">{w.name}</span>
-                              {w.completed && <span className="text-xs text-emerald-600 font-bold">✓ Completed</span>}
-                            </div>
-                            <div className="text-xs text-slate-500">{w.duration} • {w.exercises?.join(', ')}</div>
-                            {w.completedAt && (
-                              <div className="text-xs text-slate-400 mt-1">
-                                Completed: {new Date(w.completedAt).toLocaleDateString()}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                   {selectedUser.activePlan.sessions && selectedUser.activePlan.sessions.length > 0 && (
+                     <div className="space-y-2">
+                       <div className="flex justify-between text-sm font-bold">
+                         <span>Sessions</span>
+                         <span>
+                           {selectedUser.activePlan.sessions.filter(s => s.completed).length} / {selectedUser.activePlan.sessions.length} completed
+                         </span>
+                       </div>
+                       <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                         <div 
+                           className="h-full bg-emerald-500 rounded-full transition-all"
+                           style={{ 
+                             width: `${(selectedUser.activePlan.sessions.filter(s => s.completed).length / selectedUser.activePlan.sessions.length) * 100}%` 
+                           }}
+                         />
+                       </div>
+                       <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
+                         {selectedUser.activePlan.sessions.map((s, i) => (
+                           <div 
+                             key={i} 
+                             className={`p-3 rounded-lg text-sm ${
+                               s.completed 
+                                 ? 'bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800' 
+                                 : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600'
+                             }`}
+                           >
+                             <div className="flex items-center justify-between">
+                               <span className="font-bold">{s.title}</span>
+                               {s.completed && <span className="text-xs text-emerald-600 font-bold">✓ Completed</span>}
+                             </div>
+                             <div className="text-xs text-slate-500">{s.duration} • {s.exercises?.map(ex => ex.name).join(', ')}</div>
+                             {s.completedAt && (
+                               <div className="text-xs text-slate-400 mt-1">
+                                 Completed: {new Date(s.completedAt).toLocaleDateString()}
+                               </div>
+                             )}
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   )}
                 </div>
               </div>
             )}

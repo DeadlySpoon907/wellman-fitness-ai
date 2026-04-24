@@ -211,9 +211,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
               </h3>
             </div>
             {!isMember && (
-              <button className="mt-4 bg-white text-primary-600 py-2 rounded-xl font-black text-xs shadow-lg hover:bg-slate-50 transition-colors">
-                UPGRADE
-              </button>
+                <div className="flex flex-col items-center justify-center h-full text-center py-6 space-y-2 opacity-40 grayscale">
+                <span className="text-3xl">🔒</span>
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Plan Creation Locked</p>
+                <p className="text-[10px] text-slate-500 font-bold">Member exclusive feature</p>
+              </div>
             )}
             {isMember && (
               <div className="mt-4 text-[10px] font-bold opacity-80 uppercase tracking-widest">
@@ -331,12 +333,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogWeight, onDesignPlan, 
                   <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl mb-4">🏗️</div>
                   <h4 className="text-lg font-bold mb-2">No Active Plan</h4>
                   <p className="text-slate-500 text-sm mb-6 max-w-xs">Use our AI Designer to create a bespoke workout plan tailored to your body and goals.</p>
-                  <button 
-                    onClick={onDesignPlan}
-                    className="bg-primary-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary-500/20"
-                  >
-                    Go to Designer
-                  </button>
+                 <button 
+                   onClick={() => window.location.hash = '#/bmi'}
+                   className="bg-primary-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary-500/20"
+                 >
+                   Create Your Plan
+                 </button>
                 </div>
               )
             ) : (

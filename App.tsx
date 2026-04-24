@@ -276,11 +276,18 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {activeTab === 'dashboard' && <Dashboard user={user} onLogWeight={handleWeightLog} onDesignPlan={() => setActiveTab('designer')} />}
-        {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} apiKey={apiKey} />}
-        {activeTab === 'nutrition' && <Nutritionist user={user} apiKey={apiKey} />}
-        {activeTab === 'nutribot' && <NutriBot apiKey={apiKey} />}
-        {activeTab === 'bmi' && <BodyScanner user={user} onUpdateProfile={syncUser} apiKey={apiKey} />}
+         {activeTab === 'dashboard' && <Dashboard user={user} onLogWeight={handleWeightLog} onDesignPlan={() => setActiveTab('designer')} />}
+         {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} onNavigateToScan={() => setActiveTab('bmi')} apiKey={apiKey} />}
+         {activeTab === 'nutrition' && <Nutritionist user={user} apiKey={apiKey} />}
+         {activeTab === 'nutribot' && <NutriBot apiKey={apiKey} />}
+          {activeTab === 'bmi' && (
+            <BodyScanner 
+              user={user} 
+              onUpdateProfile={syncUser} 
+              onComplete={() => setActiveTab('designer')}
+              apiKey={apiKey} 
+            />
+          )}
         {activeTab === 'posture' && <PostureChecker user={user} apiKey={apiKey} />}
         {activeTab === 'profile' && <Profile user={user} onUpdate={syncUser} />}
         {activeTab === 'settings' && <Settings user={user} currentApiKey={customApiKey} onSave={handleSaveApiKey} onUpdate={() => {}} onLogout={handleLogout} />}

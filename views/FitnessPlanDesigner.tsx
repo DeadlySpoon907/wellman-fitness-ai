@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, FitnessProfile, FitnessPlan } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { GoogleGenAI } from "@google/genai";
@@ -9,15 +9,116 @@ import type { ExerciseType } from '../types';
 
 type DesignerMode = 'plan' | 'live';
 
-const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; apiKey?: string }> = ({ user, onPlanGenerated, apiKey }) => {
+const FITNESS_TITLE_MAP: Record<string, string> = {
+  'weight-loss': 'Fat Burn Blast',
+  'muscle-gain': 'Muscle Builder',
+  'endurance': 'Endurance Boost',
+  'flexibility': 'Flexibility Focus',
+  'general-fitness': 'Full Body Fitness'
+};
+
+const DEFAULT_MOTIVATIONS = [
+  "Consistency is key!",
+  "Progress, not perfection.",
+  "Every workout counts.",
+  "Stay focused, stay strong.",
+  "One day at a time.",
+  "Your body can do it, your mind needs to believe.",
+  "Sweat is just fat crying.",
+  "The only bad workout is the one that didn't happen."
+];
+
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+// Predefined workout templates for fallback generation
+const FALLBACK_WORKOUTS: Record<string, Array<{ name: string; duration: string; exercises: string[] }>> = {
+  'weight-loss': [
+    { name: 'HIIT Cardio', duration: '25 mins', exercises: ['Jumping Jacks', 'Squat', 'Push-up', 'Lunge'] },
+    { name: 'Full Body Circuit', duration: '30 mins', exercises: ['Squat', 'Push-up', 'Bicep Curl', 'Sit-up', 'Jumping Jacks'] },
+    { name: 'Core & Cardio', duration: '20 mins', exercises: ['Sit-up', 'Jumping Jacks', 'Lunge'] },
+    { name: 'Strength & Burn', duration: '35 mins', exercises: ['Squat', 'Dumbbell Shoulder Press', 'Dumbbell Rows', 'Tricep Extensions'] },
+    { name: 'Active Recovery', duration: '15 mins', exercises: ['Sit-up', 'Lateral Shoulder Raises'] },
+    { name: 'Full Body Blast', duration: '30 mins', exercises: ['Push-up', 'Squat', 'Lunge', 'Bicep Curl'] },
+    { name: 'Rest Day', duration: '0 mins', exercises: [] }
+  ],
+  'muscle-gain': [
+    { name: 'Upper Body Strength', duration: '45 mins', exercises: ['Push-up', 'Dumbbell Shoulder Press', 'Dumbbell Rows', 'Bicep Curl', 'Tricep Extensions'] },
+    { name: 'Lower Body Power', duration: '40 mins', exercises: ['Squat', 'Lunge', 'Jumping Jacks'] },
+    { name: 'Full Body Hypertrophy', duration: '50 mins', exercises: ['Push-up', 'Squat', 'Dumbbell Rows', 'Lunge'] },
+    { name: ' Arms & Core', duration: '35 mins', exercises: ['Bicep Curl', 'Tricep Extensions', 'Dumbbell Shoulder Press', 'Sit-up'] },
+    { name: 'Chest & Back', duration: '45 mins', exercises: ['Push-up', 'Dumbbell Rows', 'Dumbbell Shoulder Press'] },
+    { name: 'Legs Day', duration: '40 mins', exercises: ['Squat', 'Lunge', 'Jumping Jacks'] },
+    { name: 'Rest Day', duration: '0 mins', exercises: [] }
+  ],
+  'endurance': [
+    { name: 'Cardio Endurance', duration: '30 mins', exercises: ['Jumping Jacks', 'Sit-up'] },
+    { name: 'Circuit Training', duration: '45 mins', exercises: ['Squat', 'Push-up', 'Lunge', 'Bicep Curl'] },
+    { name: 'HIIT Stamina', duration: '25 mins', exercises: ['Jumping Jacks', 'Squat', 'Push-up', 'Lunge'] },
+    { name: 'Full Body Endurance', duration: '50 mins', exercises: ['Squat', 'Push-up', 'Dumbbell Shoulder Press', 'Dumbbell Rows', 'Sit-up'] },
+    { name: 'Active Recovery', duration: '20 mins', exercises: ['Sit-up', 'Lateral Shoulder Raises'] },
+    { name: 'Mixed Circuit', duration: '40 mins', exercises: ['Squat', 'Push-up', 'Bicep Curl', 'Tricep Extensions', 'Jumping Jacks'] },
+    { name: 'Rest Day', duration: '0 mins', exercises: [] }
+  ],
+  'flexibility': [
+    { name: 'Flexibility Flow', duration: '20 mins', exercises: ['Sit-up', 'Lateral Shoulder Raises'] },
+    { name: 'Mobility Session', duration: '25 mins', exercises: ['Sit-up', 'Lunge'] },
+    { name: 'Stretch & Recovery', duration: '15 mins', exercises: ['Sit-up'] },
+    { name: 'Yoga-Inspired', duration: '30 mins', exercises: ['Squat', 'Lunge', 'Sit-up'] },
+    { name: 'Full Body Mobility', duration: '35 mins', exercises: ['Squat', 'Push-up', 'Lunge', 'Sit-up'] },
+    { name: 'Gentle Flow', duration: '20 mins', exercises: ['Sit-up', 'Lateral Shoulder Raises', 'Jumping Jacks'] },
+    { name: 'Rest Day', duration: '0 mins', exercises: [] }
+  ]
+};
+
+const FALLBACK_MEAL_TEMPLATES = [
+  {
+    name: "High Protein Breakfast",
+    foods: ["Egg white omelette", "Whole grain toast", "Greek yogurt"],
+    calories: 450,
+    protein: 35,
+    carbs: 40,
+    fats: 15
+  },
+  {
+    name: "Balanced Lunch",
+    foods: ["Grilled chicken breast", "Brown rice", "Steamed vegetables"],
+    calories: 550,
+    protein: 40,
+    carbs: 55,
+    fats: 18
+  },
+  {
+    name: "Protein-rich Dinner",
+    foods: ["Salmon fillet", "Quinoa", "Mixed salad"],
+    calories: 600,
+    protein: 45,
+    carbs: 45,
+    fats: 25
+  },
+  {
+    name: "Healthy Snack Pack",
+    foods: ["Almonds", "Apple", "Protein bar"],
+    calories: 300,
+    protein: 15,
+    carbs: 35,
+    fats: 12
+  }
+];
+
+const FITNESS_PROFILE_DEFAULTS: FitnessProfile = {
+  goal: 'weight-loss',
+  intensity: 'beginner',
+  location: 'home',
+  focusAreas: ['Core']
+};
+
+const FitnessPlanDesigner: React.FC<{ 
+  user: User; 
+  onPlanGenerated: () => void; 
+  onNavigateToScan?: () => void;
+  apiKey?: string 
+}> = ({ user, onPlanGenerated, onNavigateToScan, apiKey }) => {
   const [mode, setMode] = useState<DesignerMode>('plan');
-  const [profile, setProfile] = useState<FitnessProfile>(() => ({
-    goal: 'weight-loss',
-    intensity: 'beginner',
-    location: 'home',
-    ...(user?.fitnessProfile || {}),
-    focusAreas: user?.fitnessProfile?.focusAreas || ['Core']
-  }));
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -27,6 +128,9 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
   const [autoDetect, setAutoDetect] = useState(false);
 
   const bodyType = user.estimatedBodyType as BodyType | undefined;
+
+  // Use user's existing fitness profile or defaults
+  const profile: FitnessProfile = user.fitnessProfile || FITNESS_PROFILE_DEFAULTS;
 
   const handleDeletePlan = async () => {
     if (!confirm('Are you sure you want to delete your current plan? This cannot be undone.')) return;
@@ -45,16 +149,61 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
 
   if (!user) return <div className="p-12 text-center text-slate-400 font-medium">Loading user profile...</div>;
 
-  const handleFocusToggle = (area: string) => {
-    setProfile(prev => {
-      const currentAreas = prev.focusAreas || [];
+  // Generate a fallback plan when Gemini is not responding
+  const generateFallbackPlan = (): FitnessPlan => {
+    const motivation = DEFAULT_MOTIVATIONS[Math.floor(Math.random() * DEFAULT_MOTIVATIONS.length)];
+    const today = new Date();
+    const startDate = today.toISOString().split('T')[0];
+    const endDate = new Date(today.getTime() + 29 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const workouts = FALLBACK_WORKOUTS[profile.goal] || FALLBACK_WORKOUTS['weight-loss'];
+    const dailyWorkouts = workouts.map((w, i) => ({
+      name: w.name,
+      duration: w.duration,
+      exercises: w.exercises
+    }));
+
+    // Generate detailed sessions for progress tracking (Dashboard/FitnessPlanTracker)
+    const sessions = dailyWorkouts.map((dw, idx) => {
+      const week = Math.floor(idx / 7) + 1;
       return {
-        ...prev,
-        focusAreas: currentAreas.includes(area) 
-          ? currentAreas.filter(a => a !== area)
-          : [...currentAreas, area]
+        id: crypto.randomUUID(),
+        day: idx + 1,
+        week,
+        dayOfWeek: DAY_NAMES[idx % 7],
+        title: dw.name,
+        focus: dw.name.split(' ')[0],
+        exercises: dw.exercises.map(ex => ({ name: ex, sets: 3, reps: 12, restSeconds: 60 })),
+        duration: dw.duration,
+        completed: false,
+        completedAt: undefined
       };
     });
+
+    // Generate nutrition plan
+    const baseMultiplier = profile.intensity === 'advanced' ? 1.2 : profile.intensity === 'intermediate' ? 1.1 : 1.0;
+    const protein = profile.goal === 'muscle-gain' ? Math.round(180 * baseMultiplier) : profile.goal === 'weight-loss' ? Math.round(140 * baseMultiplier) : Math.round(160 * baseMultiplier);
+    const carbs = profile.goal === 'muscle-gain' ? Math.round(280 * baseMultiplier) : profile.goal === 'weight-loss' ? Math.round(220 * baseMultiplier) : Math.round(250 * baseMultiplier);
+    const fats = profile.goal === 'muscle-gain' ? Math.round(70 * baseMultiplier) : profile.goal === 'weight-loss' ? Math.round(60 * baseMultiplier) : Math.round(65 * baseMultiplier);
+
+    return {
+      motivation,
+      generatedAt: today.toISOString(),
+      startDate,
+      endDate,
+      dailyWorkouts,
+      sessions,
+      nutrition: {
+        protein: `${protein}g`,
+        carbs: `${carbs}g`,
+        fats: `${fats}g`
+      },
+      dietPlan: {
+        meals: FALLBACK_MEAL_TEMPLATES,
+        hydration: `${Math.floor(2.5 + baseMultiplier * 0.5)} liters`,
+        notes: `Auto-generated ${profile.goal.replace('-', ' ')} plan for ${profile.intensity} level. ${profile.location === 'gym' ? 'Use gym equipment where available.' : profile.location === 'outdoors' ? 'Outdoor-friendly exercises included.' : 'All exercises can be done at home.'}`
+      }
+    };
   };
 
   const handleGenerate = async () => {
@@ -63,17 +212,17 @@ const FitnessPlanDesigner: React.FC<{ user: User; onPlanGenerated: () => void; a
       const currentWeight = user.weightLogs.length > 0 
         ? user.weightLogs[user.weightLogs.length - 1].weight 
         : 70;
-      
+
       const key = apiKey || (import.meta as any).env.VITE_API_KEY;
       if (!key) throw new Error("API Key is missing");
 
       const ai = new GoogleGenAI({ apiKey: key });
 
-       let bodyTypeContext = '';
-       if (bodyType) {
-         const bodyDesc = getBodyTypeDescription(bodyType);
-         const bmi = user.heightCm ? (currentWeight / Math.pow(user.heightCm / 100, 2)).toFixed(1) : 'N/A';
-         bodyTypeContext = `USER BODY PROFILE:
+      let bodyTypeContext = '';
+      if (bodyType) {
+        const bodyDesc = getBodyTypeDescription(bodyType);
+        const bmi = user.heightCm ? (currentWeight / Math.pow(user.heightCm / 100, 2)).toFixed(1) : 'N/A';
+        bodyTypeContext = `USER BODY PROFILE:
 - Body Type: ${bodyType}
 - Description: ${bodyDesc}
 - Weight: ${currentWeight}kg
@@ -131,7 +280,7 @@ GOAL-BASED FOCUS:
 - Flexibility: Include mobility drills, dynamic stretches, yoga poses
 
 Create a 30-day progressive plan with 4 weekly phases. Each week should increase intensity or volume gradually.`;
-       }
+      }
 
       const prompt = `Generate a daily fitness and diet plan for a user with:
 Weight: ${currentWeight}kg
@@ -175,10 +324,44 @@ Return ONLY valid JSON, no markdown.`;
       } else {
         throw new Error("Unable to parse AI response");
       }
-       
+        
       const jsonString = text.replace(/```json|```/g, '').trim();
-      const plan = JSON.parse(jsonString);
-      const completePlan = { ...plan, generatedAt: new Date().toISOString(), id: crypto.randomUUID() };
+      let plan: FitnessPlan;
+      try {
+        const parsed = JSON.parse(jsonString) as any;
+        // Build dailyWorkouts from AI response
+        const dailyWorkouts = parsed.dailyWorkouts || [];
+        
+        // Build sessions for tracking from dailyWorkouts
+        const sessions = dailyWorkouts.map((dw: any, idx: number) => ({
+          id: crypto.randomUUID(),
+          day: idx + 1,
+          week: Math.floor(idx / 7) + 1,
+          dayOfWeek: DAY_NAMES[idx % 7],
+          title: dw.name,
+          focus: dw.name.split(' ')[0],
+          exercises: (dw.exercises || []).map((ex: string) => ({ name: ex, sets: 3, reps: 12, restSeconds: 60 })),
+          duration: dw.duration,
+          completed: false,
+          completedAt: undefined
+        }));
+        
+        plan = {
+          motivation: parsed.motivation || DEFAULT_MOTIVATIONS[0],
+          generatedAt: new Date().toISOString(),
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 29 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          dailyWorkouts,
+          sessions,
+          nutrition: parsed.nutrition,
+          dietPlan: parsed.dietPlan
+        };
+      } catch (parseErr) {
+        console.error("Failed to parse AI response:", text);
+        throw new Error(`Invalid JSON from AI: ${parseErr instanceof Error ? parseErr.message : 'Parse error'}`);
+      }
+
+      const completePlan = { ...plan, id: crypto.randomUUID() };
 
       // Move current active plan to history before saving new one
       const planHistory = user.planHistory || [];
@@ -195,13 +378,42 @@ Return ONLY valid JSON, no markdown.`;
         activePlan: completePlan,
         planHistory: planHistory
       };
+      console.log("[PlanGen] Saving user with activePlan:", !!completePlan);
       await saveUser(updatedUser);
+      console.log("[PlanGen] Saved, calling onPlanGenerated");
       onPlanGenerated();
       alert("Success! Your personalized plan is ready on your dashboard.");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Plan generation failed:", err);
-      alert(`Failed to generate plan: ${message}`);
+      
+      // Fallback: generate a rule-based plan
+      console.log("[PlanGen] Using fallback plan generator due to error:", message);
+      try {
+        const fallbackPlan = generateFallbackPlan();
+        const completePlan = { ...fallbackPlan, id: crypto.randomUUID() };
+        
+        const planHistory = user.planHistory || [];
+        if (user.activePlan) {
+          planHistory.push({
+            ...user.activePlan,
+            endedAt: new Date().toISOString()
+          });
+        }
+
+        const updatedUser = { 
+          ...user, 
+          fitnessProfile: profile, 
+          activePlan: completePlan,
+          planHistory: planHistory
+        };
+        await saveUser(updatedUser);
+        onPlanGenerated();
+        alert("AI service is currently unavailable. A personalized fallback plan has been generated based on your profile.");
+      } catch (fallbackErr) {
+        console.error("Fallback plan generation also failed:", fallbackErr);
+        alert(`Failed to generate plan: ${message}. Please try again later.`);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -210,9 +422,44 @@ Return ONLY valid JSON, no markdown.`;
   const activePlan = user.activePlan;
 
   // Redirect to body scanner if no active plan in plan mode
+  useEffect(() => {
+    if (mode === 'plan' && !activePlan) {
+      if (onNavigateToScan) {
+        onNavigateToScan();
+      } else {
+        // Fallback to hash if callback not provided (legacy)
+        window.location.hash = '#/bmi';
+      }
+    }
+  }, [mode, activePlan, onNavigateToScan]);
+
+  // Show loading state while redirecting
   if (mode === 'plan' && !activePlan) {
-    window.location.hash = '#/bmi';
-    return null;
+    return (
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+        <section>
+          <div>
+            <h2 className="text-3xl font-black mb-1 text-primary-600 dark:text-primary-400">Plan Designer</h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">AI-powered fitness planning based on your body type.</p>
+          </div>
+        </section>
+        <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+          <div className="text-6xl mb-4">📏</div>
+          <h3 className="text-xl font-bold mb-2">Body Scan Required</h3>
+          <p className="text-slate-500 mb-6 max-w-xs mx-auto">
+            To create your personalized fitness plan, we need to analyze your body type first.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/40 rounded-full animate-pulse flex items-center justify-center text-primary-600 font-bold">1</div>
+            <div className="h-1 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-slate-400 font-bold">2</div>
+            <div className="h-1 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-slate-400 font-bold">3</div>
+          </div>
+          <p className="text-xs text-slate-400 mt-4">Redirecting to Body Scanner...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -392,113 +639,52 @@ Return ONLY valid JSON, no markdown.`;
               </div>
             )}
 
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-10">
-              
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <span className="text-primary-500">01</span> Primary Goal
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {(['weight-loss', 'muscle-gain', 'endurance', 'flexibility'] as const).map(goal => (
-                    <button
-                      key={goal}
-                      onClick={() => setProfile(p => ({ ...p, goal }))}
-                      className={`p-4 rounded-2xl border-2 transition-all text-sm font-bold capitalize ${
-                        profile.goal === goal 
-                          ? 'border-primary-600 bg-primary-50 dark:bg-primary-950/30 text-primary-600' 
-                          : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                      }`}
-                    >
-                      {goal.replace('-', ' ')}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <span className="text-primary-500">02</span> Experience Level
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {(['beginner', 'intermediate', 'advanced'] as const).map(level => (
-                    <button
-                      key={level}
-                      onClick={() => setProfile(p => ({ ...p, intensity: level }))}
-                      className={`p-4 rounded-2xl border-2 transition-all text-sm font-bold capitalize ${
-                        profile.intensity === level 
-                          ? 'border-primary-600 bg-primary-50 dark:bg-primary-950/30 text-primary-600' 
-                          : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                      }`}
-                    >
-                      {level}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <span className="text-primary-500">03</span> Location
-                  </h3>
-                  <div className="flex flex-col gap-2">
-                    {(['home', 'gym', 'outdoors'] as const).map(loc => (
-                      <button
-                        key={loc}
-                        onClick={() => setProfile(p => ({ ...p, location: loc }))}
-                        className={`p-4 text-left rounded-2xl border-2 transition-all text-sm font-bold capitalize ${
-                          profile.location === loc 
-                            ? 'border-primary-600 bg-primary-50 dark:bg-primary-950/30 text-primary-600' 
-                            : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                        }`}
-                      >
-                        {loc}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <span className="text-primary-500">04</span> Focus Areas
-                  </h3>
+            {/* Profile Summary & Generate Button */}
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Your Fitness Profile</h3>
                   <div className="flex flex-wrap gap-2">
-                    {['Core', 'Legs', 'Upper Body', 'Cardio', 'Mobility', 'Back'].map(area => (
-                      <button
-                        key={area}
-                        onClick={() => handleFocusToggle(area)}
-                        className={`px-4 py-2 rounded-full border-2 transition-all text-xs font-bold ${
-                          profile.focusAreas?.includes(area)
-                            ? 'bg-primary-600 border-primary-600 text-white'
-                            : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200'
-                        }`}
-                      >
+                    <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-xs font-bold capitalize">
+                      {profile.goal.replace('-', ' ')}
+                    </span>
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold capitalize">
+                      {profile.intensity}
+                    </span>
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold capitalize">
+                      {profile.location}
+                    </span>
+                    {profile.focusAreas?.map(area => (
+                      <span key={area} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold">
                         {area}
-                      </button>
+                      </span>
                     ))}
                   </div>
                 </div>
-              </div>
-
-              <div className="pt-6">
                 <button
-                  onClick={handleGenerate}
+                  onClick={() => {
+                    // Always go to body scanner first to ensure fresh body analysis
+                    if (onNavigateToScan) {
+                      onNavigateToScan();
+                    } else {
+                      window.location.hash = '#/bmi';
+                    }
+                  }}
                   disabled={isGenerating}
-                  className={`w-full py-5 rounded-3xl font-black text-xl transition-all shadow-xl shadow-primary-500/20 ${
+                  className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${
                     isGenerating 
                       ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' 
                       : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-95'
                   }`}
                 >
-                  {isGenerating ? 'GENERATING PLAN...' : 'GENERATE PERSONALIZED PLAN'}
+                  {isGenerating ? 'GENERATING...' : '🔁 Start New Plan'}
                 </button>
-                <p className="text-center text-xs text-slate-400 mt-4 font-medium uppercase tracking-widest">
-                  {bodyType 
-                    ? 'AI uses your body type profile for personalized recommendations' 
-                    : 'Scan your body type for personalized recommendations'}
-                </p>
               </div>
+              <p className="text-xs text-slate-500">
+                Creating a new plan requires a fresh body scan to personalize your workouts.
+              </p>
             </div>
+
           </>
         )}
 

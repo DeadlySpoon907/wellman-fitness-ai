@@ -2,6 +2,7 @@ import os
 import sys
 import django
 import random
+import uuid
 from datetime import timedelta
 from django.utils import timezone
 
@@ -141,27 +142,61 @@ def generate_fitness_profile():
         "focusAreas": random.choice(focus_areas_options)
     }
 
+def generate_diet_plan():
+    """Generate a simple daily diet plan."""
+    meal_templates = [
+        {"name": "High Protein Breakfast", "foods": ["Egg white omelette", "Whole grain toast", "Greek yogurt"], "calories": 450, "protein": 35, "carbs": 40, "fats": 15},
+        {"name": "Balanced Lunch", "foods": ["Grilled chicken breast", "Brown rice", "Steamed vegetables"], "calories": 550, "protein": 40, "carbs": 55, "fats": 18},
+        {"name": "Protein-rich Dinner", "foods": ["Salmon fillet", "Quinoa", "Mixed salad"], "calories": 600, "protein": 45, "carbs": 45, "fats": 25},
+        {"name": "Healthy Snack Pack", "foods": ["Almonds", "Apple", "Protein bar"], "calories": 300, "protein": 15, "carbs": 35, "fats": 12}
+    ]
+    return {"meals": meal_templates, "hydration": f"{random.randint(2, 4)} liters", "notes": "Stay consistent with your nutrition. Track your macros daily."}
+
 def generate_active_plan():
-    """Generate a random active fitness plan."""
+    """Generate a 30-day fitness plan with sessions (tracker) and dailyWorkouts (UI)."""
     motivations = [
-        "Consistency is key!",
-        "Progress, not perfection.",
-        "Every workout counts.",
-        "Stay focused, stay strong.",
-        "One day at a time."
+        "Consistency is key!", "Progress, not perfection.", "Every workout counts.",
+        "Stay focused, stay strong.", "One day at a time.", "Your body can do it, your mind needs to believe.",
+        "Sweat is just fat crying.", "The only bad workout is the one that didn't happen."
     ]
-    workout_templates = [
-        {"name": "Full Body Blast", "duration": "45 mins", "exercises": ["Pushups", "Squats", "Lunges", "Plank", "Burpees"]},
-        {"name": "Cardio & Core", "duration": "30 mins", "exercises": ["Running", "Crunches", "Leg Raises", "Mountain Climbers"]},
-        {"name": "Upper Body Strength", "duration": "40 mins", "exercises": ["Bench Press", "Rows", "Shoulder Press", "Bicep Curls", "Tricep Dips"]},
-        {"name": "Lower Body Power", "duration": "35 mins", "exercises": ["Deadlifts", "Squats", "Lunges", "Calf Raises", "Leg Press"]},
-        {"name": "HIIT Circuit", "duration": "25 mins", "exercises": ["Jump Squats", "Pushups", "Burpees", "High Knees", "Plank Jacks"]},
-        {"name": "Yoga Flow", "duration": "50 mins", "exercises": ["Sun Salutation", "Warrior Poses", "Downward Dog", "Tree Pose", "Savasana"]}
+    # 7-day rotation of simple workouts matching our FALLBACK_WORKOUTS in FitnessPlanDesigner
+    daily_templates = [
+        {"name": "HIIT Cardio", "duration": "25 mins", "exercises": ["Jumping Jacks", "Squat", "Push-up", "Lunge"]},
+        {"name": "Full Body Circuit", "duration": "30 mins", "exercises": ["Squat", "Push-up", "Bicep Curl", "Sit-up", "Jumping Jacks"]},
+        {"name": "Core & Cardio", "duration": "20 mins", "exercises": ["Sit-up", "Jumping Jacks", "Lunge"]},
+        {"name": "Strength & Burn", "duration": "35 mins", "exercises": ["Squat", "Dumbbell Shoulder Press", "Dumbbell Rows", "Tricep Extensions"]},
+        {"name": "Active Recovery", "duration": "15 mins", "exercises": ["Sit-up", "Lateral Shoulder Raises"]},
+        {"name": "Full Body Blast", "duration": "30 mins", "exercises": ["Push-up", "Squat", "Lunge", "Bicep Curl"]},
+        {"name": "Rest Day", "duration": "0 mins", "exercises": []}
     ]
+    start_date = timezone.now() - timedelta(days=random.randint(0, 3))
+    daily_workouts = []
+    sessions = []
+    day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    for i in range(30):
+        template = daily_templates[i % 7]
+        daily_workouts.append({"name": template["name"], "duration": template["duration"], "exercises": template["exercises"]})
+        week = (i // 7) + 1
+        sessions.append({
+            "id": str(uuid.uuid4()), "day": i + 1, "week": week, "dayOfWeek": day_names[i % 7],
+            "title": template["name"], "focus": template["name"].split()[0],
+            "exercises": [{"name": ex, "sets": 3, "reps": 12, "restSeconds": 60} for ex in template["exercises"]],
+            "duration": template["duration"], "completed": False, "completedAt": None
+        })
+    nutrition = generate_diet_plan()
+    total_protein = sum(m['protein'] for m in nutrition['meals'])
+    total_carbs   = sum(m['carbs']  for m in nutrition['meals'])
+    total_fats    = sum(m['fats']   for m in nutrition['meals'])
     return {
+        "id": str(uuid.uuid4()),
         "motivation": random.choice(motivations),
-        "generatedAt": (timezone.now() - timedelta(days=random.randint(0, 7))).isoformat(),
-        "dailyWorkouts": random.sample(workout_templates, k=random.randint(2, 4))
+        "generatedAt": (timezone.now() - timedelta(days=random.randint(1, 5))).isoformat(),
+        "startDate": start_date.isoformat().split('T')[0],
+        "endDate":   (start_date + timedelta(days=29)).isoformat().split('T')[0],
+        "dailyWorkouts": daily_workouts,
+        "sessions": sessions,
+        "nutrition": {"protein": f"{total_protein}g", "carbs": f"{total_carbs}g", "fats": f"{total_fats}g"},
+        "dietPlan": nutrition
     }
 
 def seed():

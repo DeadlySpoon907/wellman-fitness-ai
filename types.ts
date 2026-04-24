@@ -79,10 +79,12 @@ export interface PostureAnalysis {
 }
 
 export interface FitnessPlan {
+  id?: string;
   motivation: string;
   generatedAt: string;
   startDate: string;
   endDate: string;
+  endedAt?: string;
   nutrition?: {
     protein: string;
     carbs: string;
