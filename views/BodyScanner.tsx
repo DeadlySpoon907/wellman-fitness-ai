@@ -323,16 +323,19 @@ Return ONLY valid JSON, no markdown. Include exactly 30 sessions with realistic 
       }
     }
 
-     const updatedUser = { 
-       ...user, 
-       heightCm: profile.measurements.heightCm,
-       estimatedBodyType: profile.bodyType,
-       weightLogs: [...(user.weightLogs || []), { 
-         date: new Date().toISOString(), 
-         weight: profile.measurements.weightKg 
-       }],
-       activePlan: monthlyPlan
-     };
+const updatedUser = {
+        ...user,
+        heightCm: profile.measurements.heightCm,
+        estimatedBodyType: profile.bodyType,
+        weightLogs: [...(user.weightLogs || []), {
+          date: new Date().toISOString(),
+          weight: profile.measurements.weightKg
+        }],
+        planHistory: user.activePlan
+          ? [...(user.planHistory || []), { ...user.activePlan, archivedAt: new Date().toISOString() }]
+          : (user.planHistory || []),
+        activePlan: monthlyPlan
+      };
      await saveUser(updatedUser);
      onUpdateProfile();
      
