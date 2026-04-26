@@ -284,7 +284,7 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
   };
 
   const detectExercise = (landmarks: NormalizedLandmark[]): ExerciseType | null => {
-    if (!landmarks || landmarks.length < 28) return null;
+    if (!landmarks || landmarks.length < 33) return null;
 
     const isValidHuman = validateHumanPose(landmarks);
     if (!isValidHuman) return null;
@@ -295,47 +295,208 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
       if (exType) return exType;
     }
 
-    const leftShoulder = landmarks[11];
-    const rightShoulder = landmarks[12];
-    const leftHip = landmarks[23];
-    const rightHip = landmarks[24];
-    const leftKnee = landmarks[25];
-    const leftAnkle = landmarks[27];
-    const leftElbow = landmarks[13];
-    const leftWrist = landmarks[15];
+    const ls = landmarks[11]; // left shoulder
+    const rs = landmarks[12]; // right shoulder
+    const le = landmarks[13]; // left elbow
+    const re = landmarks[14]; // right elbow
+    const lw = landmarks[15]; // left wrist
+    const rw = landmarks[16]; // right wrist
+    const lh = landmarks[23]; // left hip
+    const rh = landmarks[24]; // right hip
+    const lk = landmarks[25]; // left knee
+    const rk = landmarks[26]; // right knee
+    const la = landmarks[27]; // left ankle
+    const ra = landmarks[28]; // right ankle
 
-    if (!leftShoulder || !leftHip || !leftKnee || !leftAnkle) return null;
+    if (!ls || !rs || !lh || !rh || !lk || !rk || !la || !ra) return null;
 
-    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-    const hipY = (leftHip.y + rightHip.y) / 2;
-    const isHorizontal = Math.abs(shoulderY - hipY) < 0.25;
+    // Shoulder-hip width ratio and body angle checks
+    const shoulderWidth = Math.abs(rs.x - ls.x);
+    const hipWidth = Math.abs(rh.x - lh.x);
+    const bodyWidth = (shoulderWidth + hipWidth) / 2;
 
-    const isNearGround = leftHip.y > 0.8 || leftKnee.y > 0.8;
-    const isLowPosition = leftHip.y > 0.65;
+    // Height checks (y values increase downward)
+    const shoulderY = (ls.y + rs.y) / 2;
+    const hipY = (lh.y + rh.y) / 2;
+    const kneeY = (lk.y + rk.y) / 2;
+    const ankleY = (la.y + ra.y) / 2;
 
-    if (leftElbow && leftWrist && leftShoulder) {
-      const armRaised = leftWrist.y < leftShoulder.y - 0.15;
-      const armCurled = Math.abs(leftElbow.x - leftShoulder.x) < 0.12;
-      if (armRaised || armCurled) {
+    // Torso verticality (how upright the body is)
+    const torsoVertical = Math.abs(ls.x - lh.x) < 0.1;
+
+    // Body spans
+    const verticalSpan = shoulderY - ankleY;
+    const hipToAnkle = hipY - ankleY;
+    const shoulderToHip = shoulderY - hipY;
+    const shoulderToKnee = shoulderY - kneeY;
+
+    // ============================================
+    // PUSH-UP DETECTION
+    // Body close to ground, horizontal, hands on ground
+    // ============================================
+    const isLowToGround = hipY > 0.75 && kneeY > 0.75;
+    const bodyHorizontalForPushup = Math.abs(shoulderY - hipY) < 0.08 && Math.abs(hipY - kneeY) < 0.15;
+    const armsBentForPushup = le && re && lw && rw && 
+        (le.y > ls.y - 0.05) && (re.y > rs.y - 0.05);
+    
+    if (isLowToGround && bodyHorizontalForPushup && armsBentForPushup && verticalSpan < 0.5) {
+      return 'pushup';
+    }
+
+    // ============================================
+    // SQUAT DETECTION
+    // Hips drop below knees, torso relatively upright
+    // ============================================
+    const kneesBentForSquat = lk.y > lh.y + 0.05 && rk.y > rh.y + 0.05;
+    const hipsLowForSquat = hipY > 0.6 && hipY > kneeY;
+    const torsoUprightForSquat = shoulderY < hipY + 0.15;
+    const feetOnGroundForSquat = la.y > 0.75 && ra.y > 0.75;
+
+    if (kneesBentForSquat && hipsLowForSquat && torsoUprightForSquat && feetOnGroundForSquat) {
+      return 'squat';
+    }
+
+    // ============================================
+    // LUNGE DETECTION
+    // One leg forward, knee bent, back leg straight
+    // ============================================
+    const leftLegForward = la.x < lk.x - 0.05;
+    const rightLegForward = ra.x < rk.x - 0.05;
+    const kneeBentLunge = (lk.y > lh.y + 0.1) || (rk.y > rh.y + 0.1);
+    const backLegStraightLunge = Math.abs(la.y - lk.y) > 0.25 || Math.abs(ra.y - rk.y) > 0.25;
+    const torsoForwardLunge = Math.abs(shoulderY - hipY) < 0.12;
+
+    if (kneeBentLunge && (leftLegForward || rightLegForward) && backLegStraightLunge && torsoForwardLunge) {
+      return 'lunge';
+    }
+
+    // ============================================
+    // SIT-UP DETECTION
+    // Upper body raised from ground, torso vertical
+    // ============================================
+    const isSeatedOrReclined = hipY > kneeY - 0.1 && hipY > 0.7;
+    const torsoUprightForSitup = shoulderY < hipY - 0.2 && Math.abs(ls.x - lw.x) < 0.15;
+    const feetLiftedOrPlanted = Math.abs(la.y - lk.y) < 0.2 || la.y > 0.8;
+
+    if ((isSeatedOrReclined || verticalSpan < 0.5) && torsoUprightForSitup && feetLiftedOrPlanted) {
+      return 'situp';
+    }
+
+    // ============================================
+    // BICEP CURL DETECTION
+    // Arms bent at elbows, hands near shoulders
+    // ============================================
+    if ((le && ls && lw) || (re && rs && rw)) {
+      let elbowBent = false;
+      let handsNearShoulders = false;
+
+      if (le && ls && lw) {
+        const leftArmBent = le.y > ls.y + 0.05 && le.y > lw.y + 0.05;
+        const leftHandNearBody = Math.abs(ls.x - lw.x) < 0.15;
+        const leftElbowCloseToTorso = le.x > ls.x - 0.1 && le.x < ls.x + 0.2;
+        elbowBent = leftArmBent || elbowBent;
+        handsNearShoulders = (leftHandNearBody && leftElbowCloseToTorso) || handsNearShoulders;
+      }
+
+      if (re && rs && rw) {
+        const rightArmBent = re.y > rs.y + 0.05 && re.y > rw.y + 0.05;
+        const rightHandNearBody = Math.abs(rs.x - rw.x) < 0.15;
+        const rightElbowCloseToTorso = re.x < rs.x + 0.1 && re.x > rs.x - 0.2;
+        elbowBent = rightArmBent || elbowBent;
+        handsNearShoulders = (rightHandNearBody && rightElbowCloseToTorso) || handsNearShoulders;
+      }
+
+      if (elbowBent && handsNearShoulders && shoulderY < hipY - 0.1) {
         return 'bicep_curl';
       }
     }
 
-    if (isNearGround && isHorizontal) {
-      return 'pushup';
+    // ============================================
+    // SHOULDER PRESS DETECTION
+    // Standing, arms pushing upward
+    // ============================================
+    if ((le && ls && lw) || (re && rs && rw)) {
+      let armsPressingUp = false;
+      const standingTall = torsoVertical && shoulderY < 0.4;
+
+      if (le && ls && lw) {
+        const leftPressing = lw.y < le.y - 0.1 && lw.y < ls.y - 0.1;
+        armsPressingUp = leftPressing || armsPressingUp;
+      }
+      if (re && rs && rw) {
+        const rightPressing = rw.y < re.y - 0.1 && rw.y < rs.y - 0.1;
+        armsPressingUp = rightPressing || armsPressingUp;
+      }
+
+      if (armsPressingUp && standingTall) {
+        return 'dumbbell_shoulder_press';
+      }
     }
 
-    if (isLowPosition && leftKnee.y < leftHip.y && leftAnkle.y > leftKnee.y) {
-      return 'squat';
+    // ============================================
+    // DUMBBELL ROW DETECTION
+    // Bent over, pulling arms back
+    // ============================================
+    const torsoForwardBent = shoulderY > hipY + 0.15;
+    const armsPulling = (le && ls && le.x < ls.x - 0.15) || (re && rs && re.x > rs.x + 0.15);
+
+    if (torsoForwardBent && armsPulling) {
+      return 'dumbbell_rows';
     }
 
-    if (isLowPosition && leftHip.y > leftKnee.y && !isNearGround) {
-      return 'lunge';
+    // ============================================
+    // LATERAL SHOULDER RAISE
+    // Standing, arms spread out to sides
+    // ============================================
+    if ((le && ls && lw) || (re && rs && rw)) {
+      let armsSpread = false;
+      const standing = torsoVertical && shoulderY < 0.4;
+
+      if (le && ls && lw) {
+        const leftSpread = Math.abs(le.x - ls.x) > 0.2 && lw.y < le.y;
+        armsSpread = leftSpread || armsSpread;
+      }
+      if (re && rs && rw) {
+        const rightSpread = Math.abs(re.x - rs.x) > 0.2 && rw.y < re.y;
+        armsSpread = rightSpread || armsSpread;
+      }
+
+      if (armsSpread && standing) {
+        return 'lateral_shoulder_raises';
+      }
     }
 
-    const isSitting = leftHip.y < leftKnee.y && leftKnee.y < leftAnkle.y;
-    if (isSitting && isNearGround && isHorizontal) {
-      return 'situp';
+    // ============================================
+    // JUMPING JACKS
+    // Wide stance with arms up OR jumping motion
+    // ============================================
+    const legsWide = Math.abs(la.x - ra.x) > 0.4;
+    const armsUp = lw && rw && lw.y < shoulderY - 0.15 && rw.y < shoulderY - 0.15;
+
+    if ((legsWide && armsUp) || verticalSpan > 0.75) {
+      return 'jumping_jacks';
+    }
+
+    // ============================================
+    // TRICEP EXTENSION
+    // Arms overhead, bent at elbows
+    // ============================================
+    if ((le && ls && lw) || (re && rs && rw)) {
+      let armsOverhead = false;
+      const elbowBent = (le && ls && le.y > ls.y + 0.1) || (re && rs && re.y > rs.y + 0.1);
+
+      if (le && ls && lw) {
+        const leftOverhead = lw.y < shoulderY - 0.1 && lw.y < le.y;
+        armsOverhead = leftOverhead || armsOverhead;
+      }
+      if (re && rs && rw) {
+        const rightOverhead = rw.y < shoulderY - 0.1 && rw.y < re.y;
+        armsOverhead = rightOverhead || armsOverhead;
+      }
+
+      if (armsOverhead && elbowBent && torsoVertical) {
+        return 'tricep_extensions';
+      }
     }
 
     return null;
@@ -368,35 +529,86 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
   }, [currentPose, freedomMode, exercise]);
 
   const countReps = (landmarks: NormalizedLandmark[], ex: ExerciseType) => {
-    const leftHip = landmarks[23];
-    const leftKnee = landmarks[25];
-    const leftAnkle = landmarks[27];
-    const leftElbow = landmarks[13];
-    const leftWrist = landmarks[15];
-    const leftShoulder = landmarks[11];
+    const ls = landmarks[11]; // left shoulder
+    const rs = landmarks[12]; // right shoulder
+    const le = landmarks[13]; // left elbow
+    const re = landmarks[14]; // right elbow
+    const lw = landmarks[15]; // left wrist
+    const rw = landmarks[16]; // right wrist
+    const lh = landmarks[23]; // left hip
+    const rh = landmarks[24]; // right hip
+    const lk = landmarks[25]; // left knee
+    const rk = landmarks[26]; // right knee
+    const la = landmarks[27]; // left ankle
+    const ra = landmarks[28]; // right ankle
 
-    if (!leftHip || !leftKnee || !leftAnkle) return repStateRef.current.lastCount;
+    if (!ls || !rs || !lh || !rh || !lk || !rk || !la || !ra) return repStateRef.current.lastCount;
 
     let isDown = false;
+    const shoulderY = (ls.y + rs.y) / 2;
+    const hipY = (lh.y + rh.y) / 2;
+    const kneeY = (lk.y + rk.y) / 2;
+    const ankleY = (la.y + ra.y) / 2;
 
     switch (ex) {
       case 'squat': {
-        const hipKneeAngle = Math.atan2(leftKnee.y - leftHip.y, leftKnee.x - leftHip.x) - 
-                            Math.atan2(leftAnkle.y - leftKnee.y, leftAnkle.x - leftKnee.x);
+        const hipKneeAngle = Math.atan2(lk.y - lh.y, lk.x - lh.x) - 
+                            Math.atan2(la.y - lk.y, la.x - lk.x);
         const angleDeg = Math.abs(hipKneeAngle * 180 / Math.PI);
         isDown = angleDeg < 60;
         break;
       }
       case 'pushup': {
-        if (!leftElbow || !leftShoulder) break;
-        const shoulderElbow = Math.sqrt(Math.pow(leftElbow.x - leftShoulder.x, 2) + Math.pow(leftElbow.y - leftShoulder.y, 2));
-        isDown = shoulderElbow < 0.15;
+        if (!le || !ls) break;
+        const shoulderElbow = Math.sqrt(Math.pow(le.x - ls.x, 2) + Math.pow(le.y - ls.y, 2));
+        isDown = shoulderElbow < 0.15 && lh.y > 0.7;
         break;
       }
       case 'bicep_curl': {
-        if (!leftElbow || !leftWrist || !leftShoulder) break;
-        const armLength = Math.sqrt(Math.pow(leftShoulder.x - leftWrist.x, 2) + Math.pow(leftShoulder.y - leftWrist.y, 2));
+        if (!le || !lw || !ls) break;
+        const armLength = Math.sqrt(Math.pow(ls.x - lw.x, 2) + Math.pow(ls.y - lw.y, 2));
         isDown = armLength < 0.15;
+        break;
+      }
+      case 'lunge': {
+        isDown = (lk.y > lh.y + 0.1 && Math.abs(la.y - lk.y) > 0.25) || 
+                 (rk.y > rh.y + 0.1 && Math.abs(ra.y - rk.y) > 0.25);
+        break;
+      }
+      case 'situp': {
+        isDown = shoulderY < hipY - 0.1;
+        break;
+      }
+      case 'dumbbell_shoulder_press': {
+        if (!le || !lw || !ls) break;
+        const armUp = lw.y < ls.y - 0.15;
+        const armDown = lw.y > ls.y;
+        isDown = armUp;
+        break;
+      }
+      case 'dumbbell_rows': {
+        if (!le || !ls) break;
+        const elbowBehind = le.x < ls.x - 0.15;
+        isDown = elbowBehind && lh.y > shoulderY + 0.1;
+        break;
+      }
+      case 'lateral_shoulder_raises': {
+        if (!le || !ls || !lw) break;
+        const armOut = Math.abs(le.x - ls.x) > 0.2;
+        const armUp = lw.y < ls.y - 0.1;
+        isDown = armOut && armUp;
+        break;
+      }
+      case 'jumping_jacks': {
+        const legsWide = Math.abs(la.x - ra.x) > 0.4;
+        isDown = legsWide;
+        break;
+      }
+      case 'tricep_extensions': {
+        if (!le || !lw || !ls) break;
+        const armUp = lw.y < ls.y - 0.15;
+        const elbowBent = le.y > ls.y + 0.1;
+        isDown = armUp && elbowBent;
         break;
       }
       default:

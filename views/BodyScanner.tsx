@@ -26,24 +26,26 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplet
   const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
   const [lockedProfile, setLockedProfile] = useState<LockedBodyProfile | null>(null);
   const [liveLandmarks, setLiveLandmarks] = useState<NormalizedLandmark[]>([]);
-   const [scanProgress, setScanProgress] = useState(0);
-   const [scanDuration, setScanDuration] = useState(0);
-   const [estimatedBMI, setEstimatedBMI] = useState<number | null>(null);
-   const [bodyScans, setBodyScans] = useState<BodyAnalysis[]>([]);
-   const [positionStatus, setPositionStatus] = useState<'idle' | 'checking' | 'ready' | 'invalid'>('idle');
-   const [positionMessage, setPositionMessage] = useState('');
-   const scanProgressRef = useRef(0);
-   const scanStartTimeRef = useRef(0);
-   const bodyScansRef = useRef<BodyAnalysis[]>([]);
-
+    const [scanProgress, setScanProgress] = useState(0);
+    const [scanDuration, setScanDuration] = useState(0);
+    const [estimatedBMI, setEstimatedBMI] = useState<number | null>(null);
+    const [bodyScans, setBodyScans] = useState<BodyAnalysis[]>([]);
+    const [positionStatus, setPositionStatus] = useState<'idle' | 'checking' | 'ready' | 'invalid'>('idle');
+    const [positionMessage, setPositionMessage] = useState('');
+    const scanProgressRef = useRef(0);
+    const scanStartTimeRef = useRef(0);
+    const bodyScansRef = useRef<BodyAnalysis[]>([]);
+ 
   const currentWeight = user.weightLogs.length > 0 
     ? user.weightLogs[user.weightLogs.length - 1].weight 
     : 70;
   const currentHeight = user.heightCm || 170;
   const calculatedBmi = currentWeight / Math.pow(currentHeight / 100, 2);
-
+ 
   useEffect(() => {
     if (user.estimatedBodyType && user.heightCm) {
+      const analysis = analyzeBodyType([], calculatedBmi, user.heightCm, currentWeight);
+      setBodyAnalysis(analysis);
       setLockedProfile({
         bodyType: user.estimatedBodyType as BodyType,
         lockedAt: new Date().toISOString(),
@@ -55,7 +57,7 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplet
         confidence: 0.8
       });
     }
-  }, [user.estimatedBodyType, user.heightCm]);
+  }, [user.estimatedBodyType, user.heightCm, currentWeight, calculatedBmi]);
 
   const checkPosition = (landmarks: NormalizedLandmark[]): { valid: boolean; message: string } => {
     if (!landmarks || landmarks.length < 33) {
@@ -384,7 +386,7 @@ const updatedUser = {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-black">{lockedProfile.measurements.bmi.toFixed(1)}</div>
+              <div className="text-3xl font-black">{calculatedBmi.toFixed(1)}</div>
               <div className="text-xs text-slate-500">BMI</div>
             </div>
           </div>
