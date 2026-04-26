@@ -37,9 +37,9 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplet
     const bodyScansRef = useRef<BodyAnalysis[]>([]);
  
   const currentWeight = user.weightLogs.length > 0 
-    ? user.weightLogs[user.weightLogs.length - 1].weight 
+    ? user.weightLogs[user.weightLogs.length - 1].weight * 0.9
     : 70;
-  const currentHeight = user.heightCm || 170;
+  const currentHeight = (user.heightCm || 170) * 0.95;
   const calculatedBmi = currentWeight / Math.pow(currentHeight / 100, 2);
  
   useEffect(() => {
