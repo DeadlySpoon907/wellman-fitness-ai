@@ -2,7 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { FullBodySkeleton } from './FullBodySkeleton';
 import type { NormalizedLandmark, ExerciseType } from '../types';
 import { analyzePosture } from '../utils/postureComparison';
-import { loadExerciseModel, predictExercise, getExerciseType } from '../utils/exerciseModel';
+import { loadExerciseModel, predictExercise, getExerciseType, extractExerciseFeatures } from '../utils/exerciseModel';
+import { getDataCollector } from '../utils/dataCollector';
 
 declare const PoseLandmarker: any;
 declare const FilesetResolver: any;
@@ -502,31 +503,48 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     return null;
   };
 
-  useEffect(() => {
-    if (currentPose && currentPose.landmarks.length > 0) {
-      const analysis = analyzePosture(currentPose.landmarks);
-      setPostureAnalysis(analysis);
+   useEffect(() => {
+     if (currentPose && currentPose.landmarks.length > 0) {
+       const analysis = analyzePosture(currentPose.landmarks);
+       setPostureAnalysis(analysis);
 
-      if (freedomMode) {
-        const detected = detectExercise(currentPose.landmarks);
-        if (detected && detected !== detectedExerciseRef.current) {
-          detectedExerciseRef.current = detected;
-          setDetectedExercise(detected);
-          repStateRef.current = { phase: 'up', lastCount: 0 };
-          setRepCount(0);
-        }
-      }
+       if (freedomMode) {
+         const detectionResult = predictExercise(currentPose.landmarks);
+         if (detectionResult && detectionResult.confidence > 0.6) {
+           const detected = getExerciseType(detectionResult.exercise);
+           if (detected && detected !== detectedExerciseRef.current) {
+             // Opt-in data collection: capture feature vector for model improvement
+             try {
+               const collector = getDataCollector();
+               if (collector.hasConsent()) {
+                 const featuresRecord = extractExerciseFeatures(currentPose.landmarks);
+                 // Convert to ordered array matching training order
+                 const featureKeys: string[] = ['shoulder_width','shoulder_level','hip_width','hip_level','torso_length','leg_length','body_center_x','body_center_y','left_arm_ext','left_arm_height','right_arm_ext','right_arm_height'];
+                 const featureArray = featureKeys.map(k => featuresRecord[k] ?? 0);
+                 collector.capture(featureArray, detected);
+               }
+             } catch (e) {
+               // Silent fail - data collection is optional
+             }
 
-      const currentEx = detectedExerciseRef.current || exercise;
-      if (currentEx) {
-        const reps = countReps(currentPose.landmarks, currentEx);
-        setRepCount(reps);
-        if (onRepCountChange) {
-          onRepCountChange(reps);
-        }
-      }
-    }
-  }, [currentPose, freedomMode, exercise]);
+             detectedExerciseRef.current = detected;
+             setDetectedExercise(detected);
+             repStateRef.current = { phase: 'up', lastCount: 0 };
+             setRepCount(0);
+           }
+         }
+       }
+
+       const currentEx = detectedExerciseRef.current || exercise;
+       if (currentEx) {
+         const reps = countReps(currentPose.landmarks, currentEx);
+         setRepCount(reps);
+         if (onRepCountChange) {
+           onRepCountChange(reps);
+         }
+       }
+     }
+   }, [currentPose, freedomMode, exercise]);
 
   const countReps = (landmarks: NormalizedLandmark[], ex: ExerciseType) => {
     const ls = landmarks[11]; // left shoulder

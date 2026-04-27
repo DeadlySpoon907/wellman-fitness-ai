@@ -5,7 +5,8 @@ import { GoogleGenAI } from "@google/genai";
 import { saveUser } from '../services/DB';
 import { FullBodyTracker } from '../components/FullBodyTracker';
 import { analyzeBodyType, BodyAnalysis, getBodyTypeDescription, getBodyTypeIcon, BodyType } from '../utils/bodyAnalysis';
-import { estimateBMIFromLandmarks, prefetchModel } from '../utils/bmiEstimator';
+import { estimateBMIFromLandmarks, prefetchModel, extractFeaturesFromLandmarks } from '../utils/bmiEstimator';
+import { getDataCollector } from '../utils/dataCollector';
 import type { NormalizedLandmark } from '../types';
 
 type ScanState = 'idle' | 'scanning' | 'analyzing' | 'ready' | 'locked';
@@ -115,25 +116,37 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplet
       const elapsed = Date.now() - scanStartTimeRef.current;
       setScanDuration(elapsed);
 
-      if (elapsed < 10000) {
-        // Just update progress during scanning
-        setScanProgress(Math.min(Math.floor((elapsed / 10000) * 100), 95));
-      } else {
-        // Scan complete - estimate BMI using ML model
-        try {
-          const bmiResult = await estimateBMIFromLandmarks(landmarks, currentHeight);
-          setEstimatedBMI(bmiResult.bmi);
-          const finalAnalysis = analyzeBodyType(landmarks, bmiResult.bmi, currentHeight, currentWeight);
-          setBodyAnalysis(finalAnalysis);
-        } catch (err) {
-          console.error('BMI estimation failed, using fallback', err);
-          const fallbackAnalysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
-          setBodyAnalysis(fallbackAnalysis);
-        }
-        setScanProgress(100);
-        setScanState('ready');
-        setPositionStatus('idle');
-      }
+       if (elapsed < 10000) {
+         // Just update progress during scanning
+         setScanProgress(Math.min(Math.floor((elapsed / 10000) * 100), 95));
+       } else {
+         // Scan complete - estimate BMI using ML model
+         try {
+           const bmiResult = await estimateBMIFromLandmarks(landmarks, currentHeight);
+           setEstimatedBMI(bmiResult.bmi);
+           const finalAnalysis = analyzeBodyType(landmarks, bmiResult.bmi, currentHeight, currentWeight);
+           setBodyAnalysis(finalAnalysis);
+
+           // Opt-in data collection: capture features + true BMI for model refinement
+           try {
+             const collector = getDataCollector();
+             if (collector.hasConsent()) {
+               const bmiFeatures = extractFeaturesFromLandmarks(landmarks, currentHeight);
+               const trueBmi = currentWeight / Math.pow(currentHeight / 100, 2);
+               collector.capture(bmiFeatures, undefined, trueBmi);
+             }
+           } catch {
+             // Data collection is optional, ignore errors
+           }
+         } catch (err) {
+           console.error('BMI estimation failed, using fallback', err);
+           const fallbackAnalysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
+           setBodyAnalysis(fallbackAnalysis);
+         }
+         setScanProgress(100);
+         setScanState('ready');
+         setPositionStatus('idle');
+       }
     }
    }, [scanState, currentHeight, currentWeight, calculatedBmi, estimateBMIFromLandmarks, analyzeBodyType]);
 

@@ -21,6 +21,7 @@
     "autoprefixer": "^10.4.27",
     "jsdom": "^29.0.2",
     "tailwindcss": "^3.4.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.0.0",
     "vite": "^7.3.1",
     "vitest": "^4.1.4"
@@ -35,6 +36,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "train:bmi": "tsx train-bmi-model.ts",
+    "train:exercises": "tsx train-exercise-model.ts",
+    "train:all": "tsx train-bmi-model.ts && tsx train-exercise-model.ts",
     "start": "echo 'Note: This app is configured to run via ES6 modules in the browser. Use a simple static server like \"npx serve .\" or a Vite/Snowpack setup if required.'"
   }
 }
