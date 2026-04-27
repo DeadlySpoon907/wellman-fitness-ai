@@ -46,13 +46,13 @@ class UserViewSet(viewsets.ModelViewSet):
             # Set trial ends at to 30 days from now (free trial)
             user.trial_ends_at = expiry
             
-             # Initialize new user with default/empty JSON fields
-             user.weight_logs = user.weight_logs or []
-             user.activity_logs = user.activity_logs or []
-             user.meal_logs = user.meal_logs or []
-             user.posture_logs = user.posture_logs or []
-             user.fitness_profile = user.fitness_profile or None
-             user.active_plan = user.active_plan or None
+            # Initialize new user with default/empty JSON fields
+            user.weight_logs = user.weight_logs or []
+            user.activity_logs = user.activity_logs or []
+            user.meal_logs = user.meal_logs or []
+            user.posture_logs = user.posture_logs or []
+            user.fitness_profile = user.fitness_profile or None
+            user.active_plan = user.active_plan or None
             
             # Set default role if not provided
             if not user.role:
@@ -112,12 +112,12 @@ class UserViewSet(viewsets.ModelViewSet):
             user.is_premium = True  # Trial premium
             
             # Initialize JSON fields
-             user.weight_logs = []
-             user.activity_logs = []
-             user.meal_logs = []
-             user.posture_logs = []
-             user.fitness_profile = None
-             user.active_plan = None
+            user.weight_logs = []
+            user.activity_logs = []
+            user.meal_logs = []
+            user.posture_logs = []
+            user.fitness_profile = None
+            user.active_plan = None
             
             user.save()
             
