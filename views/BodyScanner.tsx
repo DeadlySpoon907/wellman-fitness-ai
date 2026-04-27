@@ -116,9 +116,9 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplet
       const elapsed = Date.now() - scanStartTimeRef.current;
       setScanDuration(elapsed);
 
-        if (elapsed < 5000) {
+        if (elapsed < 8000) {
           // Just update progress during scanning
-          setScanProgress(Math.min(Math.floor((elapsed / 5000) * 100), 95));
+          setScanProgress(Math.min(Math.floor((elapsed / 8000) * 100), 95));
         } else {
          // Scan complete - estimate BMI using ML model
          try {
