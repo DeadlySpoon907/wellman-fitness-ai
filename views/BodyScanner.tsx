@@ -352,9 +352,6 @@ const updatedUser = {
           date: new Date().toISOString(),
           weight: profile.measurements.weightKg
         }],
-        planHistory: user.activePlan
-          ? [...(user.planHistory || []), { ...user.activePlan, archivedAt: new Date().toISOString() }]
-          : (user.planHistory || []),
         activePlan: monthlyPlan
       };
      await saveUser(updatedUser);

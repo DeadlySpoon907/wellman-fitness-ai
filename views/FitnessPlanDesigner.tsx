@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, FitnessProfile, FitnessPlan } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { GoogleGenAI } from "@google/genai";
-import { saveUser, deletePlanFromHistory } from '../services/DB';
+import { saveUser } from '../services/DB';
 import { FullBodyTracker } from '../components/FullBodyTracker';
 import { getBodyTypeDescription, getBodyTypeIcon, BodyType } from '../utils/bodyAnalysis';
 import type { ExerciseType } from '../types';
@@ -363,20 +363,10 @@ Return ONLY valid JSON, no markdown.`;
 
       const completePlan = { ...plan, id: crypto.randomUUID() };
 
-      // Move current active plan to history before saving new one
-      const planHistory = user.planHistory || [];
-      if (user.activePlan) {
-        planHistory.push({
-          ...user.activePlan,
-          endedAt: new Date().toISOString()
-        });
-      }
-
-      const updatedUser = { 
-        ...user, 
-        fitnessProfile: profile, 
-        activePlan: completePlan,
-        planHistory: planHistory
+      const updatedUser = {
+        ...user,
+        fitnessProfile: profile,
+        activePlan: completePlan
       };
       console.log("[PlanGen] Saving user with activePlan:", !!completePlan);
       await saveUser(updatedUser);
@@ -386,26 +376,16 @@ Return ONLY valid JSON, no markdown.`;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Plan generation failed:", err);
-      
       // Fallback: generate a rule-based plan
       console.log("[PlanGen] Using fallback plan generator due to error:", message);
       try {
         const fallbackPlan = generateFallbackPlan();
         const completePlan = { ...fallbackPlan, id: crypto.randomUUID() };
-        
-        const planHistory = user.planHistory || [];
-        if (user.activePlan) {
-          planHistory.push({
-            ...user.activePlan,
-            endedAt: new Date().toISOString()
-          });
-        }
 
-        const updatedUser = { 
-          ...user, 
-          fitnessProfile: profile, 
-          activePlan: completePlan,
-          planHistory: planHistory
+        const updatedUser = {
+          ...user,
+          fitnessProfile: profile,
+          activePlan: completePlan
         };
         await saveUser(updatedUser);
         onPlanGenerated();
@@ -598,46 +578,8 @@ Return ONLY valid JSON, no markdown.`;
                     </button>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Past Plans History */}
-            {user.planHistory && user.planHistory.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <span className="text-slate-500">📚</span> Past Plans
-                </h3>
-                <div className="space-y-3">
-                  {user.planHistory.map((plan: FitnessPlan, idx: number) => (
-                    <div key={plan.id || idx} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-bold text-sm">{plan.motivation || 'Plan'}</div>
-                          <div className="text-xs text-slate-500">
-                            Generated {new Date(plan.generatedAt).toLocaleDateString()}
-                            {plan.endedAt && ` • Ended ${new Date(plan.endedAt).toLocaleDateString()}`}
-                          </div>
-                          <div className="text-xs text-slate-400 mt-1">
-                            {plan.dailyWorkouts?.length || 0} workouts • {plan.dailyWorkouts?.reduce((acc, w) => acc + (w.exercises?.length || 0), 0) || 0} total exercises
-                          </div>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            if (!plan.id) return;
-                            if (!confirm('Delete this past plan?')) return;
-                            await deletePlanFromHistory(user.id, plan.id);
-                            onPlanGenerated(); // Refresh user data
-                          }}
-                          className="text-red-500 hover:text-red-700 text-sm font-medium px-2 py-1 rounded"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+               </div>
+             )}
 
             {/* Profile Summary & Generate Button */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">

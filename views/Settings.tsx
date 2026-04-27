@@ -37,7 +37,7 @@ const Settings: React.FC<SettingsProps> = ({ user, currentApiKey, onSave, onUpda
     setPasswords((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePasswordSubmit = (e: FormEvent) => {
+  const handlePasswordSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (passwords.new.length < 6) {
       setPasswordMessage("Password must be at least 6 characters.");
@@ -47,14 +47,16 @@ const Settings: React.FC<SettingsProps> = ({ user, currentApiKey, onSave, onUpda
       setPasswordMessage("New passwords do not match.");
       return;
     }
-    if (passwords.current !== user.password) {
-      setPasswordMessage("Incorrect current password.");
-      return;
+    try {
+      await saveUser({ ...user, currentPassword: passwords.current, password: passwords.new } as any);
+      setPasswordMessage("Password updated successfully!");
+      setPasswords({ current: '', new: '', confirm: '' });
+      onUpdate();
+    } catch (error) {
+      console.error(error);
+      const msg = error instanceof Error ? error.message : "Failed to update password";
+      setPasswordMessage(msg);
     }
-    saveUser({ ...user, password: passwords.new });
-    setPasswordMessage("Password updated successfully!");
-    setPasswords({ current: '', new: '', confirm: '' });
-    onUpdate();
   };
 
   return (

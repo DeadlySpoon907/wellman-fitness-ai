@@ -130,8 +130,7 @@ export const saveUser = async (user: User): Promise<User> => {
    if (user.mealLogs) (sanitized as any).mealLogs = user.mealLogs;
    if (user.postureLogs) (sanitized as any).postureLogs = user.postureLogs;
    if (user.fitnessProfile) (sanitized as any).fitnessProfile = user.fitnessProfile;
-    if (user.activePlan !== undefined) (sanitized as any).activePlan = user.activePlan;
-   if (user.planHistory) (sanitized as any).plan_history = user.planHistory;
+   if (user.activePlan !== undefined) (sanitized as any).activePlan = user.activePlan;
   
   const response = await fetch(`${API_URL}/users/${user.id}/`, {
     method: 'PATCH',
@@ -289,15 +288,6 @@ export const logMeal = async (userId: string, mealName: string, calories: number
       carbs,
       fat
     })
-  });
-  return handleResponse(response);
-};
-
-export const deletePlanFromHistory = async (userId: string, planId: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/users/${userId}/delete-plan-history/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId })
   });
   return handleResponse(response);
 };

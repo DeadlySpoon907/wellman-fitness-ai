@@ -46,13 +46,13 @@ class UserViewSet(viewsets.ModelViewSet):
             # Set trial ends at to 30 days from now (free trial)
             user.trial_ends_at = expiry
             
-            # Initialize new user with default/empty JSON fields
-            user.weight_logs = user.weight_logs or []
-            user.activity_logs = user.activity_logs or []
-            user.meal_logs = user.meal_logs or []
-            user.posture_logs = user.posture_logs or []
-            user.fitness_profile = user.fitness_profile or None
-            user.active_plan = user.active_plan or None
+             # Initialize new user with default/empty JSON fields
+             user.weight_logs = user.weight_logs or []
+             user.activity_logs = user.activity_logs or []
+             user.meal_logs = user.meal_logs or []
+             user.posture_logs = user.posture_logs or []
+             user.fitness_profile = user.fitness_profile or None
+             user.active_plan = user.active_plan or None
             
             # Set default role if not provided
             if not user.role:
@@ -112,12 +112,12 @@ class UserViewSet(viewsets.ModelViewSet):
             user.is_premium = True  # Trial premium
             
             # Initialize JSON fields
-            user.weight_logs = []
-            user.activity_logs = []
-            user.meal_logs = []
-            user.posture_logs = []
-            user.fitness_profile = None
-            user.active_plan = None
+             user.weight_logs = []
+             user.activity_logs = []
+             user.meal_logs = []
+             user.posture_logs = []
+             user.fitness_profile = None
+             user.active_plan = None
             
             user.save()
             
@@ -327,26 +327,6 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
 
         return Response({'status': 'meal logged', 'meal': meal_entry})
-
-    @action(detail=True, methods=['post'], url_path='delete-plan-history')
-    def delete_plan_history(self, request, pk=None):
-        """
-        Delete a specific plan from the user's plan history.
-        Accepts: { "planId": string }
-        """
-        user = self.get_object()
-        plan_id = request.data.get('planId')
-        if not plan_id:
-            return Response({'error': 'planId is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        history = user.plan_history or []
-        new_history = [p for p in history if p.get('id') != plan_id]
-        if len(new_history) == len(history):
-            return Response({'error': 'Plan not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        user.plan_history = new_history
-        user.save()
-        return Response({'status': 'plan deleted'})
 
 class WeightLogViewSet(viewsets.ViewSet):
     def list(self, request):
