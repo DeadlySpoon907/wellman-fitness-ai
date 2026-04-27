@@ -81,9 +81,15 @@ export function extractFeaturesFromLandmarks(landmarks: any[], heightCm: number)
   ];
 }
 
-// Generate synthetic training data
+// Generate synthetic training data with diverse body types
 export function generateSyntheticData(numSamples: number = 10000): BMISample[] {
   const samples: BMISample[] = [];
+  
+  // Distribute body types realistically
+  const ectomorphRatio = 0.25;
+  const mesomorphRatio = 0.35;
+  const endomorphRatio = 0.25;
+  const balancedRatio = 0.15;
 
   for (let i = 0; i < numSamples; i++) {
     const heightCm = 150 + Math.random() * 40; // 150-190 cm
@@ -96,65 +102,88 @@ export function generateSyntheticData(numSamples: number = 10000): BMISample[] {
     // Weight from BMI
     const weight = bmi * heightM * heightM;
 
-    // Frame factor (small to large)
-    const frameFactor = 0.9 + Math.random() * 0.22;
-    // Body type: 0=ecto, 0.5=meso, 1=endo
-    const bodyType = Math.random();
+    // Assign body type for measurement generation
+    const bodyTypeRand = Math.random();
+    let bodyType: 'ecto' | 'meso' | 'endo' | 'balanced';
+    if (bodyTypeRand < ectomorphRatio) bodyType = 'ecto';
+    else if (bodyTypeRand < ectomorphRatio + mesomorphRatio) bodyType = 'meso';
+    else if (bodyTypeRand < ectomorphRatio + mesomorphRatio + endomorphRatio) bodyType = 'endo';
+    else bodyType = 'balanced';
 
-    // Measurements from anthropometric ranges scaled to height
-    const shoulderWidth = heightCm * (0.23 + Math.random() * 0.04) / 100;
-    const hipWidth = heightCm * (0.19 + Math.random() * 0.04) / 100;
+    // Measurements from anthropometric ranges scaled to body type and height
+    let shoulderToHipRatio: number;
+    let waistToHipRatio: number;
+    let frameFactor: number;
 
-     // Waist-to-hip ratio depends on body type
-     let waistHipRatio: number;
-     if (bodyType < 0.33) {
-       waistHipRatio = 0.7 + Math.random() * 0.15;
-     } else if (bodyType < 0.66) {
-       waistHipRatio = 0.75 + Math.random() * 0.2;
-     } else {
-       waistHipRatio = 0.85 + Math.random() * 0.3;
-     }
-     const waistWidth = hipWidth * waistHipRatio;
+    switch (bodyType) {
+      case 'ecto':
+        shoulderToHipRatio = 0.85 + Math.random() * 0.3;
+        waistToHipRatio = 0.65 + Math.random() * 0.25;
+        frameFactor = 0.85 + Math.random() * 0.15;
+        break;
+      case 'meso':
+        shoulderToHipRatio = 1.05 + Math.random() * 0.45;
+        waistToHipRatio = 0.7 + Math.random() * 0.25;
+        frameFactor = 1.0 + Math.random() * 0.1;
+        break;
+      case 'endo':
+        shoulderToHipRatio = 0.75 + Math.random() * 0.4;
+        waistToHipRatio = 0.8 + Math.random() * 0.4;
+        frameFactor = 0.95 + Math.random() * 0.1;
+        break;
+      case 'balanced':
+        shoulderToHipRatio = 0.95 + Math.random() * 0.3;
+        waistToHipRatio = 0.75 + Math.random() * 0.2;
+        frameFactor = 0.95 + Math.random() * 0.1;
+        break;
+    }
 
-     // Arm length as fraction of height
-     const armLength = heightCm * (0.35 + Math.random() * 0.05) / 100;
+    const hipWidth = heightCm * (0.16 + Math.random() * 0.06) / 100;
+    const shoulderWidth = hipWidth * shoulderToHipRatio;
+    const waistWidth = hipWidth * waistToHipRatio;
 
-     // Leg and torso lengths
-     const legLength = heightCm * (0.48 + Math.random() * 0.04) / 100;
-     const torsoLength = heightCm * (0.30 + Math.random() * 0.05) / 100;
+    // Arm length varies by body type
+    const armLengthFactor = bodyType === 'ecto' ? 0.38 : bodyType === 'endo' ? 0.33 : 0.35;
+    const armLength = heightCm * (armLengthFactor + Math.random() * 0.04) / 100;
 
-     // Ratios
-     const shoulderHipRatio = shoulderWidth / (hipWidth || 1);
-     const armTorsoRatio = armLength / (torsoLength || 1);
-     const legTorsoRatio = legLength / (torsoLength || 1);
+    // Leg and torso lengths
+    const legTorsoRatio = bodyType === 'ecto' ? 1.25 : bodyType === 'endo' ? 0.85 : 1.05;
+    const legLength = heightCm * (0.45 + Math.random() * 0.05) / 100;
+    const torsoLength = legLength / legTorsoRatio;
+
+    // Ratios
+    const shoulderHipRatio = shoulderWidth / (hipWidth || 1);
+    const armTorsoRatio = armLength / (torsoLength || 1);
+    const legTorsoRatioCalc = legLength / (torsoLength || 1);
 
     // Depth approximations
-    const shoulderDepth = 0.05 + Math.random() * 0.1;
+    const shoulderDepthBase = bodyType === 'meso' ? 0.08 : 0.05;
+    const shoulderDepth = shoulderDepthBase + Math.random() * 0.08;
     const hipDepth = 0.05 + Math.random() * 0.1;
 
-    // Y coordinates (normalized landmarks) - simulated typical values with some noise
-    const leftShoulderY = 0.2 + Math.random() * 0.1;
-    const leftHipY = leftShoulderY + torsoLength + Math.random() * 0.02;
-    const leftKneeY = leftHipY + legLength + Math.random() * 0.02;
+    // Y coordinates - simulated typical values with noise
+    const leftShoulderY = 0.18 + Math.random() * 0.12;
+    const leftHipY = leftShoulderY + torsoLength * 0.8 + Math.random() * 0.02;
+    const leftKneeY = leftHipY + legLength * 0.9 + Math.random() * 0.02;
 
-     const features = [
-       shoulderWidth,
-       hipWidth,
-       waistWidth,
-       armLength,
-       legLength,
-       torsoLength,
-       shoulderHipRatio,
-       waistHipRatio,
-       armTorsoRatio,
-       legTorsoRatio,
-       shoulderDepth,
-       hipDepth,
-       leftShoulderY,
-       leftHipY,
-       leftKneeY,
-       heightCm
-     ];
+    const features = [
+      shoulderWidth,
+      hipWidth,
+      waistWidth,
+      armLength,
+      legLength,
+      torsoLength,
+      shoulderHipRatio,
+      waistToHipRatio,
+      armTorsoRatio,
+      legTorsoRatioCalc,
+      shoulderDepth,
+      hipDepth,
+      leftShoulderY,
+      leftHipY,
+      leftKneeY,
+      heightCm
+    ];
 
     samples.push({ features, bmi });
   }
@@ -222,10 +251,13 @@ export async function saveModelWeights(model: tf.Sequential): Promise<void> {
   }
 }
 
-
-
 // Estimate BMI from landmarks + height
 export async function estimateBMIFromLandmarks(landmarks: any[], heightCm: number): Promise<{ bmi: number; confidence: number }> {
+  // Validate landmarks
+  if (!landmarks || landmarks.length < 20) {
+    return { bmi: 22, confidence: 0 };
+  }
+
   // Try loading model
   let model: tf.Sequential | null = null;
   try {
@@ -235,8 +267,9 @@ export async function estimateBMIFromLandmarks(landmarks: any[], heightCm: numbe
   }
 
   if (!model) {
-    // Fallback: don't have a model; return placeholder
-    return { bmi: 22, confidence: 0 };
+    // Fallback: use BMI from standard formula
+    const bmi = Math.max(15, Math.min(35, heightCm > 0 ? (70 / Math.pow(heightCm / 100, 2)) : 22));
+    return { bmi: Math.round(bmi * 10) / 10, confidence: 0.3 };
   }
 
   const features = extractFeaturesFromLandmarks(landmarks, heightCm);
@@ -246,15 +279,32 @@ export async function estimateBMIFromLandmarks(landmarks: any[], heightCm: numbe
   input.dispose();
   prediction.dispose();
 
+  // Calculate landmark quality metrics
+  const validLandmarks = landmarks.filter(l => l && (l.visibility ?? 1) > 0.5);
+  const landmarkCount = validLandmarks.length;
+  const avgVisibility = validLandmarks.length > 0 
+    ? validLandmarks.reduce((sum: number, l: any) => sum + (l.visibility || 1), 0) / validLandmarks.length 
+    : 0;
+  
+  // Higher landmark visibility = higher confidence
+  const landmarkConfidence = Math.min(landmarkCount / 33, 1) * avgVisibility;
+  
   // Clamp to realistic range
-  const bmi = Math.max(15, Math.min(40, rawBmi));
+  const clampedBmi = Math.max(15, Math.min(40, rawBmi));
+  
+  // Check if prediction is within expected range
+  const inExpectedRange = clampedBmi >= 16 && clampedBmi <= 32;
+  
+  // Confidence: 0.5-0.95 based on landmark quality
+  const baseConfidence = 0.5 + landmarkConfidence * 0.45;
+  const finalConfidence = inExpectedRange 
+    ? Math.min(0.95, baseConfidence + 0.05)
+    : baseConfidence;
 
-  // Confidence based on landmark quality
-  const validCount = landmarks.filter(l => l && (l.visibility ?? 1) > 0.5).length;
-  const landmarkConfidence = Math.min(validCount / 33, 1);
-  const confidence = 0.6 + landmarkConfidence * 0.35; // scale 0.6-0.95
-
-  return { bmi: Math.round(bmi * 10) / 10, confidence: Math.round(confidence * 100) / 100 };
+  return { 
+    bmi: Math.round(clampedBmi * 10) / 10, 
+    confidence: Math.round(finalConfidence * 100) / 100 
+  };
 }
 
 // Shared model instance/promise to avoid duplicate training
@@ -283,14 +333,14 @@ export async function loadOrTrainModel(): Promise<tf.Sequential> {
     console.warn('Could not load model, training new one:', err);
   }
 
-   // No saved model or loading failed — train a new one
-   const trainingPromise = (async () => {
-     const samples = generateSyntheticData(5000);
-     const model = await trainBMIModel(samples);
-     await saveModelWeights(model);
-     modelInstance = model;
-     return model;
-   })();
+  // No saved model or loading failed — train a new one
+  const trainingPromise = (async () => {
+    const samples = generateSyntheticData(5000);
+    const model = await trainBMIModel(samples);
+    await saveModelWeights(model);
+    modelInstance = model;
+    return model;
+  })();
 
   modelLoadingPromise = trainingPromise;
   return trainingPromise;
