@@ -22,7 +22,7 @@ interface FullBodyTrackerProps {
   onRepCountChange?: (count: number) => void;
 }
 
-export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpdate, showOverlay = true, showPostureAnalysis = true, smoothFactor = 0.12, onRepCountChange }: FullBodyTrackerProps) {
+export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpdate, showOverlay = true, showPostureAnalysis = true, smoothFactor = 0.08, onRepCountChange }: FullBodyTrackerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const poseLandmarkerRef = useRef<any>(null);
