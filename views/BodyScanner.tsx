@@ -123,20 +123,23 @@ const calculatedBmi = currentWeight / Math.pow(currentHeight / 100, 2);
           // Just update progress during scanning
           setScanProgress(Math.min(Math.floor((elapsed / 8000) * 100), 95));
         } else {
-         // Scan complete - estimate BMI using ML model
+         // Scan complete - estimate BMI using ML model with hybrid fallback
          try {
-           const bmiResult = await estimateBMIFromLandmarks(landmarks, currentHeight);
+           // Pass actual weight for hybrid fallback accuracy
+           const bmiResult = await estimateBMIFromLandmarks(landmarks, currentHeight, currentWeight);
            setEstimatedBMI(bmiResult.bmi);
            const finalAnalysis = analyzeBodyType(landmarks, bmiResult.bmi, currentHeight, currentWeight);
            setBodyAnalysis(finalAnalysis);
 
-           // Opt-in data collection: capture features + true BMI for model refinement
+           // Record calibration data for continuous improvement
            try {
              const collector = getDataCollector();
              if (collector.hasConsent()) {
                const bmiFeatures = extractFeaturesFromLandmarks(landmarks, currentHeight);
                const trueBmi = currentWeight / Math.pow(currentHeight / 100, 2);
                collector.capture(bmiFeatures, undefined, trueBmi);
+               // Save calibration sample to refine model
+               await recordBMICalibration(landmarks, currentHeight, trueBmi);
              }
            } catch {
              // Data collection is optional, ignore errors
@@ -146,10 +149,10 @@ const calculatedBmi = currentWeight / Math.pow(currentHeight / 100, 2);
            const fallbackAnalysis = analyzeBodyType(landmarks, calculatedBmi, currentHeight, currentWeight);
            setBodyAnalysis(fallbackAnalysis);
          }
-         setScanProgress(100);
-         setScanState('ready');
-         setPositionStatus('idle');
-       }
+          setScanProgress(100);
+          setScanState('ready');
+          setPositionStatus('idle');
+        }
     }
    }, [scanState, currentHeight, currentWeight, calculatedBmi, estimateBMIFromLandmarks, analyzeBodyType]);
 
