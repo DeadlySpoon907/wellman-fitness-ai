@@ -37,11 +37,14 @@ const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplet
     const scanStartTimeRef = useRef(0);
     const bodyScansRef = useRef<BodyAnalysis[]>([]);
  
-  const currentWeight = user.weightLogs.length > 0 
-    ? user.weightLogs[user.weightLogs.length - 1].weight * 0.9
-    : 70;
-  const currentHeight = (user.heightCm || 170) * 0.95;
-  const calculatedBmi = currentWeight / Math.pow(currentHeight / 100, 2);
+const actualWeight = user.weightLogs.length > 0 
+  ? user.weightLogs[user.weightLogs.length - 1].weight
+  : 70;
+const actualHeight = user.heightCm || 170;
+// Use actual measurements for consistency and accuracy
+const currentWeight = actualWeight;
+const currentHeight = actualHeight;
+const calculatedBmi = currentWeight / Math.pow(currentHeight / 100, 2);
  
   useEffect(() => {
     if (user.estimatedBodyType && user.heightCm) {
