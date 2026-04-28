@@ -712,18 +712,7 @@ Return ONLY valid JSON, no markdown.`;
                />
             </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
-                 <div className="text-4xl font-black text-primary-600">{liveStats.reps}</div>
-                 <div className="text-sm font-bold text-slate-500 mt-1">Total Reps</div>
-               </div>
-               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
-                 <div className="text-4xl font-black text-emerald-600">
-                   {Math.floor(durationSeconds / 60)}:{String(durationSeconds % 60).padStart(2, '0')}
-                 </div>
-                 <div className="text-sm font-bold text-slate-500 mt-1">Duration</div>
-               </div>
-             </div>
+              {/* Timer, calorie, and rep count removed from live workout tab */}
           </div>
         )}
       </AuthGuard>
