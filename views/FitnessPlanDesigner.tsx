@@ -416,19 +416,7 @@ Return ONLY valid JSON, no markdown.`;
         </div>
       )}
 
-      {!bodyType && (
-        <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-3xl border border-orange-200 dark:border-orange-800">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <div className="font-bold text-orange-800 dark:text-orange-200">Body Type Not Detected</div>
-              <p className="text-sm text-orange-700 dark:text-orange-300">
-                Scan your body in the BMI Estimator to get personalized fitness plans based on your body type.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       <AuthGuard user={user} requireMember>
         {/* Plan Management Section */}
