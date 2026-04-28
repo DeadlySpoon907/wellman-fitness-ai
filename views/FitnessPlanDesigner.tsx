@@ -118,14 +118,25 @@ const FitnessPlanDesigner: React.FC<{
   onNavigateToScan?: () => void;
   apiKey?: string 
 }> = ({ user, onPlanGenerated, onNavigateToScan, apiKey }) => {
-  const [mode, setMode] = useState<DesignerMode>('plan');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [mode, setMode] = useState<DesignerMode>('plan');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const [selectedExercise, setSelectedExercise] = useState<ExerciseType>('squat');
-  const [liveStats, setLiveStats] = useState({ reps: 0, duration: 0, calories: 0 });
-  const [isLiveActive, setIsLiveActive] = useState(false);
-  const [autoDetect, setAutoDetect] = useState(false);
+    const [selectedExercise, setSelectedExercise] = useState<ExerciseType>('squat');
+    const [durationSeconds, setDurationSeconds] = useState(0);
+    const [liveStats, setLiveStats] = useState({ reps: 0 });
+    const [isLiveActive, setIsLiveActive] = useState(false);
+    const [autoDetect, setAutoDetect] = useState(false);
+    const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+
+    // Cleanup timer interval on unmount or when leaving live mode
+    useEffect(() => {
+      return () => {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+      };
+    }, [timerInterval]);
 
   const bodyType = user.estimatedBodyType as BodyType | undefined;
 
@@ -670,26 +681,49 @@ Return ONLY valid JSON, no markdown.`;
                 </div>
               </div>
 
-              <FullBodyTracker 
-                exercise={selectedExercise}
-                freedomMode={autoDetect}
-              />
+               <FullBodyTracker 
+                 exercise={selectedExercise}
+                 freedomMode={autoDetect}
+                 onRepCountChange={(reps) => {
+                   setLiveStats(prev => ({ ...prev, reps }));
+                 }}
+                 onLandmarksUpdate={(landmarks) => {
+                   // Start timer when pose detection is active
+                   if (landmarks.length > 0 && !isLiveActive) {
+                     setIsLiveActive(true);
+                     // Start timer interval
+                     const interval = setInterval(() => {
+                       setDurationSeconds(prev => prev + 1);
+                     }, 1000);
+                     setTimerInterval(interval);
+                   }
+                   // Reset rep count when no pose detected (camera stops or no detection)
+                   if (landmarks.length === 0 && isLiveActive) {
+                     setIsLiveActive(false);
+                     setLiveStats(prev => ({ ...prev, reps: 0 }));
+                     setDurationSeconds(0);
+                     // Clear timer interval
+                     if (timerInterval) {
+                       clearInterval(timerInterval);
+                       setTimerInterval(null);
+                     }
+                   }
+                 }}
+               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
-                <div className="text-4xl font-black text-primary-600">0</div>
-                <div className="text-sm font-bold text-slate-500 mt-1">Total Reps</div>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
-                <div className="text-4xl font-black text-emerald-600">0:00</div>
-                <div className="text-sm font-bold text-slate-500 mt-1">Duration</div>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
-                <div className="text-4xl font-black text-orange-500">0</div>
-                <div className="text-sm font-bold text-slate-500 mt-1">Est. Calories</div>
-              </div>
-            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                 <div className="text-4xl font-black text-primary-600">{liveStats.reps}</div>
+                 <div className="text-sm font-bold text-slate-500 mt-1">Total Reps</div>
+               </div>
+               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                 <div className="text-4xl font-black text-emerald-600">
+                   {Math.floor(durationSeconds / 60)}:{String(durationSeconds % 60).padStart(2, '0')}
+                 </div>
+                 <div className="text-sm font-bold text-slate-500 mt-1">Duration</div>
+               </div>
+             </div>
           </div>
         )}
       </AuthGuard>

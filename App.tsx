@@ -112,13 +112,13 @@ const App: React.FC = () => {
     }
   }, [user?.id, syncUser]);
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+  // Direct user update helper (used by BodyScanner after lock)
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser(current => {
+      if (!current) return current;
+      return { ...current, ...updates };
+    });
+  }, []);
 
   const handleLogout = () => {
     setUser(null);
@@ -284,6 +284,7 @@ const App: React.FC = () => {
             <BodyScanner 
               user={user} 
               onUpdateProfile={syncUser} 
+              onUserUpdated={updateUser}
               onComplete={() => setActiveTab('designer')}
               apiKey={apiKey} 
             />

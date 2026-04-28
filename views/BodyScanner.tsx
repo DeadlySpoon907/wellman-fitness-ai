@@ -22,7 +22,13 @@ interface LockedBodyProfile {
   confidence: number;
 }
 
-const BodyScanner: React.FC<{ user: User, onUpdateProfile: () => void, onComplete?: () => void; apiKey?: string }> = ({ user, onUpdateProfile, onComplete, apiKey }) => {
+const BodyScanner: React.FC<{ 
+  user: User, 
+  onUpdateProfile: () => void, 
+  onUserUpdated?: (updates: Partial<User>) => void,
+  onComplete?: () => void; 
+  apiKey?: string 
+}> = ({ user, onUpdateProfile, onUserUpdated, onComplete, apiKey }) => {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
   const [lockedProfile, setLockedProfile] = useState<LockedBodyProfile | null>(null);
@@ -46,22 +52,22 @@ const currentWeight = actualWeight;
 const currentHeight = actualHeight;
 const calculatedBmi = currentWeight / Math.pow(currentHeight / 100, 2);
  
-  useEffect(() => {
-    if (user.estimatedBodyType && user.heightCm) {
-      const analysis = analyzeBodyType([], calculatedBmi, user.heightCm, currentWeight);
-      setBodyAnalysis(analysis);
-      setLockedProfile({
-        bodyType: user.estimatedBodyType as BodyType,
-        lockedAt: new Date().toISOString(),
-        measurements: {
-          heightCm: user.heightCm,
-          weightKg: currentWeight,
-          bmi: calculatedBmi
-        },
-        confidence: 0.8
-      });
-    }
-  }, [user.estimatedBodyType, user.heightCm, currentWeight, calculatedBmi]);
+   useEffect(() => {
+     if (user.estimatedBodyType && user.heightCm) {
+       const analysis = analyzeBodyType([], calculatedBmi, user.heightCm, currentWeight);
+       setBodyAnalysis(analysis);
+       setLockedProfile({
+         bodyType: user.estimatedBodyType as BodyType,
+         lockedAt: new Date().toISOString(),
+         measurements: {
+           heightCm: user.heightCm,
+           weightKg: currentWeight,
+           bmi: calculatedBmi
+         },
+         confidence: 0.8
+       });
+     }
+   }, [user.estimatedBodyType, user.heightCm, currentWeight, calculatedBmi]);
 
   const checkPosition = (landmarks: NormalizedLandmark[]): { valid: boolean; message: string } => {
     if (!landmarks || landmarks.length < 33) {
@@ -354,8 +360,10 @@ const updatedUser = {
         }],
         activePlan: monthlyPlan
       };
-     await saveUser(updatedUser);
-     onUpdateProfile();
+      const savedUser = await saveUser(updatedUser);
+      // Immediately update the user state in parent with the saved data from server
+      onUserUpdated?.(savedUser);
+      onUpdateProfile();
      
      setScanState('locked');
      const planMsg = monthlyPlan ? `\n\nA 30-day personalized plan has been created with ${monthlyPlan.sessions.length} sessions!` : '';
