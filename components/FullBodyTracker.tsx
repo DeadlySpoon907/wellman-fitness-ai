@@ -292,11 +292,11 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     const isValidHuman = validateHumanPose(landmarks);
     if (!isValidHuman) return null;
 
-    const result = predictExercise(landmarks);
-    if (result && result.confidence > 0.6) {
-      const exType = getExerciseType(result.exercise);
-      if (exType) return exType;
-    }
+     const result = predictExercise(landmarks);
+     if (result && result.confidence > 0.4) {
+       const exType = getExerciseType(result.exercise);
+       if (exType) return exType;
+     }
 
     const ls = landmarks[11]; // left shoulder
     const rs = landmarks[12]; // right shoulder
@@ -337,10 +337,10 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     // PUSH-UP DETECTION
     // Body close to ground, horizontal, hands on ground
     // ============================================
-    const isLowToGround = hipY > 0.75 && kneeY > 0.75;
-    const bodyHorizontalForPushup = Math.abs(shoulderY - hipY) < 0.08 && Math.abs(hipY - kneeY) < 0.15;
+    const isLowToGround = hipY > 0.6 && kneeY > 0.6;
+    const bodyHorizontalForPushup = Math.abs(shoulderY - hipY) < 0.12 && Math.abs(hipY - kneeY) < 0.2;
     const armsBentForPushup = le && re && lw && rw && 
-        (le.y > ls.y - 0.05) && (re.y > rs.y - 0.05);
+        (le.y > ls.y - 0.08) && (re.y > rs.y - 0.08);
     
     if (isLowToGround && bodyHorizontalForPushup && armsBentForPushup && verticalSpan < 0.5) {
       return 'pushup';
@@ -350,10 +350,10 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     // SQUAT DETECTION
     // Hips drop below knees, torso relatively upright
     // ============================================
-    const kneesBentForSquat = lk.y > lh.y + 0.05 && rk.y > rh.y + 0.05;
-    const hipsLowForSquat = hipY > 0.6 && hipY > kneeY;
-    const torsoUprightForSquat = shoulderY < hipY + 0.15;
-    const feetOnGroundForSquat = la.y > 0.75 && ra.y > 0.75;
+    const kneesBentForSquat = lk.y > lh.y + 0.02 && rk.y > rh.y + 0.02;
+    const hipsLowForSquat = hipY > 0.5 && hipY > kneeY;
+    const torsoUprightForSquat = shoulderY < hipY + 0.2;
+    const feetOnGroundForSquat = la.y > 0.7 && ra.y > 0.7;
 
     if (kneesBentForSquat && hipsLowForSquat && torsoUprightForSquat && feetOnGroundForSquat) {
       return 'squat';
@@ -363,11 +363,11 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     // LUNGE DETECTION
     // One leg forward, knee bent, back leg straight
     // ============================================
-    const leftLegForward = la.x < lk.x - 0.05;
-    const rightLegForward = ra.x < rk.x - 0.05;
-    const kneeBentLunge = (lk.y > lh.y + 0.1) || (rk.y > rh.y + 0.1);
-    const backLegStraightLunge = Math.abs(la.y - lk.y) > 0.25 || Math.abs(ra.y - rk.y) > 0.25;
-    const torsoForwardLunge = Math.abs(shoulderY - hipY) < 0.12;
+    const leftLegForward = la.x < lk.x - 0.02;
+    const rightLegForward = ra.x < rk.x - 0.02;
+    const kneeBentLunge = (lk.y > lh.y + 0.05) || (rk.y > rh.y + 0.05);
+    const backLegStraightLunge = Math.abs(la.y - lk.y) > 0.15 || Math.abs(ra.y - rk.y) > 0.15;
+    const torsoForwardLunge = Math.abs(shoulderY - hipY) < 0.18;
 
     if (kneeBentLunge && (leftLegForward || rightLegForward) && backLegStraightLunge && torsoForwardLunge) {
       return 'lunge';
@@ -377,9 +377,9 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     // SIT-UP DETECTION
     // Upper body raised from ground, torso vertical
     // ============================================
-    const isSeatedOrReclined = hipY > kneeY - 0.1 && hipY > 0.7;
-    const torsoUprightForSitup = shoulderY < hipY - 0.2 && Math.abs(ls.x - lw.x) < 0.15;
-    const feetLiftedOrPlanted = Math.abs(la.y - lk.y) < 0.2 || la.y > 0.8;
+    const isSeatedOrReclined = hipY > kneeY - 0.05 && hipY > 0.6;
+    const torsoUprightForSitup = shoulderY < hipY - 0.15 && Math.abs(ls.x - lw.x) < 0.2;
+    const feetLiftedOrPlanted = Math.abs(la.y - lk.y) < 0.3 || la.y > 0.7;
 
     if ((isSeatedOrReclined || verticalSpan < 0.5) && torsoUprightForSitup && feetLiftedOrPlanted) {
       return 'situp';
@@ -409,9 +409,9 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
         handsNearShoulders = (rightHandNearBody && rightElbowCloseToTorso) || handsNearShoulders;
       }
 
-      if (elbowBent && handsNearShoulders && shoulderY < hipY - 0.1) {
-        return 'bicep_curl';
-      }
+       if (elbowBent && handsNearShoulders && shoulderY < hipY - 0.05) {
+         return 'bicep_curl';
+       }
     }
 
     // ============================================
@@ -510,11 +510,11 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
        const analysis = analyzePosture(currentPose.landmarks);
        setPostureAnalysis(analysis);
 
-       if (freedomMode) {
-         const detectionResult = predictExercise(currentPose.landmarks);
-         if (detectionResult && detectionResult.confidence > 0.6) {
-           const detected = getExerciseType(detectionResult.exercise);
-           if (detected && detected !== detectedExerciseRef.current) {
+        if (freedomMode) {
+          const detectionResult = predictExercise(currentPose.landmarks);
+          if (detectionResult && detectionResult.confidence > 0.4) {
+            const detected = getExerciseType(detectionResult.exercise);
+            if (detected && detected !== detectedExerciseRef.current) {
              // Opt-in data collection: capture feature vector for model improvement
              try {
                const collector = getDataCollector();
@@ -571,13 +571,13 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     const ankleY = (la.y + ra.y) / 2;
 
     switch (ex) {
-      case 'squat': {
-        const hipKneeAngle = Math.atan2(lk.y - lh.y, lk.x - lh.x) - 
-                            Math.atan2(la.y - lk.y, la.x - lk.x);
-        const angleDeg = Math.abs(hipKneeAngle * 180 / Math.PI);
-        isDown = angleDeg < 60;
-        break;
-      }
+       case 'squat': {
+         const hipKneeAngle = Math.atan2(lk.y - lh.y, lk.x - lh.x) - 
+                             Math.atan2(la.y - lk.y, la.x - lk.x);
+         const angleDeg = Math.abs(hipKneeAngle * 180 / Math.PI);
+         isDown = angleDeg < 70;
+         break;
+       }
       case 'pushup': {
         if (!le || !ls) break;
         const shoulderElbow = Math.sqrt(Math.pow(le.x - ls.x, 2) + Math.pow(le.y - ls.y, 2));
