@@ -211,26 +211,28 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
     }
   };
 
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = 0;
-    }
-    isCameraRunningRef.current = false;
-    isAIInitializedRef.current = false;
-    detectedExerciseRef.current = null;
-    setIsCameraRunning(false);
-    setIsAIInitialized(false);
-    setPoses([]);
-    setDetectionStatus('Ready to start');
-  }, []);
+   const stopCamera = useCallback(() => {
+     if (streamRef.current) {
+       streamRef.current.getTracks().forEach((track) => track.stop());
+       streamRef.current = null;
+     }
+     if (videoRef.current) {
+       videoRef.current.srcObject = null;
+     }
+     if (animationRef.current) {
+       cancelAnimationFrame(animationRef.current);
+       animationRef.current = 0;
+     }
+     isCameraRunningRef.current = false;
+     isAIInitializedRef.current = false;
+     detectedExerciseRef.current = null;
+     setIsCameraRunning(false);
+     setIsAIInitialized(false);
+     setPoses([]);
+     setRepCount(0);
+     repStateRef.current = { phase: 'up', lastCount: 0 };
+     setDetectionStatus('Ready to start');
+   }, []);
 
   const currentPose = poses[0];
 

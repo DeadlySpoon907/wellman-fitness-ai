@@ -277,7 +277,7 @@ const App: React.FC = () => {
         </header>
 
          {activeTab === 'dashboard' && <Dashboard user={user} onLogWeight={handleWeightLog} onDesignPlan={() => setActiveTab('designer')} />}
-         {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} onNavigateToScan={() => setActiveTab('bmi')} apiKey={apiKey} />}
+         {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} apiKey={apiKey} />}
          {activeTab === 'nutrition' && <Nutritionist user={user} apiKey={apiKey} />}
          {activeTab === 'nutribot' && <NutriBot apiKey={apiKey} />}
           {activeTab === 'bmi' && (

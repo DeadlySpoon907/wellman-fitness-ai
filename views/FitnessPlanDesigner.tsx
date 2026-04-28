@@ -3,11 +3,8 @@ import { User, FitnessProfile, FitnessPlan } from '../types';
 import { AuthGuard } from '../components/AuthGuard';
 import { GoogleGenAI } from "@google/genai";
 import { saveUser } from '../services/DB';
-import { FullBodyTracker } from '../components/FullBodyTracker';
 import { getBodyTypeDescription, getBodyTypeIcon, BodyType } from '../utils/bodyAnalysis';
 import type { ExerciseType } from '../types';
-
-type DesignerMode = 'plan' | 'live';
 
 const FITNESS_TITLE_MAP: Record<string, string> = {
   'weight-loss': 'Fat Burn Blast',
@@ -115,28 +112,10 @@ const FITNESS_PROFILE_DEFAULTS: FitnessProfile = {
 const FitnessPlanDesigner: React.FC<{ 
   user: User; 
   onPlanGenerated: () => void; 
-  onNavigateToScan?: () => void;
   apiKey?: string 
-}> = ({ user, onPlanGenerated, onNavigateToScan, apiKey }) => {
-    const [mode, setMode] = useState<DesignerMode>('plan');
+}> = ({ user, onPlanGenerated, apiKey }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-    const [selectedExercise, setSelectedExercise] = useState<ExerciseType>('squat');
-    const [durationSeconds, setDurationSeconds] = useState(0);
-    const [liveStats, setLiveStats] = useState({ reps: 0 });
-    const [isLiveActive, setIsLiveActive] = useState(false);
-    const [autoDetect, setAutoDetect] = useState(false);
-    const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
-
-    // Cleanup timer interval on unmount or when leaving live mode
-    useEffect(() => {
-      return () => {
-        if (timerInterval) {
-          clearInterval(timerInterval);
-        }
-      };
-    }, [timerInterval]);
 
   const bodyType = user.estimatedBodyType as BodyType | undefined;
 
@@ -412,77 +391,12 @@ Return ONLY valid JSON, no markdown.`;
 
   const activePlan = user.activePlan;
 
-  // Redirect to body scanner if no active plan in plan mode
-  useEffect(() => {
-    if (mode === 'plan' && !activePlan) {
-      if (onNavigateToScan) {
-        onNavigateToScan();
-      } else {
-        // Fallback to hash if callback not provided (legacy)
-        window.location.hash = '#/bmi';
-      }
-    }
-  }, [mode, activePlan, onNavigateToScan]);
-
-  // Show loading state while redirecting
-  if (mode === 'plan' && !activePlan) {
-    return (
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-        <section>
-          <div>
-            <h2 className="text-3xl font-black mb-1 text-primary-600 dark:text-primary-400">Plan Designer</h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">AI-powered fitness planning based on your body type.</p>
-          </div>
-        </section>
-        <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
-          <div className="text-6xl mb-4">📏</div>
-          <h3 className="text-xl font-bold mb-2">Body Scan Required</h3>
-          <p className="text-slate-500 mb-6 max-w-xs mx-auto">
-            To create your personalized fitness plan, we need to analyze your body type first.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/40 rounded-full animate-pulse flex items-center justify-center text-primary-600 font-bold">1</div>
-            <div className="h-1 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
-            <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-slate-400 font-bold">2</div>
-            <div className="h-1 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
-            <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-slate-400 font-bold">3</div>
-          </div>
-          <p className="text-xs text-slate-400 mt-4">Redirecting to Body Scanner...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
       <section>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-black mb-1 text-primary-600 dark:text-primary-400">Plan Designer</h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">AI-powered fitness planning based on your body type.</p>
-          </div>
-          <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-            <button
-              onClick={() => setMode('plan')}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                mode === 'plan' 
-                  ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' 
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              📋 Plan
-            </button>
-            <button
-              onClick={() => setMode('live')}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                mode === 'live' 
-                  ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' 
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              🔥 Live Workout
-            </button>
-          </div>
+        <div>
+          <h2 className="text-3xl font-black mb-1 text-primary-600 dark:text-primary-400">Plan Designer</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">AI-powered fitness planning based on your body type.</p>
         </div>
       </section>
 
@@ -517,204 +431,137 @@ Return ONLY valid JSON, no markdown.`;
       )}
 
       <AuthGuard user={user} requireMember>
-        {mode === 'plan' && (
-          <>
-            {activePlan && (
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-primary-200 dark:border-primary-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/40 rounded-xl flex items-center justify-center text-2xl">🎯</div>
-                  <div>
-                    <h3 className="text-lg font-black">Your Active Plan</h3>
-                    <p className="text-xs text-slate-500">Generated {new Date(activePlan.generatedAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                {activePlan.motivation && (
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl mb-4">
-                    <p className="text-sm italic text-slate-600 dark:text-slate-300">"{activePlan.motivation}"</p>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {activePlan.dailyWorkouts?.map((workout: any, idx: number) => (
-                    <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                      <div className="font-bold text-sm mb-2">{workout.name}</div>
-                      <div className="text-xs text-slate-500 mb-2">{workout.duration}</div>
-                      <div className="flex flex-wrap gap-1">
-                        {workout.exercises?.slice(0, 3).map((ex: string, i: number) => (
-                          <span key={i} className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-[10px] font-medium">
-                            {ex}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {activePlan.nutrition && (
-                  <div className="mt-4 p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl">
-                    <div className="text-xs font-bold text-violet-600 uppercase mb-2">Nutrition Guidelines</div>
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div><span className="font-bold">Protein:</span> {activePlan.nutrition.protein}</div>
-                      <div><span className="font-bold">Carbs:</span> {activePlan.nutrition.carbs}</div>
-                      <div><span className="font-bold">Fats:</span> {activePlan.nutrition.fats}</div>
-                    </div>
-                  </div>
-                )}
-                <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="text-red-500 text-sm font-medium hover:text-red-700 flex items-center gap-1"
-                  >
-                    🗑️ Delete Plan
-                  </button>
-                </div>
+        {/* Plan Management Section */}
+        {activePlan && (
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-primary-200 dark:border-primary-800 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/40 rounded-xl flex items-center justify-center text-2xl">🎯</div>
+              <div>
+                <h3 className="text-lg font-black">Your Active Plan</h3>
+                <p className="text-xs text-slate-500">Generated {new Date(activePlan.generatedAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+            {activePlan.motivation && (
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl mb-4">
+                <p className="text-sm italic text-slate-600 dark:text-slate-300">"{activePlan.motivation}"</p>
               </div>
             )}
-
-            {showDeleteConfirm && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm mx-4">
-                  <h3 className="text-lg font-bold mb-2">Delete Plan?</h3>
-                  <p className="text-slate-500 text-sm mb-4">Are you sure you want to delete your current fitness plan? This action cannot be undone.</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-medium"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDeletePlan}
-                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-               </div>
-             )}
-
-            {/* Profile Summary & Generate Button */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-bold mb-2">Your Fitness Profile</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-xs font-bold capitalize">
-                      {profile.goal.replace('-', ' ')}
-                    </span>
-                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold capitalize">
-                      {profile.intensity}
-                    </span>
-                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold capitalize">
-                      {profile.location}
-                    </span>
-                    {profile.focusAreas?.map(area => (
-                      <span key={area} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold">
-                        {area}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {activePlan.dailyWorkouts?.map((workout: any, idx: number) => (
+                <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="font-bold text-sm mb-2">{workout.name}</div>
+                  <div className="text-xs text-slate-500 mb-2">{workout.duration}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {workout.exercises?.slice(0, 3).map((ex: string, i: number) => (
+                      <span key={i} className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-[10px] font-medium">
+                        {ex}
                       </span>
                     ))}
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    // Always go to body scanner first to ensure fresh body analysis
-                    if (onNavigateToScan) {
-                      onNavigateToScan();
-                    } else {
-                      window.location.hash = '#/bmi';
-                    }
-                  }}
-                  disabled={isGenerating}
-                  className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${
-                    isGenerating 
-                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' 
-                      : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-95'
-                  }`}
-                >
-                  {isGenerating ? 'GENERATING...' : '🔁 Start New Plan'}
-                </button>
-              </div>
-              <p className="text-xs text-slate-500">
-                Creating a new plan requires a fresh body scan to personalize your workouts.
-              </p>
+              ))}
             </div>
-
-          </>
-        )}
-
-        {mode === 'live' && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-              <div className="flex flex-wrap items-center gap-4 mb-6">
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                    Select Exercise
-                  </label>
-                  <select
-                    value={selectedExercise}
-                    onChange={(e) => setSelectedExercise(e.target.value as ExerciseType)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium text-sm"
-                  >
-                    <option value="bicep_curl">Bicep Curl</option>
-                    <option value="squat">Squat</option>
-                    <option value="pushup">Push-up</option>
-                    <option value="lunge">Lunge</option>
-                    <option value="situp">Sit-up</option>
-                    <option value="dumbbell_shoulder_press">Dumbbell Shoulder Press</option>
-                    <option value="dumbbell_rows">Dumbbell Rows</option>
-                    <option value="tricep_extensions">Tricep Extensions</option>
-                    <option value="lateral_shoulder_raises">Lateral Shoulder Raises</option>
-                    <option value="jumping_jacks">Jumping Jacks</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoDetect}
-                      onChange={() => setAutoDetect(!autoDetect)}
-                      className="w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                      Auto-Detect
-                    </span>
-                  </label>
+            {activePlan.nutrition && (
+              <div className="mt-4 p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl">
+                <div className="text-xs font-bold text-violet-600 uppercase mb-2">Nutrition Guidelines</div>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div><span className="font-bold">Protein:</span> {activePlan.nutrition.protein}</div>
+                  <div><span className="font-bold">Carbs:</span> {activePlan.nutrition.carbs}</div>
+                  <div><span className="font-bold">Fats:</span> {activePlan.nutrition.fats}</div>
                 </div>
               </div>
-
-               <FullBodyTracker 
-                 exercise={selectedExercise}
-                 freedomMode={autoDetect}
-                 onRepCountChange={(reps) => {
-                   setLiveStats(prev => ({ ...prev, reps }));
-                 }}
-                 onLandmarksUpdate={(landmarks) => {
-                   // Start timer when pose detection is active
-                   if (landmarks.length > 0 && !isLiveActive) {
-                     setIsLiveActive(true);
-                     // Start timer interval
-                     const interval = setInterval(() => {
-                       setDurationSeconds(prev => prev + 1);
-                     }, 1000);
-                     setTimerInterval(interval);
-                   }
-                   // Reset rep count when no pose detected (camera stops or no detection)
-                   if (landmarks.length === 0 && isLiveActive) {
-                     setIsLiveActive(false);
-                     setLiveStats(prev => ({ ...prev, reps: 0 }));
-                     setDurationSeconds(0);
-                     // Clear timer interval
-                     if (timerInterval) {
-                       clearInterval(timerInterval);
-                       setTimerInterval(null);
-                     }
-                   }
-                 }}
-               />
+            )}
+            <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-red-500 text-sm font-medium hover:text-red-700 flex items-center gap-1"
+              >
+                🗑️ Delete Plan
+              </button>
             </div>
-
-              {/* Timer, calorie, and rep count removed from live workout tab */}
           </div>
         )}
+
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm mx-4">
+              <h3 className="text-lg font-bold mb-2">Delete Plan?</h3>
+              <p className="text-slate-500 text-sm mb-4">Are you sure you want to delete your current fitness plan? This action cannot be undone.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeletePlan}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profile Summary & Generate Button */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold mb-2">Your Fitness Profile</h3>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-xs font-bold capitalize">
+                  {profile.goal.replace('-', ' ')}
+                </span>
+                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold capitalize">
+                  {profile.intensity}
+                </span>
+                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold capitalize">
+                  {profile.location}
+                </span>
+                {profile.focusAreas?.map(area => (
+                  <span key={area} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold">
+                    {area}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                window.location.hash = '#/bmi';
+              }}
+              disabled={isGenerating}
+              className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${
+                isGenerating 
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' 
+                  : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-95'
+              }`}
+            >
+              {isGenerating ? 'GENERATING...' : '🔁 Start New Plan'}
+            </button>
+          </div>
+          <p className="text-xs text-slate-500">
+            Creating a new plan requires a fresh body scan to personalize your workouts.
+          </p>
+        </div>
+
+        {/* Posture & Workout Tracker Card */}
+        <div className="bg-gradient-to-r from-teal-500/10 to-cyan-500/10 dark:from-teal-900/20 dark:to-cyan-900/20 p-8 rounded-3xl border border-teal-200 dark:border-teal-800 shadow-sm text-center">
+          <div className="text-6xl mb-4">🏋️</div>
+          <h3 className="text-2xl font-black mb-2 text-teal-700 dark:text-teal-300">Posture & Workout Tracker</h3>
+          <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-md mx-auto">
+            Track your exercises in real-time, monitor your form, and count reps with AI-powered pose detection.
+          </p>
+          <button
+            onClick={() => {
+              window.location.hash = '#/posture';
+            }}
+            className="px-8 py-4 bg-teal-600 text-white rounded-xl font-bold text-lg hover:bg-teal-700 active:scale-95 shadow-lg transition-all"
+          >
+            🧍 Open Tracker
+          </button>
+        </div>
       </AuthGuard>
     </div>
   );
