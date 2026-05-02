@@ -112,8 +112,9 @@ const FITNESS_PROFILE_DEFAULTS: FitnessProfile = {
 const FitnessPlanDesigner: React.FC<{ 
   user: User; 
   onPlanGenerated: () => void; 
-  apiKey?: string 
-}> = ({ user, onPlanGenerated, apiKey }) => {
+  apiKey?: string;
+  onNavigateToPosture?: () => void;
+}> = ({ user, onPlanGenerated, apiKey, onNavigateToPosture }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -543,7 +544,7 @@ Return ONLY valid JSON, no markdown.`;
           </p>
           <button
             onClick={() => {
-              window.location.hash = '#/posture';
+              onNavigateToPosture?.();
             }}
             className="px-8 py-4 bg-teal-600 text-white rounded-xl font-bold text-lg hover:bg-teal-700 active:scale-95 shadow-lg transition-all"
           >

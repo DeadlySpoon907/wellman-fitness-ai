@@ -18,7 +18,10 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(() => !!localStorage.getItem('wellman_user_id'));
   const [activeTab, setActiveTab] = useState<'dashboard' | 'nutrition' | 'bmi' | 'posture' | 'designer' | 'profile' | 'nutribot' | 'settings'>('dashboard');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
   const [authError, setAuthError] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   
@@ -56,6 +59,21 @@ const App: React.FC = () => {
     };
     restoreSession();
   }, []);
+
+  // Apply dark mode class to HTML element
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  // Persist dark mode preference
+  useEffect(() => {
+    localStorage.setItem('darkMode', String(isDarkMode));
+  }, [isDarkMode]);
 
   // Simple Hash Router
   useEffect(() => {
@@ -277,7 +295,7 @@ const App: React.FC = () => {
         </header>
 
          {activeTab === 'dashboard' && <Dashboard user={user} onLogWeight={handleWeightLog} onDesignPlan={() => setActiveTab('designer')} />}
-         {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} apiKey={apiKey} />}
+         {activeTab === 'designer' && <FitnessPlanDesigner user={user} onPlanGenerated={syncUser} apiKey={apiKey} onNavigateToPosture={() => setActiveTab('posture')} />}
          {activeTab === 'nutrition' && <Nutritionist user={user} apiKey={apiKey} />}
          {activeTab === 'nutribot' && <NutriBot apiKey={apiKey} />}
           {activeTab === 'bmi' && (
