@@ -181,7 +181,7 @@ def generate_active_plan():
             "id": str(uuid.uuid4()), "day": i + 1, "week": week, "dayOfWeek": day_names[i % 7],
             "title": template["name"], "focus": template["name"].split()[0],
             "exercises": [{"name": ex, "sets": 3, "reps": 12, "restSeconds": 60} for ex in template["exercises"]],
-            "duration": template["duration"], "completed": False, "completedAt": None
+            "duration": template["duration"], "completed": False
         })
     nutrition = generate_diet_plan()
     total_protein = sum(m['protein'] for m in nutrition['meals'])
