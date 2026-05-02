@@ -145,10 +145,10 @@ def generate_fitness_profile():
 def generate_diet_plan():
     """Generate a simple daily diet plan."""
     meal_templates = [
-        {"name": "High Protein Breakfast", "foods": ["Egg white omelette", "Whole grain toast", "Greek yogurt"], "calories": 450, "protein": 35, "carbs": 40, "fats": 15},
-        {"name": "Balanced Lunch", "foods": ["Grilled chicken breast", "Brown rice", "Steamed vegetables"], "calories": 550, "protein": 40, "carbs": 55, "fats": 18},
-        {"name": "Protein-rich Dinner", "foods": ["Salmon fillet", "Quinoa", "Mixed salad"], "calories": 600, "protein": 45, "carbs": 45, "fats": 25},
-        {"name": "Healthy Snack Pack", "foods": ["Almonds", "Apple", "Protein bar"], "calories": 300, "protein": 15, "carbs": 35, "fats": 12}
+        {"name": "High Protein Breakfast", "foods": ["Egg white omelette", "Whole grain toast", "Greek yogurt"], "calories": 450, "protein": 35, "carbs": 40, "fat": 15},
+        {"name": "Balanced Lunch", "foods": ["Grilled chicken breast", "Brown rice", "Steamed vegetables"], "calories": 550, "protein": 40, "carbs": 55, "fat": 18},
+        {"name": "Protein-rich Dinner", "foods": ["Salmon fillet", "Quinoa", "Mixed salad"], "calories": 600, "protein": 45, "carbs": 45, "fat": 25},
+        {"name": "Healthy Snack Pack", "foods": ["Almonds", "Apple", "Protein bar"], "calories": 300, "protein": 15, "carbs": 35, "fat": 12}
     ]
     return {"meals": meal_templates, "hydration": f"{random.randint(2, 4)} liters", "notes": "Stay consistent with your nutrition. Track your macros daily."}
 

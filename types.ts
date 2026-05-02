@@ -89,18 +89,18 @@ export interface FitnessPlan {
     carbs: string;
     fats: string;
   };
-  dietPlan?: {
-    meals: {
-      name: string;
-      foods: string[];
-      calories: number;
-      protein: number;
-      carbs: number;
-      fats: number;
-    }[];
-    hydration: string;
-    notes: string;
-  };
+dietPlan?: {
+     meals: {
+       name: string;
+       foods: string[];
+       calories: number;
+       protein: number;
+       carbs: number;
+       fat: number;  // Changed from 'fats' to 'fat' for consistency with meal_logs
+     }[];
+     hydration: string;
+     notes: string;
+   };
   sessions?: PlanSession[];
   dailyWorkouts?: { name: string; duration: string; exercises: string[] }[];
 }

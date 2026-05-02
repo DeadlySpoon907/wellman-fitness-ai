@@ -74,7 +74,7 @@ const FALLBACK_MEAL_TEMPLATES = [
     calories: 450,
     protein: 35,
     carbs: 40,
-    fats: 15
+    fat: 15
   },
   {
     name: "Balanced Lunch",
@@ -82,7 +82,7 @@ const FALLBACK_MEAL_TEMPLATES = [
     calories: 550,
     protein: 40,
     carbs: 55,
-    fats: 18
+    fat: 18
   },
   {
     name: "Protein-rich Dinner",
@@ -90,7 +90,7 @@ const FALLBACK_MEAL_TEMPLATES = [
     calories: 600,
     protein: 45,
     carbs: 45,
-    fats: 25
+    fat: 25
   },
   {
     name: "Healthy Snack Pack",
@@ -98,7 +98,7 @@ const FALLBACK_MEAL_TEMPLATES = [
     calories: 300,
     protein: 15,
     carbs: 35,
-    fats: 12
+    fat: 12
   }
 ];
 
