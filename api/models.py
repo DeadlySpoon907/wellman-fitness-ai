@@ -42,16 +42,8 @@ class User(AbstractUser):
     posture_logs = models.JSONField(default=list, blank=True)
 
     class Meta:
-        # Add GIN index for JSON fields for faster queries (PostgreSQL only)
-        indexes = [
-            models.Index(fields=['fitness_profile'], name='idx_fitness_profile'),
-            models.Index(fields=['active_plan'], name='idx_active_plan'),
-            models.Index(fields=['diet_plan'], name='idx_diet_plan'),
-            models.Index(fields=['weight_logs'], name='idx_weight_logs'),
-            models.Index(fields=['activity_logs'], name='idx_activity_logs'),
-            models.Index(fields=['meal_logs'], name='idx_meal_logs'),
-            models.Index(fields=['posture_logs'], name='idx_posture_logs'),
-        ]
+        # No indexes on JSON fields - too large for btree, use GIN (PostgreSQL only)
+        pass
 
     def __str__(self):
         return f"{self.username} ({self.role})"
