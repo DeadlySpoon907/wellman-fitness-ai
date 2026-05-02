@@ -85,7 +85,6 @@ backend/
 | trial_ends_at | DateTime | Trial end date |
 | fitness_profile | JSON | {goal, intensity, location, focusAreas} |
 | active_plan | JSON | Current 30-day plan |
-| plan_history | JSON | Past plans array |
 | diet_plan | JSON | AI-generated diet |
 | weight_logs | JSON | [{date, weight}] |
 | activity_logs | JSON | Activity entries |

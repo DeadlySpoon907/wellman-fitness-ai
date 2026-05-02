@@ -115,7 +115,6 @@ python seed.py                   # Seed demo data
 - `is_premium`, `membership_expires`, `trial_ends_at`
 - `fitness_profile` (JSON): goal, intensity, location, focusAreas
 - `active_plan` (JSON): 30-day plan with sessions
-- `plan_history` (JSON): past plans
 - `diet_plan` (JSON): AI-generated diet
 - `weight_logs`, `activity_logs`, `meal_logs`, `posture_logs` (JSON arrays)
 
