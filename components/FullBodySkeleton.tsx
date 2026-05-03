@@ -128,6 +128,8 @@ export function FullBodySkeleton({
         position: 'absolute',
         top: 0,
         left: 0,
+        width: `${canvasWidth}px`,
+        height: `${canvasHeight}px`,
         pointerEvents: 'none',
         display: isCameraRunning ? 'block' : 'none',
         zIndex: 10,

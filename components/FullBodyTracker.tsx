@@ -37,6 +37,8 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
   const [detectionStatus, setDetectionStatus] = useState('Ready to start');
   const [error, setError] = useState('');
   const [loadingProgress, setLoadingProgress] = useState('');
+  const [videoWidth, setVideoWidth] = useState(640);
+  const [videoHeight, setVideoHeight] = useState(480);
   const [postureAnalysis, setPostureAnalysis] = useState<any>(null);
   const [detectedExercise, setDetectedExercise] = useState<ExerciseType | null>(null);
   const [repCount, setRepCount] = useState(0);
@@ -110,6 +112,8 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
         streamRef.current = stream;
 
         videoRef.current.onloadedmetadata = () => {
+          setVideoWidth(videoRef.current!.videoWidth || 640);
+          setVideoHeight(videoRef.current!.videoHeight || 480);
           videoRef.current?.play().then(() => {
             isCameraRunningRef.current = true;
             setIsCameraRunning(true);
@@ -652,7 +656,7 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
         Full Body Tracking | Show your full body to camera
       </div>
 
-      <div className="relative mx-auto" style={{ width: '640px' }}>
+      <div className="relative mx-auto" style={{ width: `${videoWidth}px`, height: `${videoHeight}px` }}>
         {isAIInitialized && currentPose && (
           <div className="absolute top-2 left-2 bg-black/70 text-white px-3 py-1 rounded text-xs font-mono z-10" style={{ color: currentPose ? '#00FF00' : '#FF9800' }}>
             {currentPose ? 'STATUS: TRACKING ACTIVE' : 'STATUS: SCANNING...'}
@@ -693,16 +697,16 @@ export function FullBodyTracker({ exercise, freedomMode = false, onLandmarksUpda
         )}
         <video
           ref={videoRef}
-          width={640}
-          height={480}
-          className="block border-2 border-slate-300 rounded-lg"
+          width={videoWidth}
+          height={videoHeight}
+          className="block border-2 border-slate-300 rounded-lg w-full h-full"
           style={{ transform: 'scaleX(-1)' }}
           playsInline
         />
         <FullBodySkeleton
           landmarks={currentPose?.landmarks || []}
-          canvasWidth={640}
-          canvasHeight={480}
+          canvasWidth={videoWidth}
+          canvasHeight={videoHeight}
           isCameraRunning={isCameraRunning}
           showOverlay={showOverlay}
         />
